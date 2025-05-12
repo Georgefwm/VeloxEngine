@@ -5,7 +5,7 @@
 
 mkdir "build"
 cd "build"
-cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -G Ninja ..
+cmake -G Ninja ..
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 ninja
