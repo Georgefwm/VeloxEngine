@@ -1,0 +1,27 @@
+Plan/ideas
+
+Engine idea:
+
+Supply user (game developer) with a framework for coding games, taking some of the low level
+complexity out of the equation for them. API should be simple but based in reality.
+
+Components:
+- Renderer
+    - Camera
+    - Lighting
+- Audio player
+- Math lib
+- UI system
+- Entity system
+- Input system
+- Asset system
+
+Immediately necessary:
+- Utility stuff
+    - General purpose allocator
+    - Math lib or write our own
+    - Read config files (avoid magic numbers at start, maybe nitpicking...)
+
+- Renderer (initially based on data from DearImGui)
+- Event system
+    - Really not sure how to structure this yet
