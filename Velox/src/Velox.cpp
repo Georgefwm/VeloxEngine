@@ -39,5 +39,5 @@ void Velox::test()
         // Render.
     }
     
-    // SDL_Quit();
+    SDL_Quit();
 }
