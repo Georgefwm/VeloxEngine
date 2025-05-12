@@ -1,2 +1,1 @@
-cd build\bin
-"./App.exe"
+.\build\bin\App.exe
