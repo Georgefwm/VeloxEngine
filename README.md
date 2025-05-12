@@ -16,9 +16,9 @@ cd VeloxEngine
 ```
 To build, simply:
 ```shell
-./build.bat
+./build.cmd
 ```
 To run:
 ```shell
-./run.bat
+./run.cmd
 ```
