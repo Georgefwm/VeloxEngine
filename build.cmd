@@ -6,8 +6,8 @@
 mkdir "build"
 cd "build"
 cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -G Ninja ..
-:: exit on fail
+if %errorlevel% neq 0 exit /b %errorlevel%
 
 ninja
-cd ..
-:: exit on fail
+if %errorlevel% neq 0 exit /b %errorlevel%
+
