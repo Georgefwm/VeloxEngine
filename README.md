@@ -14,10 +14,11 @@ git clone https://github.com/Georgefwm/VeloxEngine
 ```shell
 cd VeloxEngine
 ```
+To build, simply:
 ```shell
 ./build.bat
 ```
-Then to run:
+To run:
 ```shell
 ./run.bat
 ```
