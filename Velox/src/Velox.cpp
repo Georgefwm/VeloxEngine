@@ -1,7 +1,8 @@
 #include "Velox.h"
-#include "SDL3/SDL_events.h"
 
 #include <SDL3/SDL.h>
+#include "SDL3/SDL_events.h"
+
 #include <cstdio>
 
 bool g_quitRequested = false;
