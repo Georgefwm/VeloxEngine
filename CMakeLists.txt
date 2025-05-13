@@ -23,6 +23,8 @@ set(CMAKE_CONFIGURATION_TYPES "Debug;Release")
 set(CMAKE_BUILD_MODE "Debug")
 set(CMAKE_DEBUG_POSTFIX "-g")
 
+add_subdirectory(vendor)
+
 # Use CMakeLists.txt in these dirs.
 add_subdirectory(Velox)
 add_subdirectory(App)
