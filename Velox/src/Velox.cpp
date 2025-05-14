@@ -13,7 +13,6 @@ bool g_quitRequested = false;
 
 SDL_Window*    g_window   = nullptr;
 SDL_GPUDevice* g_device   = nullptr;
-SDL_Renderer*  g_renderer = nullptr;
 
 void Velox::test()
 {
