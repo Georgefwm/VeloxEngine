@@ -14,6 +14,9 @@ bool g_quitRequested = false;
 SDL_Window*    g_window   = nullptr;
 SDL_GPUDevice* g_device   = nullptr;
 
+// GM: Need decide on what vector types to use.
+ImVec4 g_clearColor = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+
 void Velox::test()
 {
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS))
@@ -51,6 +54,7 @@ void Velox::test()
     }
 
     // GM: Add option to change SDL_GPU_PRESENTMODE.
+    // MAILBOX is garunteed to be supported.
     SDL_SetGPUSwapchainParameters(g_device, g_window, SDL_GPU_SWAPCHAINCOMPOSITION_SDR, SDL_GPU_PRESENTMODE_MAILBOX);
 
     ImGui::CreateContext();
@@ -84,9 +88,6 @@ void Velox::test()
     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
     //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, nullptr, io.Fonts->GetGlyphRangesJapanese());
     //IM_ASSERT(font != nullptr);
-    
-    // GM: Need to use our own types.
-    ImVec4 clearColor = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
     // Main loop.
     while (!g_quitRequested)
@@ -108,6 +109,7 @@ void Velox::test()
         }
 
         // Update game state.
+        // No game yet...
 
         // Render.
         ImGui_ImplSDLGPU3_NewFrame();
@@ -119,6 +121,8 @@ void Velox::test()
         ImGui::Render();
 
         ImDrawData* drawData = ImGui::GetDrawData();
+        
+        // GM: Not sure if we need to check this, thought when window is minimised then swapchainTexture == nullptr?
         const bool isMinimised = (drawData->DisplaySize.x <= 0.0f || drawData->DisplaySize.y <= 0.0f);
 
         SDL_GPUCommandBuffer* commandBuffer = SDL_AcquireGPUCommandBuffer(g_device);
@@ -134,14 +138,16 @@ void Velox::test()
             // Setup and start a render pass
             SDL_GPUColorTargetInfo targetInfo = {};
             targetInfo.texture     = swapchainTexture;
-            targetInfo.clear_color = SDL_FColor { clearColor.x, clearColor.y, clearColor.z, clearColor.w };
+            targetInfo.clear_color = 
+                SDL_FColor { g_clearColor.x, g_clearColor.y, g_clearColor.z, g_clearColor.w };
             targetInfo.load_op     = SDL_GPU_LOADOP_CLEAR;
             targetInfo.store_op    = SDL_GPU_STOREOP_STORE;
             targetInfo.mip_level   = 0;
             targetInfo.cycle       = false;
             targetInfo.layer_or_depth_plane = 0;
 
-            SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(commandBuffer, &targetInfo, 1, nullptr);
+            SDL_GPURenderPass* renderPass = 
+                SDL_BeginGPURenderPass(commandBuffer, &targetInfo, 1, nullptr);
 
             // Render ImGui
             ImGui_ImplSDLGPU3_RenderDrawData(drawData, commandBuffer, renderPass);
@@ -154,6 +160,7 @@ void Velox::test()
 
     // Cleanup.
     SDL_WaitForGPUIdle(g_device);
+
     ImGui_ImplSDL3_Shutdown();
     ImGui_ImplSDLGPU3_Shutdown();
     ImGui::DestroyContext();
