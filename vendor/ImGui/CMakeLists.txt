@@ -16,6 +16,7 @@ target_include_directories(ImGui
     ${imgui_SOURCE_DIR}/backends
 )
 
+# GM: Extra ImGui features need to be manually added here.
 target_sources(
     ImGui
     PUBLIC
@@ -25,7 +26,7 @@ target_sources(
     ${imgui_SOURCE_DIR}/imgui_tables.cpp
     ${imgui_SOURCE_DIR}/imgui_widgets.cpp
     ${imgui_SOURCE_DIR}/backends/imgui_impl_sdl3.cpp
-    ${imgui_SOURCE_DIR}/backends/imgui_impl_sdlrenderer3.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_sdlgpu3.cpp
 )
 
 target_link_libraries(ImGui PUBLIC SDL3::SDL3)
