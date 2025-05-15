@@ -2,3 +2,5 @@ CmakeFiles/
 build/
 .cache/
 ImGui.ini
+.vs
+.vscode

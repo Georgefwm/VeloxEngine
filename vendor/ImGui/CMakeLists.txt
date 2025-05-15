@@ -29,4 +29,4 @@ target_sources(
     ${imgui_SOURCE_DIR}/backends/imgui_impl_sdlgpu3.cpp
 )
 
-target_link_libraries(ImGui PUBLIC SDL3::SDL3)
+target_link_libraries(ImGui PRIVATE SDL3::SDL3)

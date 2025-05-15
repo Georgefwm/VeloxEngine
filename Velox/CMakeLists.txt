@@ -16,11 +16,16 @@ file(GLOB_RECURSE VELOX_HEADERS
 
 add_library(Velox STATIC ${VELOX_SOURCES} ${VELOX_HEADERS})
 
-target_include_directories(Velox PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include/Velox)
+target_include_directories(
+    Velox
+    PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/Velox)
 
 # We can worry about PCH setup when API is a bit more concrete :)
 # include(PrecompiledHeaders)
 # target_precompile_headers(Velox PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/Velox/EnginePCH.h)
 
-target_link_libraries(Velox PRIVATE SDL3::SDL3 ImGui)
+# Libs from /vendor/CMakeLists.txt
+target_link_libraries(Velox PUBLIC SDL3::SDL3)
+target_link_libraries(Velox PRIVATE ImGui)
 
