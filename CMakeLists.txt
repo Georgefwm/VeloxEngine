@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(
-    TestProject
+project(TestProject
     VERSION 0.1.0
     LANGUAGES CXX
 )
@@ -22,6 +21,9 @@ set(CMAKE_CONFIGURATION_TYPES "Debug;Release")
 # Set default build to debug (generates pdb file).
 set(CMAKE_BUILD_MODE "Debug")
 set(CMAKE_DEBUG_POSTFIX "-g")
+
+# Thanks Microsoft (:
+add_compile_options("-D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH")
 
 add_subdirectory(vendor)
 

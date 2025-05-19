@@ -5,7 +5,8 @@ namespace Velox {
 // GM: Sets up all framework systems.
 void Init();
 
-void test();
+void Quit();
+bool QuitRequested();
 
 void DeInit();
 

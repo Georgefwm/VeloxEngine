@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
+
 # Just regex all files in these dirs for simplicity.
 file(GLOB_RECURSE VELOX_SOURCES 
     ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
@@ -26,6 +27,5 @@ target_include_directories(
 # target_precompile_headers(Velox PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/Velox/EnginePCH.h)
 
 # Libs from /vendor/CMakeLists.txt
-target_link_libraries(Velox PUBLIC SDL3::SDL3)
-target_link_libraries(Velox PRIVATE ImGui)
+target_link_libraries(Velox PUBLIC SDL3::SDL3 ImGui)
 

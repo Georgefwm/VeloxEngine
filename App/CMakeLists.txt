@@ -18,4 +18,4 @@ add_executable(App ${APP_SOURCES} ${APP_HEADERS})
 
 target_include_directories(App PRIVATE ${PROJECT_SOURCE_DIR}/include/App)
 
-target_link_libraries(App PRIVATE Velox)
+target_link_libraries(App PRIVATE Velox ImGui)

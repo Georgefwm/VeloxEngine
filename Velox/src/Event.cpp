@@ -1,0 +1,93 @@
+#include "Event.h"
+
+#include "UI.h"
+#include "Velox.h"
+
+#include <queue>
+
+static std::queue<Velox::Event> g_eventQueue;
+
+void Velox::PushEvent(Velox::Event event)
+{
+    g_eventQueue.push(event);
+}
+
+// GM: Bit janky rn, currently we just intercept events we want to use.
+bool Velox::PollEvents(Velox::Event* event)
+{
+    Event* t_event;
+
+    while (!g_eventQueue.empty())
+    {
+        t_event = &g_eventQueue.front();
+
+        if (ShouldEngineInterceptEvent(t_event))
+        {
+            if (InterceptEvent(t_event))
+            {
+                event = t_event;
+                g_eventQueue.pop();
+                return true;
+            }
+        }
+        else
+        {
+            event = t_event;
+            g_eventQueue.pop();
+            return true;
+        }
+    }
+
+    SDL_Event sdlEvent;
+    while (SDL_PollEvent(&sdlEvent))
+    {
+        Velox::Event newEvent = { Velox::SDLEvent, sdlEvent };
+        t_event = &newEvent;
+
+        if (ShouldEngineInterceptEvent(t_event))
+        {
+            if (InterceptEvent(t_event))
+            {
+                event = t_event;
+                return true;
+            }
+        }
+        else 
+        {
+            event = t_event;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool Velox::ShouldEngineInterceptEvent(Velox::Event* event)
+{
+    if (event->type == Velox::EventType::AssetLoadRequest)
+        return true;
+
+    if (event->type == Velox::EventType::SDLEvent)
+        return true;
+
+    return false;
+}
+
+// Returns true if event should propogate to user.
+bool Velox::InterceptEvent(Velox::Event* event)
+{
+    if (event->type == Velox::EventType::SDLEvent)
+    {
+        if (event->sdlEvent.type == SDL_EVENT_QUIT)
+        {
+            Velox::Quit();
+            return false;
+        }
+
+        Velox::ForwardSDLEvent(event);
+
+        return true;
+    }
+
+    return true;
+}
