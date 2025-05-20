@@ -38,6 +38,9 @@ bool Velox::PollEvents(Velox::Event* event)
         }
     }
 
+    // GM: Ideally we would just extract information from SDL_Events that are interesting and 
+    // create purely native velox event, but that seems like a lot of grunt work. We also need
+    // to sus out where our math types are going to come from (lib or handmade).
     SDL_Event sdlEvent;
     while (SDL_PollEvent(&sdlEvent))
     {
@@ -80,6 +83,7 @@ bool Velox::InterceptEvent(Velox::Event* event)
     {
         if (event->sdlEvent.type == SDL_EVENT_QUIT)
         {
+            // TODO: Let the developer handle the quit logic.
             Velox::Quit();
             return false;
         }

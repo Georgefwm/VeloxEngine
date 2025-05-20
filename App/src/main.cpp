@@ -25,6 +25,7 @@ int main(int argc, char** argv)
 {
     Velox::Init();
 
+    // GM: I guess when done like this, entities are allocated on the stack? ...maybe.
     Velox::EntityManager entityManager {};
 
     // GM: Will make a tests file, just doing this for now.

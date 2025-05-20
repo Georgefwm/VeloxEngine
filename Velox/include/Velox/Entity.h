@@ -1,8 +1,9 @@
 #pragma once
 
-#include <cstdint>
-#include <utility>
+#include <cstdint>  // uint32_t, not sure if we want to include this just for one datatype...
+#include <utility>  // pair
 
+#include <glm/vec3.hpp>
 
 constexpr size_t MAX_ENTITIES = 1024;
 
@@ -21,7 +22,11 @@ struct EntityHandle {
 // GM: Not entirely sure how to expose this to the user without adding bunch of complexity.
 // The general idea is that I want to have this be sub-classed to only one level deep so
 // that we can take advantage of dynamic dispatch without having silly big inheritance trees.
+//
+// Maybe for now we just use a 'megastruct' where all data is just contained in the Entity struct.
+// We can figure out extenting this in the API later.
 struct Entity {
+    glm::vec3 position = glm::vec3(0.0, 0.0, 0.0);
     int test = 0;
 };
 
