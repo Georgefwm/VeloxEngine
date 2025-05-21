@@ -1,5 +1,6 @@
 #include "Renderer.h"
 
+#include "SDL3/SDL_filesystem.h"
 #include "UI.h"
 
 #include <glm/glm.hpp>
@@ -9,51 +10,149 @@
 
 #include <cstdio>
 
+constexpr size_t     VERTEX_BUFFER_SIZE = 1024;
+constexpr SDL_FColor CLEAR_COLOR = {0.5, 0.5, 0.5, 1.0 };
+
 SDL_Window*    g_window;
 SDL_GPUDevice* g_device;
 
-const ImVec4 g_clearColor = ImVec4(0.0, 0.0, 0.0, 1.0);
+Velox::Vertex            g_vertices[VERTEX_BUFFER_SIZE];  // First vertices get put in here.
+SDL_GPUTransferBuffer*   g_transferBuffer;                // Then get memcopied to here.
+SDL_GPUBuffer*           g_vertexBuffer;                  // Then they get sent to the GPU (here).
 
-SDL_Window* Velox::GetWindow()    { return g_window; }
+SDL_GPUGraphicsPipeline* g_graphicsPipeline;
+
+SDL_Window*    Velox::GetWindow() { return g_window; }
 SDL_GPUDevice* Velox::GetDevice() { return g_device; }
 
-void Velox::InitRenderer()
+bool Velox::InitRenderer()
 {
-    SDL_WindowFlags windowFlags;
-    windowFlags |= SDL_WINDOW_VULKAN;
-    windowFlags |= SDL_WINDOW_HIGH_PIXEL_DENSITY;
+    g_vertices[0] = Velox::Vertex{ vec3( 0.0,  0.5, 0.0), vec4(1.0, 0.0, 0.0, 1.0) }; 
+    g_vertices[1] = Velox::Vertex{ vec3(-0.5, -0.5, 0.0), vec4(0.0, 0.0, 1.0, 1.0) }; 
+    g_vertices[2] = Velox::Vertex{ vec3( 0.5, -0.5, 0.0), vec4(0.0, 1.0, 0.0, 1.0) }; 
 
+    SDL_WindowFlags windowFlags;
+    windowFlags &= SDL_WINDOW_VULKAN;
+    windowFlags &= SDL_WINDOW_HIGH_PIXEL_DENSITY;
     
     g_window = SDL_CreateWindow("Velox App", 1920, 1080, windowFlags);
     if (g_window == nullptr)
     {
         printf("Error: SDL_CreateWindow(): %s\n", SDL_GetError());
-        return;
+        return false;
     }
 
     SDL_SetWindowPosition(g_window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
     SDL_ShowWindow(g_window);
 
-    // GM: Set shader format as vulkan (SPIR-V).
+    // GM: Set shader format as only vulkan for now (SPIR-V).
     SDL_GPUShaderFormat shaderFormat = SDL_GPU_SHADERFORMAT_SPIRV;
 
-    g_device = SDL_CreateGPUDevice(shaderFormat, true, nullptr);
-
+    g_device = SDL_CreateGPUDevice(shaderFormat, true, "vulkan");
     if (g_device == nullptr)
     {
         printf("Error: SDL_CreateGPUDevice(): %s\n", SDL_GetError());
-        return;
+        return false;
     }
     
     if (!SDL_ClaimWindowForGPUDevice(g_device, g_window))
     {
         printf("Error: SDL_ClaimWindowForGPUDevice(): %s\n", SDL_GetError());
-        return;
+        return false;
     }
+
+    SDL_GPUBufferCreateInfo bufferInfo {};
+    bufferInfo.size  = sizeof(g_vertices); 
+    bufferInfo.usage = SDL_GPU_BUFFERUSAGE_VERTEX;
+
+    g_vertexBuffer = SDL_CreateGPUBuffer(g_device, &bufferInfo);
+
+    // Create buffer for copying vertices to the vertex buffer (GPU).
+    SDL_GPUTransferBufferCreateInfo transferInfo {};
+    transferInfo.size  = sizeof(g_vertices);
+    transferInfo.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
+
+    g_transferBuffer = SDL_CreateGPUTransferBuffer(g_device, &transferInfo);
+
+    // Copy data to transfer buffer.
+    Vertex* data = (Vertex*)SDL_MapGPUTransferBuffer(g_device, g_transferBuffer, false);
+    SDL_memcpy(data, g_vertices, sizeof(g_vertices));
+    SDL_UnmapGPUTransferBuffer(g_device, g_transferBuffer);
+
+    SDL_GPUShader* vertexShader =
+        Velox::LoadShader("shaders\\vertex_base.spv", SDL_GPU_SHADERSTAGE_VERTEX);
+
+    if (vertexShader == nullptr)
+    {
+        printf("Error: Failed to load vertex shader\n");
+        return false;
+    }
+
+    SDL_GPUShader* fragmentShader =
+        Velox::LoadShader("shaders\\fragment_base.spv", SDL_GPU_SHADERSTAGE_FRAGMENT);
+
+    if (vertexShader == nullptr)
+    {
+        printf("Error: Failed to load fragment shader\n");
+        return false;
+    }
+
+    SDL_GPUGraphicsPipelineCreateInfo pipelineInfo {};
+    // bind shaders
+    pipelineInfo.vertex_shader   = vertexShader;
+    pipelineInfo.fragment_shader = fragmentShader;
+    pipelineInfo.primitive_type = SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
+
+    // describe the vertex buffers
+    SDL_GPUVertexBufferDescription vertexBufferDesctiptions[1];
+    vertexBufferDesctiptions[0].slot = 0;
+    vertexBufferDesctiptions[0].input_rate = SDL_GPU_VERTEXINPUTRATE_VERTEX;
+    vertexBufferDesctiptions[0].instance_step_rate = 0;
+    vertexBufferDesctiptions[0].pitch = sizeof(Vertex);
+    
+    pipelineInfo.vertex_input_state.num_vertex_buffers = 1;
+    pipelineInfo.vertex_input_state.vertex_buffer_descriptions = vertexBufferDesctiptions;
+
+    // describe the vertex attribute
+    SDL_GPUVertexAttribute vertexAttributes[2];
+    
+    // in_position
+    vertexAttributes[0].format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT3;  // vec3
+    vertexAttributes[0].buffer_slot = 0;  // Fetch data from the buffer at slot 0.
+    vertexAttributes[0].location = 0;     // Layout (location = 0) in shader.
+    vertexAttributes[0].offset = 0;       // start from the first byte from current buffer position
+    
+    // in_color
+    vertexAttributes[1].format = SDL_GPU_VERTEXELEMENTFORMAT_FLOAT4; //vec4
+    vertexAttributes[1].buffer_slot = 0;             // use buffer at slot 0
+    vertexAttributes[1].location = 1;                // layout (location = 1) in shader
+    vertexAttributes[1].offset = sizeof(float) * 3;  // 4th float from current buffer position
+
+    pipelineInfo.vertex_input_state.num_vertex_attributes = 2;
+    pipelineInfo.vertex_input_state.vertex_attributes = vertexAttributes;
+
+    // describe the color target
+    SDL_GPUColorTargetDescription colorTargetDescriptions[1];
+    colorTargetDescriptions[0] = {};
+    colorTargetDescriptions[0].format = SDL_GetGPUSwapchainTextureFormat(g_device, g_window);
+    
+    pipelineInfo.target_info.num_color_targets = 1;
+    pipelineInfo.target_info.color_target_descriptions = colorTargetDescriptions;
+
+    // create the pipeline
+    g_graphicsPipeline = SDL_CreateGPUGraphicsPipeline(g_device, &pipelineInfo);
+    
+    // Release the shaders now, they are now already loaded. 
+    SDL_ReleaseGPUShader(g_device, vertexShader);
+    SDL_ReleaseGPUShader(g_device, fragmentShader);
 
     // GM: Add option to change SDL_GPU_PRESENTMODE.
     // MAILBOX is garunteed to be supported.
-    SDL_SetGPUSwapchainParameters(g_device, g_window, SDL_GPU_SWAPCHAINCOMPOSITION_SDR, SDL_GPU_PRESENTMODE_MAILBOX);
+    SDL_SetGPUSwapchainParameters(g_device, g_window,
+        SDL_GPU_SWAPCHAINCOMPOSITION_SDR,
+        SDL_GPU_PRESENTMODE_MAILBOX);
+
+    return true;
 }
 
 void Velox::StartFrame()
@@ -79,6 +178,20 @@ void Velox::DoRenderPass()
 
     SDL_GPUCommandBuffer* commandBuffer = SDL_AcquireGPUCommandBuffer(g_device);
 
+    SDL_GPUCopyPass* copyPass = SDL_BeginGPUCopyPass(commandBuffer);
+    
+    SDL_GPUTransferBufferLocation location {};
+    location.transfer_buffer = g_transferBuffer;
+    location.offset = 0;  // start from the beginning
+
+    SDL_GPUBufferRegion region{};
+    region.buffer = g_vertexBuffer;
+    region.size   = sizeof(g_vertices);  // size of the data in bytes
+    region.offset = 0;                   // begin writing from the first vertex
+
+    SDL_UploadToGPUBuffer(copyPass, &location, &region, true);
+    SDL_EndGPUCopyPass(copyPass);
+
     SDL_GPUTexture* swapchainTexture;
     SDL_AcquireGPUSwapchainTexture(commandBuffer, g_window, &swapchainTexture, nullptr, nullptr);
 
@@ -90,8 +203,7 @@ void Velox::DoRenderPass()
         // Setup and start a render pass
         SDL_GPUColorTargetInfo targetInfo = {};
         targetInfo.texture     = swapchainTexture;
-        targetInfo.clear_color = 
-            SDL_FColor { g_clearColor.x, g_clearColor.y, g_clearColor.z, g_clearColor.w };
+        targetInfo.clear_color = CLEAR_COLOR;
         targetInfo.load_op     = SDL_GPU_LOADOP_CLEAR;
         targetInfo.store_op    = SDL_GPU_STOREOP_STORE;
         targetInfo.mip_level   = 0;
@@ -101,7 +213,18 @@ void Velox::DoRenderPass()
         SDL_GPURenderPass* renderPass = 
             SDL_BeginGPURenderPass(commandBuffer, &targetInfo, 1, nullptr);
 
-        // Render ImGui
+        SDL_BindGPUGraphicsPipeline(renderPass, g_graphicsPipeline);
+
+        // bind the vertex buffer
+        SDL_GPUBufferBinding bufferBindings[1];
+        bufferBindings[0].buffer = g_vertexBuffer;  // Index 0 is slot 0 in this example.
+        bufferBindings[0].offset = 0;  // Start from the first byte.
+        
+        SDL_BindGPUVertexBuffers(renderPass, 0, bufferBindings, 1);  // Bind one buffer starting from slot 0.
+
+        SDL_DrawGPUPrimitives(renderPass, 3, 1, 0, 0);
+
+        // Render ImGui stuff.
         ImGui_ImplSDLGPU3_RenderDrawData(drawData, commandBuffer, renderPass);
 
         SDL_EndGPURenderPass(renderPass);
@@ -110,9 +233,15 @@ void Velox::DoRenderPass()
     SDL_SubmitGPUCommandBuffer(commandBuffer);
 }
 
+// TODO: Verify if these need to be in the right order.
 void Velox::DeInitRenderer()
 {
     SDL_WaitForGPUIdle(g_device);
+
+    SDL_ReleaseGPUBuffer(g_device, g_vertexBuffer);
+    SDL_ReleaseGPUTransferBuffer(g_device, g_transferBuffer);
+
+    SDL_ReleaseGPUGraphicsPipeline(g_device, g_graphicsPipeline);
 
     ImGui_ImplSDL3_Shutdown();
     ImGui_ImplSDLGPU3_Shutdown();
@@ -122,3 +251,44 @@ void Velox::DeInitRenderer()
     SDL_DestroyWindow(g_window);
 }
 
+// filepath relative to the exe (in build/bin).
+SDL_GPUShader* Velox::LoadShader(const char* filepath, SDL_GPUShaderStage shaderStage)
+{
+    char absoluteFilepath[1024], *ptr;
+    SDL_strlcpy(absoluteFilepath, SDL_GetBasePath(), sizeof(absoluteFilepath));
+    SDL_strlcat(absoluteFilepath, filepath, sizeof(absoluteFilepath));
+
+    bool fileFound = SDL_GetPathInfo(absoluteFilepath, nullptr);
+    if (!fileFound)
+    {
+        printf("ERROR: Could not find shader file at path: %s\n.", absoluteFilepath);
+        return nullptr;
+    }
+
+    size_t shaderCodeSize;
+    void* shaderCode = SDL_LoadFile(absoluteFilepath, &shaderCodeSize);
+    if (shaderCode == nullptr)
+    {
+        printf("Error: SDL_LoadFile(): %s\n", SDL_GetError());
+        return nullptr;
+    }
+
+    SDL_GPUShaderCreateInfo shaderInfo {};
+    shaderInfo.code       = (Uint8*)shaderCode; //convert to an array of bytes
+    shaderInfo.code_size  = shaderCodeSize;
+    shaderInfo.entrypoint = "main";
+    shaderInfo.format     = SDL_GPU_SHADERFORMAT_SPIRV; // loading .spv shaders
+    shaderInfo.stage      = shaderStage; // vertex shader
+                                           
+    shaderInfo.num_samplers         = 0;
+    shaderInfo.num_storage_buffers  = 0;
+    shaderInfo.num_storage_textures = 0;
+    shaderInfo.num_uniform_buffers  = 0;
+
+    SDL_GPUShader* vertexShader = SDL_CreateGPUShader(g_device, &shaderInfo);
+
+    // Free the file
+    SDL_free(shaderCode);
+
+    return vertexShader;
+}

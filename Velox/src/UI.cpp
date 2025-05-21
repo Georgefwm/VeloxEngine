@@ -17,7 +17,6 @@ void Velox::InitUI()
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
-
     ImGui::StyleColorsDark();
 
     SDL_Window* window    = Velox::GetWindow();
@@ -25,7 +24,7 @@ void Velox::InitUI()
 
     if (device == nullptr)
     {
-        printf("Error: SDL_CreateGPUDevice(): %s\n", SDL_GetError());
+        printf("Error: Device not initialised: %s\n", SDL_GetError());
         return;
     }
 

@@ -16,3 +16,4 @@ typedef glm::vec2 vec2;
 inline ImVec4 ToImVec4(const glm::vec4& vec) { return ImVec4(vec.x, vec.y, vec.z, vec.w); }
 // No ImVec3
 inline ImVec2 ToImVec2(const glm::vec2& vec) { return ImVec2(vec.x, vec.y); }
+
