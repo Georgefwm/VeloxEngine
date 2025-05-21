@@ -2,6 +2,7 @@
 
 #include "UI.h"
 
+#include <glm/glm.hpp>
 #include <SDL3/SDL_gpu.h>
 #include <imgui_impl_sdl3.h>
 #include <imgui_impl_sdlgpu3.h>
@@ -18,7 +19,11 @@ SDL_GPUDevice* Velox::GetDevice() { return g_device; }
 
 void Velox::InitRenderer()
 {
-    SDL_WindowFlags windowFlags = SDL_WINDOW_VULKAN | SDL_WINDOW_HIGH_PIXEL_DENSITY;
+    SDL_WindowFlags windowFlags;
+    windowFlags |= SDL_WINDOW_VULKAN;
+    windowFlags |= SDL_WINDOW_HIGH_PIXEL_DENSITY;
+
+    
     g_window = SDL_CreateWindow("Velox App", 1920, 1080, windowFlags);
     if (g_window == nullptr)
     {

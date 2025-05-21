@@ -1,9 +1,9 @@
 #pragma once
 
+#include "Core.h"
+
 #include <cstdint>  // uint32_t, not sure if we want to include this just for one datatype...
 #include <utility>  // pair
-
-#include <glm/vec3.hpp>
 
 constexpr size_t MAX_ENTITIES = 1024;
 
@@ -26,7 +26,7 @@ struct EntityHandle {
 // Maybe for now we just use a 'megastruct' where all data is just contained in the Entity struct.
 // We can figure out extenting this in the API later.
 struct Entity {
-    glm::vec3 position = glm::vec3(0.0, 0.0, 0.0);
+    vec3 position = vec3(0.0, 0.0, 0.0);
     int test = 0;
 };
 

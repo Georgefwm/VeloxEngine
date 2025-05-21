@@ -1,4 +1,5 @@
 #include "Event.h"
+
 #include "Renderer.h"
 #include "Velox.h"
 #include "Entity.h"
@@ -36,7 +37,8 @@ int main(int argc, char** argv)
 
     printf("before modification: %i\n", newEntity->test);
 
-    newEntity->test = 42;
+    newEntity->position.x += 1;
+    newEntity->test += 1;
 
     printf("after modification: %i\n", newEntity->test);
 
@@ -72,7 +74,7 @@ int main(int argc, char** argv)
         printf("Iterator test 3: %i\n", entity->test);
     }
 
-    newEntity->test = 69;
+    newEntity->test += 1;
 
     printf("\n");
     for (auto [handle, entity] : entityManager.iter())

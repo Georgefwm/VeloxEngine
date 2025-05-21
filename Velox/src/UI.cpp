@@ -17,6 +17,7 @@ void Velox::InitUI()
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
+
     ImGui::StyleColorsDark();
 
     SDL_Window* window    = Velox::GetWindow();
