@@ -1,8 +1,11 @@
+#include "Console.h"
 #include "Event.h"
 
 #include "Renderer.h"
 #include "Velox.h"
 #include "Entity.h"
+#include "Primitive.h"
+#include "Util.h"
 
 #include <cstdio>
 #include <imgui.h>
@@ -20,6 +23,8 @@ void UpdateGame()
 void DoRenderingStuff()
 {
     Velox::DrawRectangle(vec4(200, 200, 500, 200), vec4(1.0));
+
+    Velox::DrawConsole();
 
     ImGui::ShowDemoWindow();
 }
@@ -89,6 +94,10 @@ int main(int argc, char** argv)
 
     while (!Velox::QuitRequested())
     {
+        // GM: Has to be called start of every frame.
+        // Can optionally use the returned value.
+        float deltaTime = Velox::RefreshDeltaTime();
+
         Velox::Event event;
         while (Velox::PollEvents(&event))
         {

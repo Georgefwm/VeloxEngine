@@ -1,5 +1,7 @@
 #include "Event.h"
 
+#include "Console.h"
+#include "SDL3/SDL_events.h"
 #include "UI.h"
 #include "Velox.h"
 
@@ -86,6 +88,16 @@ bool Velox::InterceptEvent(Velox::Event* event)
             // TODO: Let the developer handle the quit logic.
             Velox::Quit();
             return false;
+        }
+
+        if (event->sdlEvent.type == SDL_EVENT_KEY_DOWN)
+        {
+            if (event->sdlEvent.key.scancode == SDL_SCANCODE_GRAVE) 
+            {
+                // Set this as a button that never gets through to the user (engine reserved).
+                Velox::ToggleConsole();
+                return false;
+            }
         }
 
         Velox::ForwardSDLEvent(event);
