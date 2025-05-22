@@ -2,7 +2,6 @@
 
 #include "SDL3/SDL_filesystem.h"
 #include "UI.h"
-#include "Util.h"
 
 #include <glm/glm.hpp>
 #include <SDL3/SDL_gpu.h>
