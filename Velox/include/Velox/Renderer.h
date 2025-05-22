@@ -18,6 +18,8 @@ SDL_Window* GetWindow();
 
 SDL_GPUDevice* GetDevice();
 
+ivec2 GetWindowSize();
+
 bool InitRenderer();
 
 void StartFrame();
@@ -29,5 +31,9 @@ void DoRenderPass();
 void DeInitRenderer();
 
 SDL_GPUShader* LoadShader(const char* filepath, SDL_GPUShaderStage shaderStage);
+
+void AddVertex(Vertex vertex);
+
+void DrawRectangle(vec4 rectangle, vec4 color);
 
 }

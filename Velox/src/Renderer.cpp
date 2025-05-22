@@ -2,6 +2,7 @@
 
 #include "SDL3/SDL_filesystem.h"
 #include "UI.h"
+#include "Util.h"
 
 #include <glm/glm.hpp>
 #include <SDL3/SDL_gpu.h>
@@ -16,6 +17,7 @@ constexpr SDL_FColor CLEAR_COLOR = {0.5, 0.5, 0.5, 1.0 };
 SDL_Window*    g_window;
 SDL_GPUDevice* g_device;
 
+Uint32                   vertexCount = 0;  // Keeps track of how many vertices we have added this frame.
 Velox::Vertex            g_vertices[VERTEX_BUFFER_SIZE];  // First vertices get put in here.
 SDL_GPUTransferBuffer*   g_transferBuffer;                // Then get memcopied to here.
 SDL_GPUBuffer*           g_vertexBuffer;                  // Then they get sent to the GPU (here).
@@ -25,12 +27,16 @@ SDL_GPUGraphicsPipeline* g_graphicsPipeline;
 SDL_Window*    Velox::GetWindow() { return g_window; }
 SDL_GPUDevice* Velox::GetDevice() { return g_device; }
 
+ivec2 Velox::GetWindowSize()
+{
+    ivec2 size {};
+    SDL_GetWindowSize(g_window, &size.x, &size.y);
+
+    return size;
+}
+
 bool Velox::InitRenderer()
 {
-    g_vertices[0] = Velox::Vertex{ vec3( 0.0,  0.5, 0.0), vec4(1.0, 0.0, 0.0, 1.0) }; 
-    g_vertices[1] = Velox::Vertex{ vec3(-0.5, -0.5, 0.0), vec4(0.0, 0.0, 1.0, 1.0) }; 
-    g_vertices[2] = Velox::Vertex{ vec3( 0.5, -0.5, 0.0), vec4(0.0, 1.0, 0.0, 1.0) }; 
-
     SDL_WindowFlags windowFlags;
     windowFlags &= SDL_WINDOW_VULKAN;
     windowFlags &= SDL_WINDOW_HIGH_PIXEL_DENSITY;
@@ -73,11 +79,6 @@ bool Velox::InitRenderer()
     transferInfo.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
 
     g_transferBuffer = SDL_CreateGPUTransferBuffer(g_device, &transferInfo);
-
-    // Copy data to transfer buffer.
-    Vertex* data = (Vertex*)SDL_MapGPUTransferBuffer(g_device, g_transferBuffer, false);
-    SDL_memcpy(data, g_vertices, sizeof(g_vertices));
-    SDL_UnmapGPUTransferBuffer(g_device, g_transferBuffer);
 
     SDL_GPUShader* vertexShader =
         Velox::LoadShader("shaders\\vertex_base.spv", SDL_GPU_SHADERSTAGE_VERTEX);
@@ -161,12 +162,22 @@ void Velox::StartFrame()
     ImGui_ImplSDLGPU3_NewFrame();
     ImGui_ImplSDL3_NewFrame();
     ImGui::NewFrame();
+
+    vertexCount = 0;
+
+    // GM: I don't think we accually need to clear the vertex buffer if we just overwrite vertices.
 }
 
 void Velox::EndFrame()
 {
     // GM: Finalises and generates ImGui draw data.
     ImGui::Render();
+    
+    // Copy data to transfer buffer.
+    Vertex* data = (Vertex*)SDL_MapGPUTransferBuffer(g_device, g_transferBuffer, false);
+    SDL_memcpy(data, g_vertices, sizeof(g_vertices));
+
+    SDL_UnmapGPUTransferBuffer(g_device, g_transferBuffer);
 }
 
 void Velox::DoRenderPass()
@@ -187,6 +198,7 @@ void Velox::DoRenderPass()
     SDL_GPUBufferRegion region{};
     region.buffer = g_vertexBuffer;
     region.size   = sizeof(g_vertices);  // size of the data in bytes
+    //region.size   = sizeof(Velox::Vertex) * vertexCount;  // size of the data in bytes
     region.offset = 0;                   // begin writing from the first vertex
 
     SDL_UploadToGPUBuffer(copyPass, &location, &region, true);
@@ -222,7 +234,7 @@ void Velox::DoRenderPass()
         
         SDL_BindGPUVertexBuffers(renderPass, 0, bufferBindings, 1);  // Bind one buffer starting from slot 0.
 
-        SDL_DrawGPUPrimitives(renderPass, 3, 1, 0, 0);
+        SDL_DrawGPUPrimitives(renderPass, vertexCount, 1, 0, 0);
 
         // Render ImGui stuff.
         ImGui_ImplSDLGPU3_RenderDrawData(drawData, commandBuffer, renderPass);
@@ -291,4 +303,33 @@ SDL_GPUShader* Velox::LoadShader(const char* filepath, SDL_GPUShaderStage shader
     SDL_free(shaderCode);
 
     return vertexShader;
+}
+
+void Velox::AddVertex(Velox::Vertex vertex)
+{
+    g_vertices[vertexCount] = vertex;
+    vertexCount++;
+}
+
+void Velox::DrawRectangle(vec4 rectangle, vec4 color)
+{
+    vec2 origin = vec2(rectangle.x, rectangle.y);
+    vec2 size   = vec2(rectangle.z, rectangle.w);
+
+    vec3 topLeft  = Velox::toShaderCoords(vec3(origin.x,          origin.y, 0.0), true);
+    vec3 topRight = Velox::toShaderCoords(vec3(origin.x + size.x, origin.y, 0.0), true);
+
+    vec3 botLeft  = Velox::toShaderCoords(vec3(origin.x,          origin.y + size.y, 0.0), true);
+    vec3 botRight = Velox::toShaderCoords(vec3(origin.x + size.x, origin.y + size.y, 0.0), true);
+    
+    // Vertices must be added in clockwise order!
+    // First triangle.
+    AddVertex(Velox::Vertex { botLeft,  color });
+    AddVertex(Velox::Vertex { topLeft,  color });
+    AddVertex(Velox::Vertex { topRight, color });
+
+    // Second.
+    AddVertex(Velox::Vertex { topRight, color });
+    AddVertex(Velox::Vertex { botRight, color });
+    AddVertex(Velox::Vertex { botLeft,  color });
 }

@@ -7,11 +7,13 @@ if %errorlevel% neq 0 exit /b %errorlevel%
 ninja
 if %errorlevel% neq 0 exit /b %errorlevel%
 
-:: Now compile shaders and place them in the bin output
 cd "bin"
 mkdir "shaders"
-cd "shaders"
 
-glslc -fshader-stage=vertex ..\..\..\Velox\shaders\vertex_base.glsl -o vertex_base.spv
-glslc -fshader-stage=fragment ..\..\..\Velox\shaders\fragment_base.glsl -o fragment_base.spv
+:: Now compile shaders and place them in the bin output
+cd "..\..\Velox\shaders"
+
+glslc -fshader-stage=vertex vertex_base.glsl -o ..\..\build\bin\shaders\vertex_base.spv
+glslc -fshader-stage=fragment fragment_base.glsl -o ..\..\build\bin\shaders\fragment_base.spv
+
 
