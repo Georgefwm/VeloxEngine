@@ -20,6 +20,8 @@ SDL_GPUDevice* GetDevice();
 
 ivec2 GetWindowSize();
 
+float GetDisplayScale();
+
 bool InitRenderer();
 
 void StartFrame();

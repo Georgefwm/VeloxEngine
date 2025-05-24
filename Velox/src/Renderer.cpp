@@ -34,6 +34,11 @@ ivec2 Velox::GetWindowSize()
     return size;
 }
 
+float Velox::GetDisplayScale()
+{
+    return SDL_GetWindowDisplayScale(g_window);
+}
+
 bool Velox::InitRenderer()
 {
     SDL_WindowFlags windowFlags;
