@@ -53,6 +53,10 @@ void Velox::InitUI()
     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
     //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, nullptr, io.Fonts->GetGlyphRangesJapanese());
     //IM_ASSERT(font != nullptr);
+
+    // GM: Account for display scaling!
+    // (I can read the text now without putting my face in the screen)
+    io.FontGlobalScale = Velox::GetDisplayScale();
 }
 
 void Velox::ForwardSDLEvent(Velox::Event* event)
