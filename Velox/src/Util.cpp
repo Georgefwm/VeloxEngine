@@ -37,6 +37,17 @@ double Velox::DeltaTimePrecise()
     return g_deltaTime;
 }
 
+float Velox::DeltaTimeMS()
+{
+    return (float)(g_deltaTime * SDL_MS_PER_SECOND);
+}
+
+// In ms.
+float Velox::Time()
+{
+    return (float)g_lastTime;
+}
+
 float Velox::RefreshDeltaTime()
 {
     uint64_t nowTime = SDL_GetTicks();

@@ -12,6 +12,10 @@ float DeltaTime();
 
 double DeltaTimePrecise();
 
+float DeltaTimeMS();
+
+float Time();
+
 float RefreshDeltaTime();
 
 }
