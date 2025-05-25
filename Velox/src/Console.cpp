@@ -1,5 +1,6 @@
 #include "Console.h"
 
+#include "ConsoleCommands.h"
 #include "Util.h"
 #include "Renderer.h"
 
@@ -7,7 +8,58 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 
+#include <sstream>
+
 static Velox::Console g_console {};
+
+Velox::Console* Velox::GetConsole() { return &g_console; }
+
+void Velox::InitConsole()
+{
+    Velox::RegisterDefaultCommands();
+}
+
+void Velox::Console::RegisterCommand(const std::string& name, 
+        std::function<void(std::string&, const std::vector<std::string>&)> func)
+{
+    commands[name] = std::move(func);
+}
+
+bool Velox::Console::ExecuteCommand(const std::string& inputLine)
+{
+    std::stringstream stream(inputLine);
+    std::string commandName;
+    stream >> commandName;
+
+    Velox::ConsoleRecord record;
+    record.command = inputLine;
+
+    if (commands.find(commandName) == commands.end())
+    {
+        record.response = "Unknown command";
+        history.push_back(record);
+        return false;
+    }
+
+    std::vector<std::string> args;
+    std::string arg;
+    while (stream >> arg) {
+        args.push_back(arg);
+    }
+
+    // Run command.
+    commands.at(commandName)(record.response, args);
+
+    history.push_back(record);
+
+    return true;
+}
+
+// TODO: Tab autocomplete on available commands.
+std::vector<std::string> GetSuggestions(const std::string& prefix) 
+{
+    return { "" };
+}
 
 void Velox::ToggleConsole()
 {
@@ -53,16 +105,12 @@ void Velox::DrawConsole()
 
     ImGui::PushTextWrapPos();
 
-    // history entries
-    // for (int index = 0; index < g_console.history.size(); index++)
-    // {                    
-    //     ImGui::Text("> %s", g_console.history[index].command.c_str());
-    // 
-    //     for (int responseIndex = 0; responseIndex < g_console.history[index].response.size(); responseIndex++)
-    //     {
-    //         ImGui::Text("%s", g_console.history[index].response[responseIndex].c_str());
-    //     }
-    // }
+    // history entriesfor
+    for (auto record = g_console.history.rbegin(); record != g_console.history.rend(); record++)
+    {                    
+        ImGui::Text("> %s", record->command.c_str());
+        ImGui::Text("%s", record->response.c_str());
+    }
     
     ImGui::PopTextWrapPos();
 
@@ -90,7 +138,11 @@ void Velox::DrawConsole()
     if (ImGui::InputText("##CmdInputLine", g_console.commandInput, INPUT_BUFFER_SIZE,
                 inputTextFlags, Velox::ConsoleKeyFilterCallback, NULL))
     {
-        // g_console.SubmitCommand();
+        std::string command { g_console.commandInput };
+
+        g_console.ExecuteCommand(command);
+
+        g_console.commandInput[0] = '\0';
 
         // Scroll to bottom when command is entered.
         g_console.shouldScrollToBottom = true;
