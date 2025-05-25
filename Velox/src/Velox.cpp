@@ -1,5 +1,6 @@
 #include "Velox.h"
 
+#include "Console.h"
 #include "UI.h"
 #include "Renderer.h"
 
@@ -28,6 +29,7 @@ void Velox::Init()
     }
 
     Velox::InitUI();
+    Velox::InitConsole();
 }
 
 void Velox::Quit()
