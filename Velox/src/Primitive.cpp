@@ -11,18 +11,19 @@ void Velox::DrawRectangle(vec4 rectangle, vec4 color)
 
     vec3 topLeft  = Velox::ToShaderCoords(vec3(origin.x,          origin.y, 0.0), true);
     vec3 topRight = Velox::ToShaderCoords(vec3(origin.x + size.x, origin.y, 0.0), true);
-
     vec3 botLeft  = Velox::ToShaderCoords(vec3(origin.x,          origin.y + size.y, 0.0), true);
     vec3 botRight = Velox::ToShaderCoords(vec3(origin.x + size.x, origin.y + size.y, 0.0), true);
     
-    // Vertices must be added in clockwise order!
-    // First triangle.
-    AddVertex(Velox::Vertex { botLeft,  color });
-    AddVertex(Velox::Vertex { topLeft,  color });
-    AddVertex(Velox::Vertex { topRight, color });
+    Uint32 topLeftIndex  = Velox::AddVertex(Velox::Vertex { topLeft,  color });
+    Uint32 topRightIndex = Velox::AddVertex(Velox::Vertex { topRight, color });
+    Uint32 botRightIndex = Velox::AddVertex(Velox::Vertex { botRight, color });
+    Uint32 botLeftIndex  = Velox::AddVertex(Velox::Vertex { botLeft,  color });
 
-    // Second.
-    AddVertex(Velox::Vertex { topRight, color });
-    AddVertex(Velox::Vertex { botRight, color });
-    AddVertex(Velox::Vertex { botLeft,  color });
+    // Connect the dots.
+    Velox::AddIndex(topLeftIndex);
+    Velox::AddIndex(topRightIndex);
+    Velox::AddIndex(botLeftIndex);
+    Velox::AddIndex(botLeftIndex);
+    Velox::AddIndex(topRightIndex);
+    Velox::AddIndex(botRightIndex);
 }

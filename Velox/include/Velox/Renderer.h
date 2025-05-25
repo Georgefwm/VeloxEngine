@@ -30,11 +30,16 @@ void EndFrame();
 
 void DoRenderPass();
 
+void DoCopyPass(SDL_GPUCommandBuffer* commandBuffer);
+
 void DeInitRenderer();
 
 SDL_GPUShader* LoadShader(const char* filepath, SDL_GPUShaderStage shaderStage);
 
-void AddVertex(Vertex vertex);
+// Returns the index of the vertex.
+Uint32 AddVertex(Vertex vertex);
+
+void AddIndex(Uint32 index);
 
 
 }

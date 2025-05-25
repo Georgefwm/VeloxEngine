@@ -10,16 +10,25 @@
 
 #include <cstdio>
 
-constexpr size_t     VERTEX_BUFFER_SIZE = 1024;
+constexpr size_t VERTEX_BUFFER_SIZE = 512;
+constexpr size_t INDEX_BUFFER_SIZE  = 512;
+
 constexpr SDL_FColor CLEAR_COLOR = {0.5, 0.5, 0.5, 1.0 };
 
 SDL_Window*    g_window;
 SDL_GPUDevice* g_device;
 
-Uint32                   vertexCount = 0;  // Keeps track of how many vertices we have added this frame.
-Velox::Vertex            g_vertices[VERTEX_BUFFER_SIZE];  // First vertices get put in here.
-SDL_GPUTransferBuffer*   g_transferBuffer;                // Then get memcopied to here.
-SDL_GPUBuffer*           g_vertexBuffer;                  // Then they get sent to the GPU (here).
+Uint32 vertexCount = 0;
+Uint32 indexCount = 0;
+
+Velox::Vertex g_vertices[VERTEX_BUFFER_SIZE];
+Uint32        g_indices[INDEX_BUFFER_SIZE];
+
+SDL_GPUTransferBuffer* g_vertexTransferBuffer;
+SDL_GPUTransferBuffer* g_indexTransferBuffer;
+
+SDL_GPUBuffer* g_vertexBuffer;
+SDL_GPUBuffer* g_indexBuffer;
 
 SDL_GPUGraphicsPipeline* g_graphicsPipeline;
 
@@ -71,18 +80,25 @@ bool Velox::InitRenderer()
         return false;
     }
 
-    SDL_GPUBufferCreateInfo bufferInfo {};
-    bufferInfo.size  = sizeof(g_vertices); 
-    bufferInfo.usage = SDL_GPU_BUFFERUSAGE_VERTEX;
+    SDL_GPUBufferCreateInfo vertexBufferInfo {};
+    vertexBufferInfo.size  = sizeof(g_vertices);
+    vertexBufferInfo.usage = SDL_GPU_BUFFERUSAGE_VERTEX;
+    g_vertexBuffer = SDL_CreateGPUBuffer(g_device, &vertexBufferInfo);
 
-    g_vertexBuffer = SDL_CreateGPUBuffer(g_device, &bufferInfo);
+    SDL_GPUBufferCreateInfo indexBufferInfo {};
+    indexBufferInfo.size  = sizeof(g_indices);
+    indexBufferInfo.usage = SDL_GPU_BUFFERUSAGE_INDEX;
+    g_indexBuffer = SDL_CreateGPUBuffer(g_device, &indexBufferInfo);
 
-    // Create buffer for copying vertices to the vertex buffer (GPU).
-    SDL_GPUTransferBufferCreateInfo transferInfo {};
-    transferInfo.size  = sizeof(g_vertices);
-    transferInfo.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
+    SDL_GPUTransferBufferCreateInfo vertexTransferInfo {};
+    vertexTransferInfo.size  = sizeof(g_vertices);
+    vertexTransferInfo.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
+    g_vertexTransferBuffer = SDL_CreateGPUTransferBuffer(g_device, &vertexTransferInfo);
 
-    g_transferBuffer = SDL_CreateGPUTransferBuffer(g_device, &transferInfo);
+    SDL_GPUTransferBufferCreateInfo indexTransferInfo {};
+    indexTransferInfo.size  = sizeof(g_indices);
+    indexTransferInfo.usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
+    g_indexTransferBuffer = SDL_CreateGPUTransferBuffer(g_device, &indexTransferInfo);
 
     SDL_GPUShader* vertexShader =
         Velox::LoadShader("shaders\\vertex_base.spv", SDL_GPU_SHADERSTAGE_VERTEX);
@@ -144,7 +160,6 @@ bool Velox::InitRenderer()
     pipelineInfo.target_info.num_color_targets = 1;
     pipelineInfo.target_info.color_target_descriptions = colorTargetDescriptions;
 
-    // create the pipeline
     g_graphicsPipeline = SDL_CreateGPUGraphicsPipeline(g_device, &pipelineInfo);
     
     // Release the shaders now, they are now already loaded. 
@@ -168,6 +183,7 @@ void Velox::StartFrame()
     ImGui::NewFrame();
 
     vertexCount = 0;
+    indexCount = 0;
 
     // GM: I don't think we accually need to clear the vertex buffer if we just overwrite vertices.
 }
@@ -176,12 +192,7 @@ void Velox::EndFrame()
 {
     // GM: Finalises and generates ImGui draw data.
     ImGui::Render();
-    
-    // Copy data to transfer buffer.
-    Vertex* data = (Vertex*)SDL_MapGPUTransferBuffer(g_device, g_transferBuffer, false);
-    SDL_memcpy(data, g_vertices, sizeof(g_vertices));
 
-    SDL_UnmapGPUTransferBuffer(g_device, g_transferBuffer);
 }
 
 void Velox::DoRenderPass()
@@ -193,28 +204,18 @@ void Velox::DoRenderPass()
 
     SDL_GPUCommandBuffer* commandBuffer = SDL_AcquireGPUCommandBuffer(g_device);
 
-    SDL_GPUCopyPass* copyPass = SDL_BeginGPUCopyPass(commandBuffer);
-    
-    SDL_GPUTransferBufferLocation location {};
-    location.transfer_buffer = g_transferBuffer;
-    location.offset = 0;  // start from the beginning
-
-    SDL_GPUBufferRegion region{};
-    region.buffer = g_vertexBuffer;
-    region.size   = sizeof(g_vertices);  // size of the data in bytes
-    //region.size   = sizeof(Velox::Vertex) * vertexCount;  // size of the data in bytes
-    region.offset = 0;                   // begin writing from the first vertex
-
-    SDL_UploadToGPUBuffer(copyPass, &location, &region, true);
-    SDL_EndGPUCopyPass(copyPass);
-
     SDL_GPUTexture* swapchainTexture;
     SDL_AcquireGPUSwapchainTexture(commandBuffer, g_window, &swapchainTexture, nullptr, nullptr);
+
+    SDL_WaitForGPUIdle(g_device);
 
     if (swapchainTexture != nullptr && !isMinimised)
     {
         // This is mandatory: call ImGui_ImplSDLGPU3_PrepareDrawData() to upload the vertex/index buffer!
         Imgui_ImplSDLGPU3_PrepareDrawData(drawData, commandBuffer);
+
+        // Copy vertices and indices to the GPU.
+        Velox::DoCopyPass(commandBuffer);
 
         // Setup and start a render pass
         SDL_GPUColorTargetInfo targetInfo = {};
@@ -232,13 +233,18 @@ void Velox::DoRenderPass()
         SDL_BindGPUGraphicsPipeline(renderPass, g_graphicsPipeline);
 
         // bind the vertex buffer
-        SDL_GPUBufferBinding bufferBindings[1];
-        bufferBindings[0].buffer = g_vertexBuffer;  // Index 0 is slot 0 in this example.
-        bufferBindings[0].offset = 0;  // Start from the first byte.
-        
-        SDL_BindGPUVertexBuffers(renderPass, 0, bufferBindings, 1);  // Bind one buffer starting from slot 0.
+        SDL_GPUBufferBinding vertexBufferBindings[1];
+        vertexBufferBindings[0].buffer = g_vertexBuffer;
+        vertexBufferBindings[0].offset = 0;
 
-        SDL_DrawGPUPrimitives(renderPass, vertexCount, 1, 0, 0);
+        SDL_GPUBufferBinding indexBufferBinding {};
+        indexBufferBinding.buffer = g_indexBuffer;
+        indexBufferBinding.offset = 0;
+
+        SDL_BindGPUVertexBuffers(renderPass, 0, vertexBufferBindings, 1);
+        SDL_BindGPUIndexBuffer(renderPass, &indexBufferBinding, SDL_GPU_INDEXELEMENTSIZE_32BIT);
+
+        SDL_DrawGPUIndexedPrimitives(renderPass, indexCount, 1, 0, 0, 0);
 
         // Render ImGui stuff.
         ImGui_ImplSDLGPU3_RenderDrawData(drawData, commandBuffer, renderPass);
@@ -249,13 +255,54 @@ void Velox::DoRenderPass()
     SDL_SubmitGPUCommandBuffer(commandBuffer);
 }
 
+void Velox::DoCopyPass(SDL_GPUCommandBuffer* commandBuffer)
+{
+    Vertex* vertexData = (Vertex*)SDL_MapGPUTransferBuffer(g_device, g_vertexTransferBuffer, true);
+    Uint32* indexData  = (Uint32*)SDL_MapGPUTransferBuffer(g_device, g_indexTransferBuffer,  true);
+
+    // Copy data to transfer buffer.
+    SDL_memcpy(vertexData, g_vertices, sizeof(g_vertices));
+    SDL_memcpy(indexData,  g_indices,  sizeof(g_indices));
+
+    SDL_UnmapGPUTransferBuffer(g_device, g_vertexTransferBuffer);
+    SDL_UnmapGPUTransferBuffer(g_device, g_indexTransferBuffer);
+
+    SDL_GPUTransferBufferLocation vertexLocation {};
+    vertexLocation.transfer_buffer = g_vertexTransferBuffer;
+    vertexLocation.offset = 0;
+
+    SDL_GPUTransferBufferLocation indexLocation {};
+    indexLocation.transfer_buffer = g_indexTransferBuffer;
+    indexLocation.offset = 0;
+
+    SDL_GPUBufferRegion vertexRegion {};
+    vertexRegion.buffer = g_vertexBuffer;
+    vertexRegion.size   = sizeof(g_vertices);
+    vertexRegion.offset = 0;
+
+    SDL_GPUBufferRegion indexRegion {};
+    indexRegion.buffer = g_indexBuffer;
+    indexRegion.size   = sizeof(g_indices);
+    indexRegion.offset = 0;
+
+    SDL_GPUCopyPass* copyPass = SDL_BeginGPUCopyPass(commandBuffer);
+
+    SDL_UploadToGPUBuffer(copyPass, &vertexLocation, &vertexRegion, true);
+    SDL_UploadToGPUBuffer(copyPass, &indexLocation,  &indexRegion,  true);
+
+    SDL_EndGPUCopyPass(copyPass);
+}
+
 // TODO: Verify if these need to be in the right order.
 void Velox::DeInitRenderer()
 {
     SDL_WaitForGPUIdle(g_device);
 
     SDL_ReleaseGPUBuffer(g_device, g_vertexBuffer);
-    SDL_ReleaseGPUTransferBuffer(g_device, g_transferBuffer);
+    SDL_ReleaseGPUBuffer(g_device, g_indexBuffer);
+
+    SDL_ReleaseGPUTransferBuffer(g_device, g_vertexTransferBuffer);
+    SDL_ReleaseGPUTransferBuffer(g_device, g_indexTransferBuffer);
 
     SDL_ReleaseGPUGraphicsPipeline(g_device, g_graphicsPipeline);
 
@@ -271,9 +318,11 @@ void Velox::DeInitRenderer()
 SDL_GPUShader* Velox::LoadShader(const char* filepath, SDL_GPUShaderStage shaderStage)
 {
     char absoluteFilepath[1024], *ptr;
+    
+    int frame = 0;
     SDL_strlcpy(absoluteFilepath, SDL_GetBasePath(), sizeof(absoluteFilepath));
     SDL_strlcat(absoluteFilepath, filepath, sizeof(absoluteFilepath));
-
+    
     bool fileFound = SDL_GetPathInfo(absoluteFilepath, nullptr);
     if (!fileFound)
     {
@@ -309,9 +358,19 @@ SDL_GPUShader* Velox::LoadShader(const char* filepath, SDL_GPUShaderStage shader
     return vertexShader;
 }
 
-void Velox::AddVertex(Velox::Vertex vertex)
+Uint32 Velox::AddVertex(Velox::Vertex vertex)
 {
+    int index = vertexCount;
+
     g_vertices[vertexCount] = vertex;
     vertexCount++;
+
+    return index;
+}
+
+void Velox::AddIndex(Uint32 index)
+{
+    g_indices[indexCount] = index;
+    indexCount++;
 }
 
