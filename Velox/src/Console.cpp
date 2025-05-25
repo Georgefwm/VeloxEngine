@@ -22,6 +22,19 @@ void Velox::InitConsole()
 void Velox::Console::RegisterCommand(const std::string& name, 
         std::function<void(std::string&, const std::vector<std::string>&)> func)
 {
+    // Check for command name collisions.
+    bool collisionFound = false;
+    if (commands.find(name) != commands.end())
+    {
+        collisionFound = true;
+    }
+
+    if (collisionFound)
+    {
+        printf("Command \"%s\" is already registered, skipping\n", name.c_str());
+        return;
+    }
+
     commands[name] = std::move(func);
 }
 
