@@ -4,7 +4,7 @@
 ## Build from source
 
 #### Prerequisites
-- Clang compiler (LLVM)
+- LLVM (Clang & Clang++)
 - Ninja
 - CMake
 - Vulkan SDK
