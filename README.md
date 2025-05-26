@@ -7,6 +7,7 @@
 - Clang compiler (LLVM)
 - Ninja
 - CMake
+- Vulkan SDK
 
 ```powershell
 git clone https://github.com/Georgefwm/VeloxEngine
