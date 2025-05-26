@@ -155,6 +155,7 @@ void Velox::DrawConsole()
 
         g_console.ExecuteCommand(command);
 
+        // Clear input buffer.
         g_console.commandInput[0] = '\0';
 
         // Scroll to bottom when command is entered.
