@@ -38,14 +38,6 @@ void* Velox::Arena::AllocBytes(size_t bytes, size_t alignment = alignof(max_alig
     return ptr;
 }
 
-template<typename T>
-T* Alloc(size_t count = 1)
-{
-    void* memory = allocateRaw(sizeof(T) * count, alignof(T));
-
-    return static_cast<T*>(memory);
-}
-
 void Velox::Arena::Reset()
 {
     offset = 0;

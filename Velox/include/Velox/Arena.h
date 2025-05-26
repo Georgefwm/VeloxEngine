@@ -13,7 +13,11 @@ struct Arena {
     void* AllocBytes(size_t bytes, size_t alignment);
 
     template<typename T>
-    T* Alloc(size_t count);
+    T* Alloc(size_t count)
+    {
+        void* memory = AllocBytes(sizeof(T) * count, alignof(T));
+        return static_cast<T*>(memory);
+    }
 
     void Reset();
 };
