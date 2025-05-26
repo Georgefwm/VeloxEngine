@@ -4,7 +4,7 @@ mkdir "build" >nul 2>nul
 cd "build"
 
 echo Generating ninja build...
-cmake -G Ninja -DBUILD_VELOX_TESTS=ON ..
+cmake -G Ninja -DBUILD_VELOX_TESTS=ON -DBUILD_GMOCK=OFF ..
 if %errorlevel% neq 0 exit /b %errorlevel%
 echo Done
 
