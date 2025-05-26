@@ -42,6 +42,5 @@ add_subdirectory(Velox)
 add_subdirectory(App)
 
 if (BUILD_VELOX_TESTS)
-    enable_testing()
     add_subdirectory(tests)
 endif()
