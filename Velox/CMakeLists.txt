@@ -27,5 +27,5 @@ target_include_directories(
 # target_precompile_headers(Velox PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/Velox/EnginePCH.h)
 
 # Libs from /vendor/CMakeLists.txt
-target_link_libraries(Velox PUBLIC SDL3::SDL3 ImGui glm::glm)
+target_link_libraries(Velox PUBLIC SDL3::SDL3 SDL3_image::SDL3_image ImGui glm::glm)
 
