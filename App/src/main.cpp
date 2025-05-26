@@ -25,9 +25,6 @@ void DoRenderingStuff()
 {
     Velox::DrawRectangle(vec4(200, 200, 500, 200), vec4(1.0));
 
-    Velox::DrawConsole();
-
-    Velox::DrawPerformanceStats();
 
     ImGui::ShowDemoWindow();
 }

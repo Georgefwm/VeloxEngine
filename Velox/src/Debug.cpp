@@ -48,8 +48,7 @@ void Velox::DrawPerformanceStats()
         if (value < min)
             min = value;
 
-        sum += value;
-        
+        sum += value;    
     }
 
     float average = sum / FRAME_HISTORY_COUNT;
@@ -78,32 +77,29 @@ void Velox::DrawPerformanceStats()
 
     ImGui::Separator();
 
-    ImGui::Text("FrameTimes");
-
+    ImGui::Text("FrameTimes (previous %zu frames)", FRAME_HISTORY_COUNT);
     ImGui::Spacing();
+
     ImGui::Text("This Frame: %.0f", g_frameTimeHistory[g_currentIndex]);
-
     ImGui::Spacing();
+    
     ImGui::Text("Average: %.1f", average);
-
     ImGui::Spacing();
+
     ImGui::Text("Max: %.0f", max);
-
     ImGui::Spacing();
+
     ImGui::Text("Min: %.0f", min);
-
     ImGui::Separator();
-
     ImGui::Spacing();
+
     ImGui::Text("FPS: %i", fps);
-
     ImGui::Spacing();
-    ImGui::Text("Chart: Previous %zu frames", FRAME_HISTORY_COUNT);
 
     float chartMax = max > 20 ? max * 1.1 : 20;
 
     ImGui::PlotLines("##Lines", g_frameTimeHistory, IM_ARRAYSIZE(g_frameTimeHistory),
-            g_currentIndex, nullptr, 0.0f, chartMax, ImVec2(windowSize.x -20, 100.f));
+            g_currentIndex, nullptr, 0.0f, chartMax, ImVec2(windowSize.x -20, 200.f));
 
     ImGui::PopItemWidth();
     ImGui::End();

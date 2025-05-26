@@ -1,6 +1,7 @@
 #include "Velox.h"
 
 #include "Console.h"
+#include "Debug.h"
 #include "UI.h"
 #include "Renderer.h"
 
@@ -13,6 +14,8 @@
 #include <cstdio>
 
 bool g_quitRequested = false;
+
+static Velox::EngineState engineState {};
 
 void Velox::Init()
 {
@@ -30,6 +33,21 @@ void Velox::Init()
 
     Velox::InitUI();
     Velox::InitConsole();
+}
+
+Velox::EngineState* Velox::GetEngineState()
+{
+    return &engineState;
+}
+
+void Velox::DoFrameEndUpdates()
+{
+    Velox::DrawConsole();
+
+    if (engineState.showPerformanceStats)
+        Velox::DrawPerformanceStats();
+
+    
 }
 
 void Velox::Quit()

@@ -2,6 +2,7 @@
 
 #include "SDL3/SDL_filesystem.h"
 #include "UI.h"
+#include "Velox.h"
 
 #include <glm/glm.hpp>
 #include <SDL3/SDL_gpu.h>
@@ -190,6 +191,10 @@ void Velox::StartFrame()
 
 void Velox::EndFrame()
 {
+    // GM: For now we just insert engine stuff here.
+    // Mosly just drawing engine UI elements.
+    Velox::DoFrameEndUpdates();
+
     // GM: Finalises and generates ImGui draw data.
     ImGui::Render();
 

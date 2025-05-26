@@ -148,8 +148,8 @@ void Velox::DrawConsole()
         g_console.bufferEditedManually = false;
     }
 
-    if (ImGui::InputText("##CmdInputLine", g_console.commandInput, INPUT_BUFFER_SIZE,
-                inputTextFlags, Velox::ConsoleKeyFilterCallback, NULL))
+    if (ImGui::InputTextWithHint("##CmdInputLine", "Use \"list\" to view all commands",
+        g_console.commandInput, INPUT_BUFFER_SIZE, inputTextFlags, Velox::ConsoleKeyFilterCallback, NULL))
     {
         std::string command { g_console.commandInput };
 

@@ -8,8 +8,14 @@ void Velox::RegisterDefaultCommands()
 {
     Velox::Console* console = GetConsole();
 
-    console->RegisterCommand("list", &Velox::ListCommands); 
-    console->RegisterCommand("quit", &Velox::QuitCommand); 
+    // List all available commands.
+    console->RegisterCommand("list", &Velox::ListCommands);
+
+    // Toggle performance stats window.
+    console->RegisterCommand("fps",  &Velox::FpsCommand);
+
+    // Request quit.
+    console->RegisterCommand("quit", &Velox::QuitCommand);
 }
 
 void Velox::ListCommands(std::string& response, const std::vector<std::string> args)
@@ -27,6 +33,12 @@ void Velox::ListCommands(std::string& response, const std::vector<std::string> a
     string << "\n";
 
     response = string.str();
+}
+
+void Velox::FpsCommand(std::string& response, const std::vector<std::string> args)
+{
+    Velox::EngineState* engineState = Velox::GetEngineState();
+    engineState->showPerformanceStats = !engineState->showPerformanceStats;
 }
 
 void Velox::QuitCommand(std::string& response, const std::vector<std::string> args)
