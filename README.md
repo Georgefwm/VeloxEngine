@@ -8,18 +8,24 @@
 - Ninja
 - CMake
 
-```shell
+```powershell
 git clone https://github.com/Georgefwm/VeloxEngine
 ```
-```shell
+```powershell
 cd VeloxEngine
 ```
 (only tested on windows)
 To build, simply:
-```shell
-./build.cmd
+```powershell
+./build
 ```
-To run:
-```shell
-./run.cmd
+```powershell
+./run
+```
+To run tests:
+```powershell
+./build_tests
+```
+```powershell
+./test
 ```
