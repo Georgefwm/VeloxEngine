@@ -1,6 +1,6 @@
 @echo off
 
-mkdir "build" > $null 2>&1
+mkdir "build" >nul 2>nul
 cd "build"
 
 echo Generating ninja build...
@@ -14,13 +14,15 @@ if %errorlevel% neq 0 exit /b %errorlevel%
 echo Done
 
 cd "bin"
-mkdir "shaders" > $null 2>&1
+mkdir "shaders" >nul 2>nul
 
 :: Now compile shaders and place them in the bin output
 cd "..\..\Velox\shaders"
 
+set shader_output_dir="..\..\build\bin\shaders"
+
 echo Compiling shaders...
-glslc -fshader-stage=vertex vertex_base.glsl -o ..\..\build\bin\shaders\vertex_base.spv
-glslc -fshader-stage=fragment fragment_base.glsl -o ..\..\build\bin\shaders\fragment_base.spv
+glslc -fshader-stage=vertex   vertex_base.glsl   -o %shader_output_dir%\vertex_base.spv
+glslc -fshader-stage=fragment fragment_base.glsl -o %shader_output_dir%\fragment_base.spv
 echo Done
 
