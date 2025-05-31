@@ -22,7 +22,10 @@ cd "..\..\Velox\shaders"
 set shader_output_dir="..\..\build\bin\shaders"
 
 echo Compiling shaders...
-glslc -fshader-stage=vertex   vertex_base.glsl   -o %shader_output_dir%\vertex_base.spv
-glslc -fshader-stage=fragment fragment_base.glsl -o %shader_output_dir%\fragment_base.spv
+glslc -fshader-stage=vertex   textured_quad.vert.glsl -o %shader_output_dir%\textured_quad.vert.spv
+glslc -fshader-stage=fragment textured_quad.frag.glsl -o %shader_output_dir%\textured_quad.frag.spv
+
+glslc -fshader-stage=vertex   vertex_base.vert.glsl   -o %shader_output_dir%\vertex_base.vert.spv
+glslc -fshader-stage=fragment fragment_base.frag.glsl -o %shader_output_dir%\fragment_base.frag.spv
 echo Done
 
