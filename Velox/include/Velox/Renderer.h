@@ -12,6 +12,7 @@ namespace Velox {
 struct Vertex {
     vec3 position;
     vec4 color;
+    vec2 uv;
 };
 
 SDL_Window* GetWindow();
@@ -34,7 +35,9 @@ void DoCopyPass(SDL_GPUCommandBuffer* commandBuffer);
 
 void DeInitRenderer();
 
-SDL_GPUShader* LoadShader(const char* filepath, SDL_GPUShaderStage shaderStage);
+SDL_GPUShader* LoadShader(const char* filepath, SDL_GPUShaderStage shaderStage, int numSamplers = 0, int numUniforms = 0);
+
+SDL_Surface* LoadImage(const char* filepath);
 
 // Returns the index of the vertex.
 Uint32 AddVertex(Vertex vertex);
