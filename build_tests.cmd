@@ -4,7 +4,7 @@ mkdir "build" >nul 2>nul
 cd "build"
 
 echo Generating ninja build...
-cmake -G Ninja -DBUILD_VELOX_TESTS=ON -DBUILD_GMOCK=OFF ..
+cmake -G Ninja -DBUILD_VELOX_TESTS=ON -DBUILD_GMOCK=OFF -Wno-deprecated ..
 if %errorlevel% neq 0 exit /b %errorlevel%
 echo Done
 
@@ -13,16 +13,13 @@ ninja
 if %errorlevel% neq 0 exit /b %errorlevel%
 echo Done
 
-cd "bin"
-mkdir "shaders" >nul 2>nul
+:: Back to root dir
+cd ".."
 
-:: Now compile shaders and place them in the bin output
-cd "..\..\Velox\shaders"
+echo Copying assets to output dir...
+mkdir "build\bin\assets" >nul 2>nul
+xcopy "assets\*" "build\bin\assets" /E /H /C /I /Y >nul 2>nul
+echo done
 
-set shader_output_dir="..\..\build\bin\shaders"
-
-echo Compiling shaders...
-glslc -fshader-stage=vertex   vertex_base.glsl   -o %shader_output_dir%\vertex_base.spv
-glslc -fshader-stage=fragment fragment_base.glsl -o %shader_output_dir%\fragment_base.spv
-echo Done
+./compile_shaders.cmd
 
