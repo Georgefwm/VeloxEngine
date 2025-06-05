@@ -1,5 +1,6 @@
 #include "Velox.h"
 
+#include "Asset.h"
 #include "Console.h"
 #include "Debug.h"
 #include "UI.h"
@@ -9,7 +10,6 @@
 
 #include <imgui.h>
 #include <imgui_impl_sdl3.h>
-#include <imgui_impl_sdlgpu3.h>
 
 #include <cstdio>
 
@@ -31,7 +31,8 @@ void Velox::Init()
         return;
     }
 
-    Velox::InitUI();
+    Velox::InitAssets();
+    // Velox::InitUI();
     Velox::InitConsole();
 }
 
@@ -47,7 +48,8 @@ void Velox::DoFrameEndUpdates()
     if (engineState.showPerformanceStats)
         Velox::DrawPerformanceStats();
 
-    
+    if (engineState.showMemoryUsageStats)
+        Velox::DrawMemoryUsageStats();
 }
 
 void Velox::Quit()
@@ -63,7 +65,7 @@ bool Velox::QuitRequested()
 void Velox::DeInit()
 {
     Velox::DeInitRenderer();
-    Velox::DeInitUI();
+    // Velox::DeInitUI();
 
     SDL_Quit();    
 }
