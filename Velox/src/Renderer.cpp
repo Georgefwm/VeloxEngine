@@ -49,10 +49,6 @@ constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 
 SDL_Window* g_window;
 
-//
-// Vulkan (new stuff)
-//
-
 VkInstance g_instance;
 
 VkPhysicalDevice g_physicalDevice = VK_NULL_HANDLE;
@@ -100,19 +96,12 @@ VkDeviceMemory g_indexBufferMemory;
 std::vector<VkBuffer> g_uniformBuffers;
 std::vector<VkDeviceMemory> g_uniformBuffersMemory;
 std::vector<void*> g_uniformBuffersMapped;
-//
-// Vulkan end
-//
 
 uint32_t g_vertexCount = 0;
 Velox::Vertex g_vertices[VERTEX_BUFFER_SIZE];
 
 uint32_t g_indexCount = 0;
 uint32_t g_indices[INDEX_BUFFER_SIZE];
-
-// int g_textureCount = 0;
-// SDL_GPUTexture* g_textures[MAX_TEXTURE_COUNT];
-// SDL_GPUSampler* g_samplers[MAX_TEXTURE_COUNT];
 
 SDL_Window* Velox::GetWindow() { return g_window; }
 VkDevice*   Velox::GetDevice() { return &g_device; }
@@ -171,7 +160,6 @@ bool Velox::InitRenderer()
     Velox::CreateLogicalDevice();
 
     Velox::CreateSwapchain();
-
     Velox::CreateImageViews();
 
     Velox::CreateRenderPass();
@@ -185,20 +173,15 @@ bool Velox::InitRenderer()
     Velox::CreateCommandPool();
 
     Velox::CreateVertexBuffer();
-
     Velox::CreateIndexBuffer();
-
     Velox::CreateUniformBuffers();
 
     Velox::CreateDescriptorPool();
-
     Velox::CreateDescriptorSets();
 
     Velox::CreateCommandBuffers();
 
     Velox::CreateSyncObjects();
-
-    printf("no errors so far\n");
 
     return true;
 }

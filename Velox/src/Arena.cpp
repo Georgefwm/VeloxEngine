@@ -25,7 +25,8 @@ void* Velox::Arena::AllocBytes(size_t bytes, size_t alignment = alignof(max_alig
     if (offset + adjustment + bytes > size)
     {
         // No memory left in arena.
-        printf("WARNING: Arena out of memory!\n");
+        printf("WARNING: Arena out of memory! Consider expanding by %zu bytes to fit this element\n",
+            (offset + adjustment + bytes) - size);
 
         return nullptr;
     }
@@ -34,6 +35,10 @@ void* Velox::Arena::AllocBytes(size_t bytes, size_t alignment = alignof(max_alig
 
     void* ptr = buffer + offset;
     offset += bytes;
+
+    // Sometimes helpful.
+    // printf("Arena: Added %zu bytes, now using %zu/%zu bytes (%c%.1f)\n",
+    //         adjustment + bytes, offset, size, '%', ((float)offset / size) * 100);
 
     return ptr;
 }
