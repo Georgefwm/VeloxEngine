@@ -1,5 +1,3 @@
-#include "Console.h"
-#include "Debug.h"
 #include "Event.h"
 
 #include "Renderer.h"
@@ -10,6 +8,8 @@
 
 #include <cstdio>
 #include <imgui.h>
+#include <iostream>
+#include <ostream>
 
 void HandleEvent(Velox::Event* event)
 {
@@ -23,13 +23,13 @@ void UpdateGame()
 
 void DoRenderingStuff()
 {
-    Velox::DrawRectangle(vec4(200, 200, 500, 200), vec4(1.0));
+    Velox::DrawRectangle(vec4(200, 200, 500, 200), vec4(1.0, 0.0, 0.0, 1.0), -1); // Untextured
+    Velox::DrawRectangle(vec4(200, 500, 500, 200), vec4(1.0, 1.0, 1.0, 1.0),  0); // Textured
 
-
-    ImGui::ShowDemoWindow();
+    // ImGui::ShowDemoWindow();
 }
 
-int main(int argc, char** argv)
+void run()
 {
     Velox::Init();
 
@@ -112,11 +112,23 @@ int main(int argc, char** argv)
         DoRenderingStuff();
 
         Velox::EndFrame();
-        Velox::DoRenderPass();
     }
 
     // Cleanup.
     Velox::DeInit();
+}
+
+int main(int argc, char** argv)
+{   
+    try
+    {
+        run();
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << e.what() << std::endl;
+        return EXIT_FAILURE;
+    }
 
     return 0;
 }

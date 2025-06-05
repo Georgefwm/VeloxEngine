@@ -13,26 +13,29 @@
 
 void Velox::InitUI()
 {
+    return;
+
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
     ImGui::StyleColorsDark();
 
-    SDL_Window* window    = Velox::GetWindow();
-    SDL_GPUDevice* device = Velox::GetDevice();
 
-    if (device == nullptr)
-    {
-        printf("Error: Device not initialised: %s\n", SDL_GetError());
-        return;
-    }
+    SDL_Window* window    = Velox::GetWindow();
+    // SDL_GPUDevice* device = Velox::GetDevice();
+
+    //if (device == nullptr)
+    //{
+    //    printf("Error: Device not initialised: %s\n", SDL_GetError());
+    //    return;
+    //}
 
     ImGui_ImplSDL3_InitForSDLGPU(window);
 
     ImGui_ImplSDLGPU3_InitInfo initInfo = {};
-    initInfo.Device = device;
-    initInfo.ColorTargetFormat = SDL_GetGPUSwapchainTextureFormat(device, window);
+    //initInfo.Device = device;
+    //initInfo.ColorTargetFormat = SDL_GetGPUSwapchainTextureFormat(device, window);
     initInfo.MSAASamples = SDL_GPU_SAMPLECOUNT_1;
 
     ImGui_ImplSDLGPU3_Init(&initInfo);
@@ -61,7 +64,7 @@ void Velox::InitUI()
 
 void Velox::ForwardSDLEvent(Velox::Event* event)
 {
-    ImGui_ImplSDL3_ProcessEvent(&event->sdlEvent);
+    // ImGui_ImplSDL3_ProcessEvent(&event->sdlEvent);
 }
 
 ImDrawData* Velox::GetUIDrawData()

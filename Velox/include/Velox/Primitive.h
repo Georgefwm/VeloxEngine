@@ -4,6 +4,6 @@
 
 namespace Velox {
 
-void DrawRectangle(vec4 rectangle, vec4 color);
+void DrawRectangle(vec4 rectangle, vec4 color, int textureIndex = -1);
 
 }

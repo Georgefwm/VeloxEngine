@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-# Windowing / GPU API
+# Windowing / OS layer stuff
 add_subdirectory("SDL3")
 
 # Image loading

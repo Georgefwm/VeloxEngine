@@ -1,6 +1,7 @@
 #include "Event.h"
 
 #include "Console.h"
+#include "Renderer.h"
 #include "SDL3/SDL_events.h"
 #include "UI.h"
 #include "Velox.h"
@@ -99,8 +100,16 @@ bool Velox::InterceptEvent(Velox::Event* event)
                 return false;
             }
         }
+        
+        // SDL window events fall between this range.
+        // The renderer only needs to know about window events.
+        if (event->sdlEvent.type > Uint32(0x202) && event->sdlEvent.type < Uint32(0x300))
+        {
+            Velox::ForwardSDLEventToRenderer(&event->sdlEvent);
+            return true;
+        }
 
-        Velox::ForwardSDLEvent(event);
+        // Velox::ForwardSDLEvent(event);
 
         return true;
     }
