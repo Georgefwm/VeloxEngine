@@ -14,6 +14,9 @@ void Velox::RegisterDefaultCommands()
     // Toggle performance stats window.
     console->RegisterCommand("fps",  &Velox::FpsCommand);
 
+    // Toggle memory stats window.
+    console->RegisterCommand("mem",  &Velox::MemoryCommand);
+
     // Request quit.
     console->RegisterCommand("quit", &Velox::QuitCommand);
 }
@@ -39,6 +42,12 @@ void Velox::FpsCommand(std::string& response, const std::vector<std::string> arg
 {
     Velox::EngineState* engineState = Velox::GetEngineState();
     engineState->showPerformanceStats = !engineState->showPerformanceStats;
+}
+
+void Velox::MemoryCommand(std::string& response, const std::vector<std::string> args)
+{
+    Velox::EngineState* engineState = Velox::GetEngineState();
+    engineState->showMemoryUsageStats = !engineState->showMemoryUsageStats;
 }
 
 void Velox::QuitCommand(std::string& response, const std::vector<std::string> args)

@@ -1,5 +1,6 @@
 #include "Debug.h"
 
+#include "Asset.h"
 #include "SDL3/SDL_timer.h"
 #include "Util.h"
 #include "imgui.h"
@@ -77,6 +78,9 @@ void Velox::DrawPerformanceStats()
 
     ImGui::Separator();
 
+    ImGui::Text("FPS: %i", fps);
+    ImGui::Spacing();
+
     ImGui::Text("FrameTimes (previous %zu frames)", FRAME_HISTORY_COUNT);
     ImGui::Spacing();
 
@@ -90,17 +94,53 @@ void Velox::DrawPerformanceStats()
     ImGui::Spacing();
 
     ImGui::Text("Min: %.0f", min);
-    ImGui::Separator();
-    ImGui::Spacing();
-
-    ImGui::Text("FPS: %i", fps);
     ImGui::Spacing();
 
     float chartMax = max > 20 ? max * 1.1 : 20;
 
     ImGui::PlotLines("##Lines", g_frameTimeHistory, IM_ARRAYSIZE(g_frameTimeHistory),
-            g_currentIndex, nullptr, 0.0f, chartMax, ImVec2(windowSize.x -20, 200.f));
+            g_currentIndex, nullptr, 0.0f, chartMax, ImVec2(-1.f, 200.f));
 
+    ImGui::PopItemWidth();
+    ImGui::End();
+}
+
+void Velox::DrawMemoryUsageStats() {
+    ImGuiWindowFlags flags = 0;
+    
+    ImGuiInputTextFlags inputTextFlags = 0;
+    inputTextFlags |= ImGuiInputTextFlags_EnterReturnsTrue;
+    inputTextFlags |= ImGuiInputTextFlags_CallbackCharFilter; 
+
+    ImVec2 windowSize = { 500, 500 };
+
+    // Don't change size of window, just position; To avoid resizing elements.
+    ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(windowSize,  ImGuiCond_FirstUseEver);
+
+    int valueSpacing = 300;
+
+    ImGui::Begin("Memory Stats", NULL, flags);
+    ImGui::PushItemWidth(ImGui::GetFontSize());
+    
+    ImGui::Separator();
+
+    size_t used, capacity;
+    Velox::GetAssetMemoryUsage(&used, &capacity);
+
+    float percentage = ((float)used / capacity);
+
+    ImGui::Text("Bytes used / allocated");
+    ImGui::Text("Assets: %zu / %zu", used, capacity);
+    ImGui::Spacing();
+
+    ImGui::Text("percentage:");
+
+    char buf[32];
+    sprintf(buf, "%c%.1f", '%', percentage * 100);
+    ImGui::ProgressBar(percentage, ImVec2(-1.f, 0.f), buf);
+    ImGui::Spacing();
+    
     ImGui::PopItemWidth();
     ImGui::End();
 }
