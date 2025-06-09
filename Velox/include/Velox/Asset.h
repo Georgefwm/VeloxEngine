@@ -1,6 +1,7 @@
 #pragma once
 
-#include <vector>
+#include <unordered_map>
+#include "Arena.h"
 #include "SDL3/SDL_gpu.h"
 
 namespace Velox {
@@ -18,14 +19,20 @@ struct Texture {
 };
 
 struct AssetManager {
-    std::vector<Texture> textures;
+    // Textures are stored in the renderer
+    std::unordered_map<const char*, int> textureMap = {
+        { "default_texture", 0 },
+    };
+
+    // Returns default texture on failure.
+    int LoadTexture(const char* filepath);
 
     void DeInit();
 };
 
-void InitAssets();
+AssetManager* GetAssetManager();
 
-void LoadTexture(const char& filepath);
+void InitAssets();
 
 void GetAssetMemoryUsage(size_t* used, size_t* capacity);
 
