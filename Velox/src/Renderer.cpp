@@ -1,10 +1,10 @@
-#include "Primitive.h"
 #ifndef VK_EXT_DEBUG_REPORT_EXTENSION_NAME
 #define VK_EXT_DEBUG_REPORT_EXTENSION_NAME "VK_EXT_debug_report"
 #endif
 
-#include "Renderer.h"
+#include "Primitive.h"
 
+#include "Renderer.h"
 #include "Arena.h"
 
 #include <glm/glm.hpp>
@@ -30,6 +30,16 @@
     constexpr bool enableValidationLayers = false;
 #else
     constexpr bool enableValidationLayers = true;
+    // Note: When validation layers are enabled, I seem to encounter validation errors when 
+    // RTSS (Rivatuner Statistics Server) is running. Errors when calling:
+    //
+    //  1. vkCreateSwapchainKHR()
+    //  2. vkCreateImageView()
+    //
+    // I'm guessing other frame tracking software might do similar things as well.
+    // Hopefully this note prevents anothers hair from being pulled out.
+    //
+    // GM
 #endif
 
 const std::vector<const char*> validationLayers = {
@@ -37,12 +47,12 @@ const std::vector<const char*> validationLayers = {
 };
 
 const std::vector<const char*> requiredPhysicalDeviceExtensions = {
-    VK_KHR_SWAPCHAIN_EXTENSION_NAME
+    VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 };
 
 constexpr size_t VERTEX_BUFFER_SIZE = 512;
 constexpr size_t INDEX_BUFFER_SIZE  = 512;
-constexpr size_t MAX_TEXTURE_COUNT  = 5;
+constexpr size_t MAX_TEXTURE_COUNT  = 32;
 
 constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -59,49 +69,54 @@ VkSurfaceKHR g_surface;
 VkQueue g_graphicsQueue;
 VkQueue g_presentQueue;
 
-VkSwapchainKHR g_swapchain;
-std::vector<VkImage> g_swapchainImages;
+VkSwapchainKHR           g_swapchain;
+std::vector<VkImage>     g_swapchainImages;
 std::vector<VkImageView> g_swapchainImageViews;
 
-VkFormat g_swapchainImageFormat;
+VkFormat   g_swapchainImageFormat;
 VkExtent2D g_swapchainExtent;
 
 VkRenderPass g_renderPass;
 
+bool g_descriptorSetsInitialised = false;
 VkDescriptorSetLayout g_descriptorSetLayout;
-VkPipelineLayout g_pipelineLayout;
-VkPipeline g_graphicsPipeline;
+VkPipelineLayout      g_pipelineLayout;
+VkPipeline            g_graphicsPipeline;
 
 std::vector<VkFramebuffer> g_swapchainFrameBuffers;
 
-VkCommandPool g_commandPool;
+VkCommandPool                g_commandPool;
+std::vector<VkCommandBuffer> g_commandBuffers;
 
-VkDescriptorPool g_descriptorPool;
+VkDescriptorPool             g_descriptorPool;
 std::vector<VkDescriptorSet> g_descriptorSets;
 
-std::vector<VkCommandBuffer> g_commandBuffers;
 std::vector<VkSemaphore> g_imageAvailableSemaphores;
 std::vector<VkSemaphore> g_renderFinishedSemaphores;
-std::vector<VkFence> g_inFlightFences;
+std::vector<VkFence>     g_inFlightFences;
 
+uint32_t g_frameNumber = 0;
 uint32_t g_currentFrame = 0;
 bool g_frameBufferResized = false;
 
-VkBuffer g_vertexBuffer;
+VkBuffer       g_vertexBuffer;
 VkDeviceMemory g_vertexBufferMemory;
 
-VkBuffer g_indexBuffer;
+VkBuffer       g_indexBuffer;
 VkDeviceMemory g_indexBufferMemory;
 
-std::vector<VkBuffer> g_uniformBuffers;
+std::vector<VkBuffer>       g_uniformBuffers;
 std::vector<VkDeviceMemory> g_uniformBuffersMemory;
-std::vector<void*> g_uniformBuffersMapped;
+std::vector<void*>          g_uniformBuffersMapped;
 
-uint32_t g_vertexCount = 0;
+uint32_t      g_vertexCount = 0;
 Velox::Vertex g_vertices[VERTEX_BUFFER_SIZE];
 
 uint32_t g_indexCount = 0;
 uint32_t g_indices[INDEX_BUFFER_SIZE];
+
+uint32_t         g_textureCount = 0;
+Velox::Texture2D g_textures[MAX_TEXTURE_COUNT];
 
 SDL_Window* Velox::GetWindow() { return g_window; }
 VkDevice*   Velox::GetDevice() { return &g_device; }
@@ -172,12 +187,16 @@ bool Velox::InitRenderer()
 
     Velox::CreateCommandPool();
 
+    // load default texture.
+    Velox::LoadTextureInternal("missing_texture.png");
+
     Velox::CreateVertexBuffer();
     Velox::CreateIndexBuffer();
     Velox::CreateUniformBuffers();
 
     Velox::CreateDescriptorPool();
     Velox::CreateDescriptorSets();
+    g_descriptorSetsInitialised = true;
 
     Velox::CreateCommandBuffers();
 
@@ -207,7 +226,7 @@ void Velox::CreateInstance()
     appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
     appInfo.pEngineName = "Velox Engine",
     appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0),
-    appInfo.apiVersion = VK_API_VERSION_1_0;
+    appInfo.apiVersion = VK_API_VERSION_1_2; // v1.2 for descriptor indexing support in core lib.
 
     VkInstanceCreateInfo InstanceCreateInfo {};
     InstanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -314,13 +333,17 @@ bool Velox::IsDeviceSuitable(VkPhysicalDevice device)
 
     bool extensionsSupported = Velox::CheckPhysicalDeviceExtensionSupport(device);
 
+    VkPhysicalDeviceFeatures supportedFeatures;
+    vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
+
     bool swapchainAdequate = false;
     if (extensionsSupported) {
         SwapchainSupportDetails swapchainSupport = Velox::GetSwapchainSupportDetails(device);
         swapchainAdequate = !swapchainSupport.formats.empty() && !swapchainSupport.presentModes.empty();
     }
 
-    return indices.graphicsFamily.has_value() && extensionsSupported && swapchainAdequate;
+    return indices.graphicsFamily.has_value() && extensionsSupported && swapchainAdequate &&
+        supportedFeatures.samplerAnisotropy;
 }
 
 int Velox::RateDeviceSuitability(VkPhysicalDevice device)
@@ -395,8 +418,19 @@ void Velox::CreateLogicalDevice()
         queueCreateInfo.pQueuePriorities = &queuePriority;
         queueCreateInfos.push_back(queueCreateInfo);
     }
-    
+
+    // Descriptor indexing features are core from Vulkan 1.2.
+    VkPhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures {};
+    descriptorIndexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
+
+    // Enable non-uniform indexing
+    descriptorIndexingFeatures.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
+    descriptorIndexingFeatures.runtimeDescriptorArray = VK_TRUE;
+    descriptorIndexingFeatures.descriptorBindingVariableDescriptorCount = VK_TRUE;
+    descriptorIndexingFeatures.descriptorBindingPartiallyBound = VK_TRUE;
+
     VkPhysicalDeviceFeatures deviceFeatures {};
+    deviceFeatures.samplerAnisotropy = VK_TRUE;
 
     VkDeviceCreateInfo deviceCreateInfo {};
     deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -405,6 +439,7 @@ void Velox::CreateLogicalDevice()
     deviceCreateInfo.pQueueCreateInfos    = queueCreateInfos.data();
     deviceCreateInfo.enabledExtensionCount   = static_cast<uint32_t>(requiredPhysicalDeviceExtensions.size());
     deviceCreateInfo.ppEnabledExtensionNames = requiredPhysicalDeviceExtensions.data();
+    deviceCreateInfo.pNext = &descriptorIndexingFeatures;
 
     VkResult result = vkCreateDevice(g_physicalDevice, &deviceCreateInfo, nullptr, &g_device);
     if (result != VK_SUCCESS)
@@ -435,7 +470,8 @@ Velox::SwapchainSupportDetails Velox::GetSwapchainSupportDetails(VkPhysicalDevic
     uint32_t presentModeCount;
     vkGetPhysicalDeviceSurfacePresentModesKHR(device, g_surface, &presentModeCount, nullptr);
 
-    if (presentModeCount != 0) {
+    if (presentModeCount != 0)
+    {
         details.presentModes.resize(presentModeCount);
         vkGetPhysicalDeviceSurfacePresentModesKHR(device, g_surface, &presentModeCount, details.presentModes.data());
     }
@@ -559,13 +595,11 @@ void Velox::ReCreateSwapchain()
 
 void Velox::CleanupSwapchain()
 {
-    for (size_t i = 0; i < g_swapchainFrameBuffers.size(); i++) {
+    for (size_t i = 0; i < g_swapchainFrameBuffers.size(); i++)
         vkDestroyFramebuffer(g_device, g_swapchainFrameBuffers[i], nullptr);
-    }
 
-    for (size_t i = 0; i < g_swapchainImageViews.size(); i++) {
+    for (size_t i = 0; i < g_swapchainImageViews.size(); i++)
         vkDestroyImageView(g_device, g_swapchainImageViews[i], nullptr);
-    }
 
     vkDestroySwapchainKHR(g_device, g_swapchain, nullptr);
 }
@@ -657,10 +691,35 @@ void Velox::CreateDiscriptorSetLayout()
     uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
     uboLayoutBinding.pImmutableSamplers = nullptr; // Optional
 
-    VkDescriptorSetLayoutCreateInfo layoutCreateInfo{};
+    // This binding is unbounded, as such, it should always be the last binding. 
+    // i.e. only ever add bindings before this one and update the binding index.
+    VkDescriptorSetLayoutBinding samplerLayoutBinding {};
+    samplerLayoutBinding.binding = 1;
+    samplerLayoutBinding.descriptorCount = MAX_TEXTURE_COUNT;
+    samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    samplerLayoutBinding.pImmutableSamplers = nullptr;
+
+    std::array<VkDescriptorSetLayoutBinding, 2> bindings = {
+        uboLayoutBinding,
+        samplerLayoutBinding,
+    };
+
+    std::vector<VkDescriptorBindingFlagsEXT> descriptorBindingFlags = {
+        0,
+        VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT | VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT
+    };
+
+    VkDescriptorSetLayoutBindingFlagsCreateInfo setLayoutBindingFlagsCreateInfo {};
+    setLayoutBindingFlagsCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO;
+    setLayoutBindingFlagsCreateInfo.bindingCount = static_cast<uint32_t>(descriptorBindingFlags.size());
+	setLayoutBindingFlagsCreateInfo.pBindingFlags = descriptorBindingFlags.data();
+
+    VkDescriptorSetLayoutCreateInfo layoutCreateInfo {};
     layoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    layoutCreateInfo.bindingCount = 1;
-    layoutCreateInfo.pBindings = &uboLayoutBinding;
+    layoutCreateInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+    layoutCreateInfo.pBindings = bindings.data();
+    layoutCreateInfo.pNext = &setLayoutBindingFlagsCreateInfo;
 
     VkResult result = vkCreateDescriptorSetLayout(g_device, &layoutCreateInfo, nullptr, &g_descriptorSetLayout);
     if (result != VK_SUCCESS)
@@ -752,9 +811,9 @@ void Velox::CreateGraphicsPipeline()
     VkPipelineColorBlendAttachmentState colorBlendAttachment {};
     colorBlendAttachment.colorWriteMask = 
         VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-    colorBlendAttachment.blendEnable = VK_FALSE;
-    colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;  // Optional
-    colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
+    colorBlendAttachment.blendEnable = VK_TRUE; // Enables transperancy of textures.
+    colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+    colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
     colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;             // Optional
     colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;  // Optional
     colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
@@ -861,14 +920,16 @@ void Velox::CreateCommandPool()
 
 void Velox::CreateDescriptorPool()
 {
-    VkDescriptorPoolSize poolSize {};
-    poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    poolSize.descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+    std::array<VkDescriptorPoolSize, 2> poolSizes {};
+    poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    poolSizes[0].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+    poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    poolSizes[1].descriptorCount = MAX_FRAMES_IN_FLIGHT * MAX_TEXTURE_COUNT;
 
     VkDescriptorPoolCreateInfo poolCreateInfo {};
     poolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    poolCreateInfo.poolSizeCount = 1;
-    poolCreateInfo.pPoolSizes = &poolSize;
+    poolCreateInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
+    poolCreateInfo.pPoolSizes = poolSizes.data();
     poolCreateInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
     
     VkResult result = vkCreateDescriptorPool(g_device, &poolCreateInfo, nullptr, &g_descriptorPool);
@@ -883,11 +944,21 @@ void Velox::CreateDescriptorSets()
 {
     std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, g_descriptorSetLayout);
 
+    uint32_t variableCounts[MAX_FRAMES_IN_FLIGHT];
+    for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
+        variableCounts[i] = MAX_TEXTURE_COUNT;
+
+    VkDescriptorSetVariableDescriptorCountAllocateInfo variableSetCounts = {};
+    variableSetCounts.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_ALLOCATE_INFO;
+    variableSetCounts.descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+    variableSetCounts.pDescriptorCounts = variableCounts;
+
     VkDescriptorSetAllocateInfo allocInfo {};
     allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     allocInfo.descriptorPool = g_descriptorPool;
     allocInfo.descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
     allocInfo.pSetLayouts = layouts.data();
+    allocInfo.pNext = &variableSetCounts;
 
     g_descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
 
@@ -905,20 +976,78 @@ void Velox::CreateDescriptorSets()
         bufferInfo.offset = 0;
         bufferInfo.range = sizeof(UniformBufferObject);
 
-        VkWriteDescriptorSet descriptorWrite {};
-        descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptorWrite.dstSet = g_descriptorSets[i];
-        descriptorWrite.dstBinding = 0;
-        descriptorWrite.dstArrayElement = 0;
-        descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        descriptorWrite.descriptorCount = 1;
-        descriptorWrite.pBufferInfo = &bufferInfo;
-        descriptorWrite.pImageInfo = nullptr; // Optional
-        descriptorWrite.pTexelBufferView = nullptr; // Optional
-        
-        vkUpdateDescriptorSets(g_device, 1, &descriptorWrite, 0, nullptr);
-    }
+        std::vector<VkDescriptorImageInfo> imageInfos(g_textureCount);
+        for (size_t textureIndex = 0; textureIndex < imageInfos.size(); textureIndex++)
+        {
+            VkDescriptorImageInfo imageInfo {};
+            imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            imageInfo.imageView = g_textures[textureIndex].imageView;
+            imageInfo.sampler   = g_textures[textureIndex].sampler;
 
+            imageInfos[textureIndex] = imageInfo;
+        }
+
+        std::array<VkWriteDescriptorSet, 2> descriptorWrites {};
+        descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        descriptorWrites[0].dstBinding = 0;
+        descriptorWrites[0].dstSet = g_descriptorSets[i];
+        descriptorWrites[0].dstArrayElement = 0;
+        descriptorWrites[0].descriptorCount = 1;
+        descriptorWrites[0].pBufferInfo = &bufferInfo;
+
+        descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        descriptorWrites[1].dstBinding = 1;
+        descriptorWrites[1].dstSet = g_descriptorSets[i];
+        descriptorWrites[1].dstArrayElement = 0;
+        descriptorWrites[1].descriptorCount = static_cast<uint32_t>(imageInfos.size());
+        descriptorWrites[1].pImageInfo = imageInfos.data();
+
+        vkUpdateDescriptorSets(g_device, 
+                static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+    }
+}
+
+void Velox::UpdateTextureDescriptors()
+{
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        std::vector<VkDescriptorImageInfo> imageInfos(g_textureCount);
+        for (size_t textureIndex = 0; textureIndex < g_textureCount; textureIndex++)
+        {
+            VkDescriptorImageInfo imageInfo {};
+            imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            imageInfo.imageView = g_textures[textureIndex].imageView;
+            imageInfo.sampler   = g_textures[textureIndex].sampler;
+
+            imageInfos[textureIndex] = imageInfo;
+        }
+
+        VkWriteDescriptorSet write {};
+        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write.dstSet = g_descriptorSets[i];
+        write.dstBinding = 1;
+        write.dstArrayElement = 0;
+        write.descriptorCount = static_cast<uint32_t>(imageInfos.size());
+        write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        write.pImageInfo = imageInfos.data();
+
+        // std::vector<VkWriteDescriptorSet> descriptorWrites {};
+        // descriptorWrites.resize(imageInfos.size());
+        // for (size_t textureIndex = 0; textureIndex < imageInfos.size(); textureIndex++)
+        // {
+        //     descriptorWrites[textureIndex].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        //     descriptorWrites[textureIndex].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        //     descriptorWrites[textureIndex].dstBinding = 1;
+        //     descriptorWrites[textureIndex].dstSet = g_descriptorSets[i];
+        //     descriptorWrites[textureIndex].dstArrayElement = textureIndex;
+        //     descriptorWrites[textureIndex].descriptorCount = 1;
+        //     descriptorWrites[textureIndex].pImageInfo = &imageInfos[textureIndex];
+        // }
+
+        vkUpdateDescriptorSets(g_device, 1, &write, 0, nullptr);
+    }
 }
 
 void Velox::CreateCommandBuffers()
@@ -1026,19 +1155,7 @@ void Velox::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPr
 
 void Velox::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
 {
-    VkCommandBufferAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandPool = g_commandPool;
-    allocInfo.commandBufferCount = 1;
-
-    VkCommandBuffer commandBuffer;
-    vkAllocateCommandBuffers(g_device, &allocInfo, &commandBuffer);
-
-    VkCommandBufferBeginInfo beginInfo {};
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-    vkBeginCommandBuffer(commandBuffer, &beginInfo);
+    VkCommandBuffer commandBuffer = Velox::BeginSingleTimeCommands();
 
     VkBufferCopy copyRegion {};
     copyRegion.srcOffset = 0; // Optional
@@ -1046,17 +1163,7 @@ void Velox::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size
     copyRegion.size = size;
     vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
 
-    vkEndCommandBuffer(commandBuffer);
-
-    VkSubmitInfo submitInfo {};
-    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &commandBuffer;
-
-    vkQueueSubmit(g_graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-    vkQueueWaitIdle(g_graphicsQueue);
-
-    vkFreeCommandBuffers(g_device, g_commandPool, 1, &commandBuffer);
+    Velox::EndSingleTimeCommands(commandBuffer);
 }
 
 void Velox::CreateVertexBuffer()
@@ -1303,6 +1410,122 @@ void Velox::DrawFrame()
     g_currentFrame = (g_currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
+void Velox::TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout)
+{
+    VkCommandBuffer commandBuffer = Velox::BeginSingleTimeCommands();
+
+    VkImageMemoryBarrier barrier {};
+    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    barrier.oldLayout = oldLayout;
+    barrier.newLayout = newLayout;
+    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.image = image;
+    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    barrier.subresourceRange.baseMipLevel = 0;
+    barrier.subresourceRange.levelCount = 1;
+    barrier.subresourceRange.baseArrayLayer = 0;
+    barrier.subresourceRange.layerCount = 1;
+    barrier.srcAccessMask = 0; // TODO
+    barrier.dstAccessMask = 0; // TODO
+
+    VkPipelineStageFlags sourceStage;
+    VkPipelineStageFlags destinationStage;
+
+    if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+    {
+        barrier.srcAccessMask = 0;
+        barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+        sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    }
+    else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+    {
+        barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+        sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+        destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    }
+    else
+    {
+        throw std::invalid_argument("unsupported layout transition!");
+    }
+
+    vkCmdPipelineBarrier(
+        commandBuffer,
+        sourceStage, destinationStage,
+        0,
+        0, nullptr,
+        0, nullptr,
+        1, &barrier);
+
+    Velox::EndSingleTimeCommands(commandBuffer);
+}
+
+void Velox::CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height) {
+    VkCommandBuffer commandBuffer = Velox::BeginSingleTimeCommands();
+
+    VkBufferImageCopy region {};
+    region.bufferOffset = 0;
+    region.bufferRowLength = 0;
+    region.bufferImageHeight = 0;
+
+    region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    region.imageSubresource.mipLevel = 0;
+    region.imageSubresource.baseArrayLayer = 0;
+    region.imageSubresource.layerCount = 1;
+
+    region.imageOffset = { 0, 0, 0 };
+    region.imageExtent = { width, height, 1 };
+
+    vkCmdCopyBufferToImage(
+        commandBuffer,
+        buffer,
+        image,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        1,
+        &region);
+
+    Velox::EndSingleTimeCommands(commandBuffer);
+}
+
+VkCommandBuffer Velox::BeginSingleTimeCommands()
+{
+    VkCommandBufferAllocateInfo allocInfo {};
+    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandPool = g_commandPool;
+    allocInfo.commandBufferCount = 1;
+
+    VkCommandBuffer commandBuffer;
+    vkAllocateCommandBuffers(g_device, &allocInfo, &commandBuffer);
+
+    VkCommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+    vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+    return commandBuffer;
+}
+
+void Velox::EndSingleTimeCommands(VkCommandBuffer commandBuffer)
+{
+    vkEndCommandBuffer(commandBuffer);
+
+    VkSubmitInfo submitInfo{};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &commandBuffer;
+
+    vkQueueSubmit(g_graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+    vkQueueWaitIdle(g_graphicsQueue);
+
+    vkFreeCommandBuffers(g_device, g_commandPool, 1, &commandBuffer);
+}
+
 void Velox::EndFrame()
 {
     Velox::DoCopyPass();
@@ -1313,6 +1536,7 @@ void Velox::EndFrame()
 
     // GM: Finalises and generates ImGui draw data.
     // ImGui::Render();
+    g_frameNumber += 1;
 }
 
 void Velox::DoRenderPass()
@@ -1383,7 +1607,16 @@ void Velox::DeInitRenderer()
 
     Velox::CleanupSwapchain();
 
-    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+    for (size_t i = 0; i < g_textureCount; i++ )
+    {
+        vkDestroyImage(g_device, g_textures[i].image, nullptr);
+        vkFreeMemory(g_device, g_textures[i].imageMemory, nullptr);
+        vkDestroyImageView(g_device, g_textures[i].imageView, nullptr);
+        vkDestroySampler(g_device, g_textures[i].sampler, nullptr);
+    }
+
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
         vkDestroyBuffer(g_device, g_uniformBuffers[i], nullptr);
         vkFreeMemory(g_device, g_uniformBuffersMemory[i], nullptr);
     }
@@ -1458,13 +1691,51 @@ void Velox::LoadShader(VkShaderModule* shaderModule, const char* filepath, Velox
     }
 }
 
-void Velox::LoadImage(const char* filepath)
+void Velox::CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling,
+    VkImageUsageFlags usageFlags, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory)
+{
+    VkImageCreateInfo imageInfo {};
+    imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    imageInfo.imageType = VK_IMAGE_TYPE_2D;
+    imageInfo.extent.width = width;
+    imageInfo.extent.height = height;
+    imageInfo.extent.depth = 1;
+    imageInfo.mipLevels = 1;
+    imageInfo.arrayLayers = 1;
+    imageInfo.format = format;
+    imageInfo.tiling = tiling;
+    imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    imageInfo.usage = usageFlags;
+    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    if (vkCreateImage(g_device, &imageInfo, nullptr, &image) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create image!");
+    }
+
+    VkMemoryRequirements memRequirements;
+    vkGetImageMemoryRequirements(g_device, image, &memRequirements);
+
+    VkMemoryAllocateInfo allocInfo {};
+    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.allocationSize = memRequirements.size;
+    allocInfo.memoryTypeIndex = Velox::FindMemoryType(memRequirements.memoryTypeBits, properties);
+
+    if (vkAllocateMemory(g_device, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS) {
+        throw std::runtime_error("failed to allocate image memory!");
+    }
+
+    vkBindImageMemory(g_device, image, imageMemory, 0);
+}
+
+void Velox::LoadImage(const char* filepath, int index)
 {
     char absoluteFilepath[1024], *ptr;
     
     int frame = 0;
-    SDL_strlcpy(absoluteFilepath, SDL_GetBasePath(), sizeof(absoluteFilepath));
-    SDL_strlcat(absoluteFilepath, filepath,          sizeof(absoluteFilepath));
+    SDL_strlcpy(absoluteFilepath, SDL_GetBasePath(),    sizeof(absoluteFilepath));
+    SDL_strlcat(absoluteFilepath, "assets\\textures\\", sizeof(absoluteFilepath));
+    SDL_strlcat(absoluteFilepath, filepath,             sizeof(absoluteFilepath));
     
     // printf("Filepath: %s\n", absoluteFilepath);
 
@@ -1472,25 +1743,164 @@ void Velox::LoadImage(const char* filepath)
     if (surface == nullptr)
     {
         printf("Error: Failed to load image from filepath: %s\n", absoluteFilepath);
-        // return nullptr;
+        throw std::runtime_error("Failed to load image from disk");
     }
 
+    bool useConvertedSurface = false;
+    SDL_Surface* convertedSurface;
     if (surface->format != SDL_PIXELFORMAT_ABGR8888)
     {
-        printf("Error: Loaded image has wrong pixel format. Expected \"SDL_PIXELFORMAT_ABGR888\", \
-            found: \"%s\"\n", SDL_GetPixelFormatName(surface->format));
+        useConvertedSurface = true;
+        convertedSurface = SDL_ConvertSurface(surface, SDL_PIXELFORMAT_ABGR8888);
 
-        // This is safe for now.
-        // TODO: Atempt to convert maybe?
+        if (convertedSurface == nullptr)
+        {
+            printf("Error: Loaded image has wrong pixel format and couldn't convert. \
+                    Expected \"SDL_PIXELFORMAT_ABGR888\", \
+                found: \"%s\"\n", SDL_GetPixelFormatName(surface->format));
 
-        // return nullptr;
+            throw std::runtime_error("Loaded image has wrong pixel format.");
+        }
     }
 
-    // return surface;
+    int imageWidth = surface->w;
+    int imageHeight = surface->h;
+    VkDeviceSize imageSize = imageWidth * imageHeight * 4;
+
+    VkBuffer stagingBuffer;
+    VkDeviceMemory stagingBufferMemory;
+
+    Velox::CreateBuffer(
+        imageSize,
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
+        stagingBuffer, 
+        stagingBufferMemory);
+
+    void* data;
+    vkMapMemory(g_device, stagingBufferMemory, 0, imageSize, 0, &data);
+
+    if (useConvertedSurface)
+        memcpy(data, convertedSurface->pixels, static_cast<size_t>(imageSize));
+    else
+        memcpy(data, surface->pixels, static_cast<size_t>(imageSize));
+
+    vkUnmapMemory(g_device, stagingBufferMemory);
+
+    SDL_DestroySurface(surface);
+    if (useConvertedSurface)
+        SDL_DestroySurface(convertedSurface);
+
+    Velox::CreateImage(imageWidth, imageHeight,
+        VK_FORMAT_R8G8B8A8_SRGB,
+        VK_IMAGE_TILING_OPTIMAL,
+        VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        g_textures[index].image, 
+        g_textures[index].imageMemory);
+
+    Velox::TransitionImageLayout(g_textures[index].image, 
+        VK_FORMAT_R8G8B8A8_SRGB,
+        VK_IMAGE_LAYOUT_UNDEFINED,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+    Velox::CopyBufferToImage(stagingBuffer, g_textures[index].image,
+        static_cast<uint32_t>(imageWidth), static_cast<uint32_t>(imageHeight));
+
+    Velox::TransitionImageLayout(g_textures[index].image,
+        VK_FORMAT_R8G8B8A8_SRGB, 
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+    vkDestroyBuffer(g_device, stagingBuffer, nullptr);
+    vkFreeMemory(g_device, stagingBufferMemory, nullptr);
 }
 
-void Velox::CreateTexture()
+
+int Velox::LoadTextureInternal(const char* filepath)
 {
+    if (g_textureCount >= MAX_TEXTURE_COUNT)
+    {
+        printf("ERROR: Cannot load texture, max textures buffer full\n");
+        return 0;
+    }
+
+    int newIndex = g_textureCount;
+    
+    g_textures[newIndex] = {};
+
+    // Fills image and imageMemory members.
+    Velox::LoadImage(filepath, newIndex);
+
+    // Fills imageView.
+    Velox::CreateImageView(newIndex, VK_FORMAT_R8G8B8A8_SRGB);
+
+    // Fills sampler.
+    Velox::CreateTextureSampler(newIndex);
+
+    assert(g_textures[newIndex].imageView != VK_NULL_HANDLE);
+    assert(g_textures[newIndex].sampler   != VK_NULL_HANDLE);
+
+    g_textureCount += 1;
+
+    if (g_descriptorSetsInitialised)
+        Velox::UpdateTextureDescriptors();
+
+    return newIndex;
+}
+
+void Velox::CreateImageView(int index, VkFormat format)
+{
+    VkImageViewCreateInfo viewInfo {};
+    viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    viewInfo.image = g_textures[index].image;
+    viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    viewInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
+    viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    viewInfo.subresourceRange.baseMipLevel = 0;
+    viewInfo.subresourceRange.levelCount = 1;
+    viewInfo.subresourceRange.baseArrayLayer = 0;
+    viewInfo.subresourceRange.layerCount = 1;
+
+    if (vkCreateImageView(g_device, &viewInfo, nullptr, &g_textures[index].imageView) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create texture image view!");
+    }
+}
+
+void Velox::CreateTextureSampler(int index)
+{
+    VkSamplerCreateInfo samplerInfo {};
+    samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    samplerInfo.unnormalizedCoordinates = VK_FALSE;
+
+    samplerInfo.compareEnable = VK_FALSE;
+    samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+
+    // Filtering (interpolating texels).
+    samplerInfo.magFilter = VK_FILTER_LINEAR;
+    samplerInfo.minFilter = VK_FILTER_LINEAR;
+
+    // Repeat/mirror/clamp image behaviour.
+    samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+    samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+    samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+
+    samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+
+    VkPhysicalDeviceProperties properties {};
+    vkGetPhysicalDeviceProperties(g_physicalDevice, &properties);
+
+    samplerInfo.anisotropyEnable = VK_TRUE;
+    samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
+
+    samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    samplerInfo.mipLodBias = 0.0f;
+    samplerInfo.minLod = 0.0f;
+    samplerInfo.maxLod = 0.0f;
+
+    if (vkCreateSampler(g_device, &samplerInfo, nullptr, &g_textures[index].sampler) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create texture sampler!");
+    }
 }
 
 uint32_t Velox::AddVertex(Velox::Vertex vertex)

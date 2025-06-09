@@ -77,6 +77,13 @@ struct Vertex {
     }
 };
 
+struct Texture2D { 
+    VkImage        image;
+    VkDeviceMemory imageMemory;
+    VkImageView    imageView;
+    VkSampler      sampler;
+};
+
 SDL_Window* GetWindow();
 
 VkDevice* GetDevice();
@@ -127,6 +134,8 @@ void CreateDescriptorPool();
 
 void CreateDescriptorSets();
 
+void UpdateTextureDescriptors();
+
 void CreateCommandBuffers();
 
 void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
@@ -150,6 +159,12 @@ void CreateSyncObjects();
 
 bool ForwardSDLEventToRenderer(SDL_Event* event);
 
+void CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
+    
+VkCommandBuffer BeginSingleTimeCommands();
+
+void EndSingleTimeCommands(VkCommandBuffer commandBuffer);
+
 void StartFrame();
 
 void DrawFrame();
@@ -167,9 +182,22 @@ void DeInitRenderer();
 
 void LoadShader(VkShaderModule* shaderModule, const char* filepath, Velox::Arena* allocator);
 
-void LoadImage(const char* filepath);
+void CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling,
+    VkImageUsageFlags usageFlags, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
 
-void CreateTexture();
+void TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
+
+VkCommandBuffer BeginSingleTimeCommands();
+
+void EndSingleTimeCommands(VkCommandBuffer commandBuffer);
+
+void LoadImage(const char* filepath, int index);
+
+int LoadTextureInternal(const char* filepath);
+
+void CreateImageView(int index, VkFormat format);
+
+void CreateTextureSampler(int index);
 
 // Returns the index of the vertex.
 uint32_t AddVertex(Vertex vertex);
