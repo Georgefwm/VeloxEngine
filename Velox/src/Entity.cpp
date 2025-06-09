@@ -1,6 +1,26 @@
 #include "Entity.h"
+#include "Primitive.h"
 
 #include <cassert>
+
+//
+// Entity
+//
+void Velox::Entity::Draw(bool centerOrigin)
+{
+    if (!(flags & Visible)) 
+        return;
+
+    vec4 area = { position.x, position.y, size.x, size.y };
+    
+    if (centerOrigin)
+    {
+        area.x -= (size.x / 2);
+        area.y -= (size.y / 2);
+    }
+
+    Velox::DrawRectangle(area, colorOverride, textureIndex);
+}
 
 //
 // EntityManager 

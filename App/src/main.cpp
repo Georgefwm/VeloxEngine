@@ -1,3 +1,4 @@
+#include "Asset.h"
 #include "Event.h"
 
 #include "Renderer.h"
@@ -6,10 +7,14 @@
 #include "Primitive.h"
 #include "Util.h"
 
-#include <cstdio>
 #include <imgui.h>
 #include <iostream>
 #include <ostream>
+
+Velox::EntityManager g_entityManager;;
+
+Velox::EntityHandle e1;
+float direction = 1.0;
 
 void HandleEvent(Velox::Event* event)
 {
@@ -18,13 +23,23 @@ void HandleEvent(Velox::Event* event)
 
 void UpdateGame()
 {
+    Velox::Entity* e = g_entityManager.getMut(e1);
 
+    e->position.x += 2 * direction;
+
+    ivec2 windowSize = Velox::GetWindowSize();
+    if (e->position.x > windowSize.x * 0.95) direction = -1.0;
+    if (e->position.x < windowSize.x * 0.05) direction =  1.0;
 }
 
 void DoRenderingStuff()
 {
     Velox::DrawRectangle(vec4(200, 200, 500, 200), vec4(1.0, 0.0, 0.0, 1.0), -1); // Untextured
     Velox::DrawRectangle(vec4(200, 500, 500, 200), vec4(1.0, 1.0, 1.0, 1.0),  0); // Textured
+
+
+    Velox::Entity* e = g_entityManager.getMut(e1);
+    e->Draw(true);
 
     // ImGui::ShowDemoWindow();
 }
@@ -33,64 +48,19 @@ void run()
 {
     Velox::Init();
 
-    // GM: I guess when done like this, entities are allocated on the stack? ...maybe.
-    Velox::EntityManager entityManager {};
+    g_entityManager = Velox::EntityManager();
+    e1 = g_entityManager.createEntity();
+    Velox::Entity* e = g_entityManager.getMut(e1);
+    
+    e->position = vec3(100, 100, 0);
+    e->size = vec2(100, 100);
+    e->textureIndex = Velox::GetAssetManager()->LoadTexture("star.png");
+    e->flags |= Velox::EntityFlags::Visible;
 
-    // GM: Will make a tests file, just doing this for now.
-    // Test start.
-    if (false)
-    {
-        Velox::EntityHandle handle = entityManager.createEntity();
-        Velox::Entity* newEntity = entityManager.getMut(handle);
-
-        printf("before modification: %i\n", newEntity->test);
-
-        newEntity->position.x += 1;
-        newEntity->test += 1;
-
-        printf("after modification: %i\n", newEntity->test);
-
-        newEntity = entityManager.getMut(handle);
-
-        printf("after modification (re-query): %i\n", newEntity->test);
-
-        printf("\n");
-        for (auto [handle, entity] : entityManager.iter())
-        {
-            printf("Iterator test 1: %i\n", entity->test);
-        }
-
-        entityManager.destroyEntity(handle);
-
-        entityManager.createEntity();
-        entityManager.createEntity();
-
-        printf("\n");
-        for (auto [handle, entity] : entityManager.iter())
-        {
-            printf("Iterator test 2: %i\n", entity->test);
-        }
-
-        Velox::EntityHandle newHandle = entityManager.createEntity();
-        newEntity = entityManager.getMut(newHandle);
-
-        entityManager.createEntity();
-
-        printf("\n");
-        for (auto [handle, entity] : entityManager.iter())
-        {
-            printf("Iterator test 3: %i\n", entity->test);
-        }
-
-        newEntity->test += 1;
-
-        printf("\n");
-        for (auto [handle, entity] : entityManager.iter())
-        {
-            printf("Iterator test 4: %i\n", entity->test);
-        }
-        // Test end.
-    }
+    // for (auto [handle, entity] : entityManager.iter())
+    // {
+    //     printf("Iterator test 1: %i\n", entity->test);
+    // }
 
     while (!Velox::QuitRequested())
     {

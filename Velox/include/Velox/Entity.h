@@ -2,12 +2,18 @@
 
 #include "Core.h"
 
-#include <cstdint>  // uint32_t, not sure if we want to include this just for one datatype...
+#include <cstdint>
 #include <utility>  // pair
 
 constexpr size_t MAX_ENTITIES = 1024;
 
 namespace Velox {
+
+enum EntityFlags : uint32_t {
+    None    = 0,
+    Visible = 1 << 0,
+    Static  = 1 << 1,
+};
 
 struct EntityHandle {
     uint32_t index;
@@ -26,10 +32,26 @@ struct EntityHandle {
 // Maybe for now we just use a 'megastruct' where all data is just contained in the Entity struct.
 // We can figure out extenting this in the API later.
 struct Entity {
+    // Core
+    uint32_t flags = None;
+
+    // Spacial
     vec3 position = vec3(0.0, 0.0, 0.0);
-    int test = 0;
+    float rotation = 0;
+
+    // Rendering
+    vec2 size = vec4(10.0);
+    int textureIndex = 0;
+    vec4 colorOverride = vec4(1.0);
+
+    bool HasFlag(EntityFlags flag) const { return (flags & flag) != 0; }
+    void Draw(bool centerOrigin = false);
 };
 
+// Ideas:
+// Could store entites in arrays that are sorted is dfs or bfs ordering for fast tree traversal. 
+//  - e.g. Insert child entities after parents(in memory) for dfs, not sure what this is called. Flat tree?
+// Multiple arrays for different ordering, i.e. draw order, tree order, etc.
 struct EntityManager {
     // GM: Will probably need to use custom allocator for this when entity data gets big enough.
     Entity entities[MAX_ENTITIES];
