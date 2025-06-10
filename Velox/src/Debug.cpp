@@ -84,16 +84,16 @@ void Velox::DrawPerformanceStats()
     ImGui::Text("FrameTimes (previous %zu frames)", FRAME_HISTORY_COUNT);
     ImGui::Spacing();
 
-    ImGui::Text("This Frame: %.0f", g_frameTimeHistory[g_currentIndex]);
+    ImGui::Text("This Frame: %.0fms", g_frameTimeHistory[g_currentIndex]);
     ImGui::Spacing();
     
-    ImGui::Text("Average: %.1f", average);
+    ImGui::Text("Average: %.1fms", average);
     ImGui::Spacing();
 
-    ImGui::Text("Max: %.0f", max);
+    ImGui::Text("Max: %.0fms", max);
     ImGui::Spacing();
 
-    ImGui::Text("Min: %.0f", min);
+    ImGui::Text("Min: %.0fms", min);
     ImGui::Spacing();
 
     float chartMax = max > 20 ? max * 1.1 : 20;
