@@ -150,7 +150,7 @@ float Velox::GetDisplayScale()
     return SDL_GetWindowDisplayScale(g_window);
 }
 
-bool Velox::InitRenderer()
+Velox::InitRenderer()
 {
     if (enableValidationLayers && !CheckValidationLayerSupport())
         throw std::runtime_error("validation layers requested, but not available!");
@@ -219,8 +219,6 @@ bool Velox::InitRenderer()
     Velox::CreateCommandBuffers();
 
     Velox::CreateSyncObjects();
-
-    return true;
 }
 
 ImGui_ImplVulkan_InitInfo Velox::GetImguiInitInfo()

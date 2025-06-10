@@ -93,7 +93,7 @@ ivec2 GetWindowSize();
 
 float GetDisplayScale();
 
-bool InitRenderer();
+void InitRenderer();
 
 ImGui_ImplVulkan_InitInfo GetImguiInitInfo();
 

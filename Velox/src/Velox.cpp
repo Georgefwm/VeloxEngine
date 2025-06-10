@@ -25,12 +25,7 @@ void Velox::Init()
         return;
     }
 
-    if (!Velox::InitRenderer())
-    {
-        Quit();
-        return;
-    }
-
+    Velox::InitRenderer();
     Velox::InitAssets();
     Velox::InitUI();
     Velox::InitConsole();
