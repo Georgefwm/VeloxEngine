@@ -32,7 +32,7 @@ void Velox::Init()
     }
 
     Velox::InitAssets();
-    // Velox::InitUI();
+    Velox::InitUI();
     Velox::InitConsole();
 }
 
@@ -65,7 +65,7 @@ bool Velox::QuitRequested()
 void Velox::DeInit()
 {
     Velox::DeInitRenderer();
-    // Velox::DeInitUI();
+    Velox::DeInitUI();
 
     SDL_Quit();    
 }

@@ -21,11 +21,11 @@ void HandleEvent(Velox::Event* event)
 
 }
 
-void UpdateGame()
+void UpdateGame(float deltaTime)
 {
     Velox::Entity* e = g_entityManager.getMut(e1);
 
-    e->position.x += 2 * direction;
+    e->position.x += (300 * direction) * deltaTime;
 
     ivec2 windowSize = Velox::GetWindowSize();
     if (e->position.x > windowSize.x * 0.95) direction = -1.0;
@@ -37,11 +37,10 @@ void DoRenderingStuff()
     Velox::DrawRectangle(vec4(200, 200, 500, 200), vec4(1.0, 0.0, 0.0, 1.0), -1); // Untextured
     Velox::DrawRectangle(vec4(200, 500, 500, 200), vec4(1.0, 1.0, 1.0, 1.0),  0); // Textured
 
-
     Velox::Entity* e = g_entityManager.getMut(e1);
     e->Draw(true);
 
-    // ImGui::ShowDemoWindow();
+    ImGui::ShowDemoWindow();
 }
 
 void run()
@@ -75,7 +74,7 @@ void run()
             // Do something with events.
         }        
 
-        UpdateGame();
+        UpdateGame(deltaTime);
 
         Velox::StartFrame();
         

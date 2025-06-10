@@ -7,7 +7,7 @@ namespace Velox {
 
 void InitUI();
 
-void ForwardSDLEvent(Velox::Event* event);
+void ForwardSDLEventToUI(Velox::Event* event);
 
 // Must be called after Velox::EndFrame()!
 ImDrawData* GetUIDrawData();

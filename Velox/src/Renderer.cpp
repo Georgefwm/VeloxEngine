@@ -1,8 +1,7 @@
+#include "Velox.h"
 #ifndef VK_EXT_DEBUG_REPORT_EXTENSION_NAME
 #define VK_EXT_DEBUG_REPORT_EXTENSION_NAME "VK_EXT_debug_report"
 #endif
-
-#include "Primitive.h"
 
 #include "Renderer.h"
 #include "Arena.h"
@@ -56,6 +55,8 @@ constexpr size_t MAX_TEXTURE_COUNT  = 32;
 
 constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 
+// v1.2 for descriptor indexing support in core lib.
+constexpr uint32_t USING_VULKAN_API_VERSION = VK_API_VERSION_1_2;
 
 SDL_Window* g_window;
 
@@ -66,6 +67,7 @@ VkDevice g_device;
 
 VkSurfaceKHR g_surface;
 
+Velox::QueueFamilyIndices g_queueFamilyIndices; 
 VkQueue g_graphicsQueue;
 VkQueue g_presentQueue;
 
@@ -121,6 +123,20 @@ Velox::Texture2D g_textures[MAX_TEXTURE_COUNT];
 SDL_Window* Velox::GetWindow() { return g_window; }
 VkDevice*   Velox::GetDevice() { return &g_device; }
 
+static void ImguiCheckVkResult(VkResult err)
+{
+    if (err == 0) return;
+    fprintf(stderr, "Error: [IMGUI VULKAN] %s\n", string_VkResult(err));
+    if (err < 0) abort();
+}
+
+static void CheckVkResult(VkResult err, const char* msg)
+{
+    if (err == 0) return;
+    fprintf(stderr, "Error: [VELOX VULKAN] %s\n", string_VkResult(err));
+    if (err < 0) throw std::runtime_error(msg);
+}
+
 ivec2 Velox::GetWindowSize()
 {
     ivec2 size {};
@@ -172,6 +188,8 @@ bool Velox::InitRenderer()
     vkGetPhysicalDeviceProperties(g_physicalDevice, &deviceProperties);
     printf("Using physical device: %s\n", deviceProperties.deviceName);
 
+    g_queueFamilyIndices = Velox::FindQueueFamilies(g_physicalDevice);
+    
     Velox::CreateLogicalDevice();
 
     Velox::CreateSwapchain();
@@ -205,6 +223,30 @@ bool Velox::InitRenderer()
     return true;
 }
 
+ImGui_ImplVulkan_InitInfo Velox::GetImguiInitInfo()
+{
+    ImGui_ImplVulkan_InitInfo ImguiInitInfo = {};
+
+    ImguiInitInfo.ApiVersion = USING_VULKAN_API_VERSION;
+    ImguiInitInfo.Instance = g_instance;
+    ImguiInitInfo.PhysicalDevice = g_physicalDevice;
+    ImguiInitInfo.Device = g_device;
+    ImguiInitInfo.QueueFamily = g_queueFamilyIndices.graphicsFamily.value();
+    ImguiInitInfo.Queue = g_graphicsQueue;
+    ImguiInitInfo.PipelineCache = VK_NULL_HANDLE; // optional
+    ImguiInitInfo.DescriptorPool = nullptr;
+    ImguiInitInfo.DescriptorPoolSize = MAX_FRAMES_IN_FLIGHT;
+    ImguiInitInfo.RenderPass = g_renderPass;
+    ImguiInitInfo.Subpass = 0;
+    ImguiInitInfo.MinImageCount = MAX_FRAMES_IN_FLIGHT;
+    ImguiInitInfo.ImageCount = MAX_FRAMES_IN_FLIGHT;
+    ImguiInitInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+    ImguiInitInfo.Allocator = nullptr;
+    ImguiInitInfo.CheckVkResultFn = ImguiCheckVkResult;
+
+    return ImguiInitInfo;
+}
+
 void Velox::CreateInstance()
 {
     uint32_t instanceExtensionCount;
@@ -226,7 +268,7 @@ void Velox::CreateInstance()
     appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
     appInfo.pEngineName = "Velox Engine",
     appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0),
-    appInfo.apiVersion = VK_API_VERSION_1_2; // v1.2 for descriptor indexing support in core lib.
+    appInfo.apiVersion = USING_VULKAN_API_VERSION;
 
     VkInstanceCreateInfo InstanceCreateInfo {};
     InstanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -241,12 +283,8 @@ void Velox::CreateInstance()
         InstanceCreateInfo.ppEnabledLayerNames = validationLayers.data();
     }
 
-    VkResult result = vkCreateInstance(&InstanceCreateInfo, nullptr, &g_instance);
-    if (result != VK_SUCCESS)
-    {
-        printf("ERROR: vkCreateInstance(): %s\n", string_VkResult(result));
-        throw std::runtime_error("Failed to create Vulkan instance");
-    }
+    CheckVkResult(vkCreateInstance(&InstanceCreateInfo, nullptr, &g_instance),
+        "Failed to create instance");
 
     SDL_free(extensions);
 }
@@ -400,12 +438,10 @@ Velox::QueueFamilyIndices Velox::FindQueueFamilies(VkPhysicalDevice device)
 
 void Velox::CreateLogicalDevice()
 {
-    QueueFamilyIndices indices = Velox::FindQueueFamilies(g_physicalDevice);
-    
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
     std::set<uint32_t> uniqueQueueFamilies = {
-        indices.graphicsFamily.value(), 
-        indices.presentFamily.value()
+        g_queueFamilyIndices.graphicsFamily.value(), 
+        g_queueFamilyIndices.presentFamily.value()
     };
     
     float queuePriority = 1.0f;
@@ -441,15 +477,11 @@ void Velox::CreateLogicalDevice()
     deviceCreateInfo.ppEnabledExtensionNames = requiredPhysicalDeviceExtensions.data();
     deviceCreateInfo.pNext = &descriptorIndexingFeatures;
 
-    VkResult result = vkCreateDevice(g_physicalDevice, &deviceCreateInfo, nullptr, &g_device);
-    if (result != VK_SUCCESS)
-    {
-        printf("ERROR: vkCreateDevice(): %s\n", string_VkResult(result));
-        throw std::runtime_error("Failed to create Vulkan logical device");
-    }
+    CheckVkResult(vkCreateDevice(g_physicalDevice, &deviceCreateInfo, nullptr, &g_device),
+        "Failed to create logical device");
 
-    vkGetDeviceQueue(g_device, indices.graphicsFamily.value(), 0, &g_graphicsQueue);
-    vkGetDeviceQueue(g_device, indices.presentFamily.value(),  0, &g_presentQueue);
+    vkGetDeviceQueue(g_device, g_queueFamilyIndices.graphicsFamily.value(), 0, &g_graphicsQueue);
+    vkGetDeviceQueue(g_device, g_queueFamilyIndices.presentFamily.value(),  0, &g_presentQueue);
 }
 
 Velox::SwapchainSupportDetails Velox::GetSwapchainSupportDetails(VkPhysicalDevice device)
@@ -503,15 +535,14 @@ void Velox::CreateSwapchain()
     swapchainCreateInfo.imageArrayLayers = 1;
     swapchainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-    QueueFamilyIndices indices = Velox::FindQueueFamilies(g_physicalDevice);
     uint32_t queueFamilyIndices[] = {
-        indices.graphicsFamily.value(),
-        indices.presentFamily.value()
+        g_queueFamilyIndices.graphicsFamily.value(),
+        g_queueFamilyIndices.presentFamily.value()
     };
 
     swapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    if (indices.graphicsFamily != indices.presentFamily) {
+    if (g_queueFamilyIndices.graphicsFamily != g_queueFamilyIndices.presentFamily) {
         swapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
         swapchainCreateInfo.queueFamilyIndexCount = 2;
         swapchainCreateInfo.pQueueFamilyIndices = queueFamilyIndices;
@@ -523,12 +554,8 @@ void Velox::CreateSwapchain()
     swapchainCreateInfo.clipped = VK_TRUE;
     swapchainCreateInfo.oldSwapchain = VK_NULL_HANDLE;
 
-    VkResult result = vkCreateSwapchainKHR(g_device, &swapchainCreateInfo, nullptr, &g_swapchain);
-    if (result != VK_SUCCESS)
-    {
-        printf("ERROR: vkCreateSwapchainKHR(): %s\n", string_VkResult(result));
-        throw std::runtime_error("Failed to create swapchain");
-    }
+    CheckVkResult(vkCreateSwapchainKHR(g_device, &swapchainCreateInfo, nullptr, &g_swapchain),
+        "Failed to create swapchain");
 
     vkGetSwapchainImagesKHR(g_device, g_swapchain, &imageCount, nullptr);
     g_swapchainImages.resize(imageCount);
@@ -542,7 +569,10 @@ VkSurfaceFormatKHR Velox::ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFor
 {
     for (const auto& availableFormat : availableFormats)
     {
-        if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && 
+        // GM: ImGui uses B8G8R8A8_UNORM format.
+        // If SRGB is used, gamma correction is applied twice to ImGui elements.
+        // Lets just use that for now as we don't currenty have a preference.
+        if (availableFormat.format == VK_FORMAT_B8G8R8A8_UNORM && 
                 availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
             return availableFormat;
     }
@@ -587,6 +617,8 @@ void Velox::ReCreateSwapchain()
     vkDeviceWaitIdle(g_device);
 
     Velox::CleanupSwapchain();
+    
+    ImGui_ImplVulkan_SetMinImageCount(MAX_FRAMES_IN_FLIGHT);
 
     Velox::CreateSwapchain();
     Velox::CreateImageViews();
@@ -627,12 +659,8 @@ void Velox::CreateImageViews()
         imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
         imageViewCreateInfo.subresourceRange.layerCount = 1;
 
-        VkResult result = vkCreateImageView(g_device, &imageViewCreateInfo, nullptr, &g_swapchainImageViews[i]);
-        if (result != VK_SUCCESS)
-        {
-            printf("ERROR: vkCreateImageView(): %s\n", string_VkResult(result));
-            throw std::runtime_error("Failed to create Vulkan Image View");
-        }
+        CheckVkResult(vkCreateImageView(g_device, &imageViewCreateInfo, nullptr, &g_swapchainImageViews[i]),
+            "Failed to create image view");
     }
 }
 
@@ -674,12 +702,8 @@ void Velox::CreateRenderPass()
     renderPassCreateInfo.dependencyCount = 1;
     renderPassCreateInfo.pDependencies = &dependency;
 
-    VkResult result = vkCreateRenderPass(g_device, &renderPassCreateInfo, nullptr, &g_renderPass);
-    if (result != VK_SUCCESS)
-    {
-        printf("ERROR: vkCreateRenderPass(): %s\n", string_VkResult(result));
-        throw std::runtime_error("Failed to create Vulkan Render Pass");
-    }
+    CheckVkResult(vkCreateRenderPass(g_device, &renderPassCreateInfo, nullptr, &g_renderPass),
+        "Failed to create render pass");
 }
 
 void Velox::CreateDiscriptorSetLayout()
@@ -721,12 +745,8 @@ void Velox::CreateDiscriptorSetLayout()
     layoutCreateInfo.pBindings = bindings.data();
     layoutCreateInfo.pNext = &setLayoutBindingFlagsCreateInfo;
 
-    VkResult result = vkCreateDescriptorSetLayout(g_device, &layoutCreateInfo, nullptr, &g_descriptorSetLayout);
-    if (result != VK_SUCCESS)
-    {
-        printf("ERROR: vkCreateDiscriptorSetLayout(): %s\n", string_VkResult(result));
-        throw std::runtime_error("Failed to create discriptor set layout");
-    }
+    CheckVkResult(vkCreateDescriptorSetLayout(g_device, &layoutCreateInfo, nullptr, &g_descriptorSetLayout),
+        "Failed to create descriptor set layout");
 }
 
 void Velox::CreateGraphicsPipeline()
@@ -814,10 +834,10 @@ void Velox::CreateGraphicsPipeline()
     colorBlendAttachment.blendEnable = VK_TRUE; // Enables transperancy of textures.
     colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
     colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-    colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;             // Optional
-    colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;  // Optional
-    colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
-    colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;             // Optional
+    colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+    colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+    colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+    colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
 
     VkPipelineColorBlendStateCreateInfo colorBlendStateCreateInfo {};
     colorBlendStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
@@ -825,10 +845,10 @@ void Velox::CreateGraphicsPipeline()
     colorBlendStateCreateInfo.logicOp = VK_LOGIC_OP_COPY; // Optional
     colorBlendStateCreateInfo.attachmentCount = 1;
     colorBlendStateCreateInfo.pAttachments = &colorBlendAttachment;
-    colorBlendStateCreateInfo.blendConstants[0] = 0.0f; // Optional
-    colorBlendStateCreateInfo.blendConstants[1] = 0.0f; // Optional
-    colorBlendStateCreateInfo.blendConstants[2] = 0.0f; // Optional
-    colorBlendStateCreateInfo.blendConstants[3] = 0.0f; // Optional
+    colorBlendStateCreateInfo.blendConstants[0] = 0.0f;
+    colorBlendStateCreateInfo.blendConstants[1] = 0.0f;
+    colorBlendStateCreateInfo.blendConstants[2] = 0.0f;
+    colorBlendStateCreateInfo.blendConstants[3] = 0.0f;
 
     VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo {};
     pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -837,12 +857,8 @@ void Velox::CreateGraphicsPipeline()
     pipelineLayoutCreateInfo.pushConstantRangeCount = 0;    // Optional
     pipelineLayoutCreateInfo.pPushConstantRanges = nullptr; // Optional
 
-    VkResult result = vkCreatePipelineLayout(g_device, &pipelineLayoutCreateInfo, nullptr, &g_pipelineLayout);
-    if (result != VK_SUCCESS)
-    {
-        printf("ERROR: vkCreatePipelineLayout(): %s\n", string_VkResult(result));
-        throw std::runtime_error("Failed to create Vulkan Pipeline Layout");
-    }
+    CheckVkResult(vkCreatePipelineLayout(g_device, &pipelineLayoutCreateInfo, nullptr, &g_pipelineLayout),
+        "Failed to create pipeline layout");
 
     VkGraphicsPipelineCreateInfo pipelineCreateInfo {};
     pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -862,12 +878,9 @@ void Velox::CreateGraphicsPipeline()
     pipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
     pipelineCreateInfo.basePipelineIndex = -1; // Optional
 
-    result = vkCreateGraphicsPipelines(g_device, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &g_graphicsPipeline);
-    if (result != VK_SUCCESS)
-    {
-        printf("ERROR: vkCreateGraphicsPipelines(): %s\n", string_VkResult(result));
-        throw std::runtime_error("Failed to create Vulkan Graphics Pipeline");
-    }
+    CheckVkResult(vkCreateGraphicsPipelines(g_device, VK_NULL_HANDLE, 1, &pipelineCreateInfo,
+            nullptr, &g_graphicsPipeline),
+        "Failed to create graphics pipeline");
 
     vkDestroyShaderModule(g_device, fragShaderModule, nullptr);
     vkDestroyShaderModule(g_device, vertShaderModule, nullptr);
@@ -892,30 +905,20 @@ void Velox::CreateFrameBuffers()
         framebufferInfo.height = g_swapchainExtent.height;
         framebufferInfo.layers = 1;
 
-        VkResult result = vkCreateFramebuffer(g_device, &framebufferInfo, nullptr, &g_swapchainFrameBuffers[i]);
-        if (result != VK_SUCCESS)
-        {
-            printf("ERROR: vkCreateFrameBuffer(%zu): %s\n", i, string_VkResult(result));
-            throw std::runtime_error("Failed to create Vulkan Frame Buffer");
-        }
+        CheckVkResult(vkCreateFramebuffer(g_device, &framebufferInfo, nullptr, &g_swapchainFrameBuffers[i]),
+            "Failed to create frame buffer");
     }
 }
 
 void Velox::CreateCommandPool()
 {
-    QueueFamilyIndices queueFamilyIndices = Velox::FindQueueFamilies(g_physicalDevice);
-
     VkCommandPoolCreateInfo poolCreateInfo {};
     poolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     poolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    poolCreateInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+    poolCreateInfo.queueFamilyIndex = g_queueFamilyIndices.graphicsFamily.value();
 
-    VkResult result = vkCreateCommandPool(g_device, &poolCreateInfo, nullptr, &g_commandPool);
-    if (result != VK_SUCCESS)
-    {
-        printf("ERROR: vkCreateFrameBuffer(): %s\n", string_VkResult(result));
-        throw std::runtime_error("Failed to create command pool");
-    }
+    CheckVkResult(vkCreateCommandPool(g_device, &poolCreateInfo, nullptr, &g_commandPool),
+        "Failed to create command pool");
 }
 
 void Velox::CreateDescriptorPool()
@@ -932,12 +935,8 @@ void Velox::CreateDescriptorPool()
     poolCreateInfo.pPoolSizes = poolSizes.data();
     poolCreateInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
     
-    VkResult result = vkCreateDescriptorPool(g_device, &poolCreateInfo, nullptr, &g_descriptorPool);
-    if (result != VK_SUCCESS)
-    {
-        printf("ERROR: vkCreateDescriptorPool(): %s\n", string_VkResult(result));
-        throw std::runtime_error("Failed to create descriptor pool");
-    }
+    CheckVkResult(vkCreateDescriptorPool(g_device, &poolCreateInfo, nullptr, &g_descriptorPool),
+        "Failed to create descriptor pool");
 }
 
 void Velox::CreateDescriptorSets()
@@ -962,12 +961,8 @@ void Velox::CreateDescriptorSets()
 
     g_descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
 
-    VkResult result = vkAllocateDescriptorSets(g_device, &allocInfo, g_descriptorSets.data());
-    if (result != VK_SUCCESS)
-    {
-        printf("ERROR: vkAllocateDescriptorSets(): %s\n", string_VkResult(result));
-        throw std::runtime_error("Failed to allocate descriptor sets");
-    }
+    CheckVkResult(vkAllocateDescriptorSets(g_device, &allocInfo, g_descriptorSets.data()),
+        "Failed to allocate descriptor sets");
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
@@ -1060,12 +1055,8 @@ void Velox::CreateCommandBuffers()
     commandBufferAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     commandBufferAllocInfo.commandBufferCount = (uint32_t)g_commandBuffers.size();
 
-    VkResult result = vkAllocateCommandBuffers(g_device, &commandBufferAllocInfo, g_commandBuffers.data());
-    if (result != VK_SUCCESS)
-    {
-        printf("ERROR: vkAllocateCommandBuffers(): %s\n", string_VkResult(result));
-        throw std::runtime_error("Failed to create command buffers");
-    }
+    CheckVkResult(vkAllocateCommandBuffers(g_device, &commandBufferAllocInfo, g_commandBuffers.data()),
+        "Failed to create commands buffers");
 }
 
 void Velox::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
@@ -1118,14 +1109,12 @@ void Velox::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageInd
 
     vkCmdDrawIndexed(commandBuffer, g_indexCount, 1, 0, 0, 1);
 
+    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
+
     vkCmdEndRenderPass(commandBuffer);
 
-    VkResult result = vkEndCommandBuffer(commandBuffer);
-    if (result != VK_SUCCESS)
-    {
-        printf("ERROR: vkEndCommandBuffer(): %s\n", string_VkResult(result));
-        throw std::runtime_error("Errors occurred while proccessing command buffer");
-    }
+    CheckVkResult(vkEndCommandBuffer(commandBuffer),
+        "Failed to end command buffer recording");
 }
 
 void Velox::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory)
@@ -1288,13 +1277,11 @@ void Velox::CreateSyncObjects()
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
-        VkResult result = vkCreateSemaphore(g_device, &semaphoreCreateInfo,  nullptr, &g_imageAvailableSemaphores[i]);
-        if (result != VK_SUCCESS)
-            throw std::runtime_error("Error creating imageAvailable semphore");
+        CheckVkResult(vkCreateSemaphore(g_device, &semaphoreCreateInfo,  nullptr, &g_imageAvailableSemaphores[i]),
+            "Failed to create imageAvailable semaphore");
 
-        result = vkCreateSemaphore(g_device, &semaphoreCreateInfo,  nullptr, &g_renderFinishedSemaphores[i]);
-        if (result != VK_SUCCESS)
-            throw std::runtime_error("Error creating renderFinished semphore");
+        CheckVkResult(vkCreateSemaphore(g_device, &semaphoreCreateInfo,  nullptr, &g_renderFinishedSemaphores[i]),
+            "Failed to create renderFinised semaphore");
     }
 
     VkFenceCreateInfo fenceCreateInfo {};
@@ -1303,9 +1290,8 @@ void Velox::CreateSyncObjects()
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
-        VkResult result = vkCreateFence(g_device, &fenceCreateInfo,  nullptr, &g_inFlightFences[i]);
-        if (result != VK_SUCCESS)
-            throw std::runtime_error("Error creating inFlight fence");
+        CheckVkResult(vkCreateFence(g_device, &fenceCreateInfo,  nullptr, &g_inFlightFences[i]),
+            "Failed to create inFlight fence");
     }
 }
 
@@ -1326,6 +1312,10 @@ void Velox::StartFrame()
 {
     vkDeviceWaitIdle(g_device);
 
+    ImGui_ImplVulkan_NewFrame();
+    ImGui_ImplSDL3_NewFrame();
+    ImGui::NewFrame();
+
     g_vertexCount = 0;
     g_indexCount = 0;
 }
@@ -1342,8 +1332,6 @@ void Velox::DrawFrame()
     VkResult result = vkAcquireNextImageKHR(g_device, g_swapchain, UINT64_MAX, 
             g_imageAvailableSemaphores[g_currentFrame], VK_NULL_HANDLE, &imageIndex);
 
-    // printf("AQUIREIMAGE(): %s\n", string_VkResult(result));
-
     if (result == VK_ERROR_OUT_OF_DATE_KHR)
     {
         Velox::ReCreateSwapchain();
@@ -1351,7 +1339,7 @@ void Velox::DrawFrame()
     }
     else if (result != VK_SUCCESS)
     {
-        throw std::runtime_error("failed to aquire next image");
+        CheckVkResult(result, "Failed to aquire next swapchain image");
     }
 
     Velox::UpdateUniformBuffer(g_currentFrame);
@@ -1360,6 +1348,7 @@ void Velox::DrawFrame()
 
     vkResetCommandBuffer(g_commandBuffers[g_currentFrame], 0);
 
+    // Draw calls happen here.
     Velox::RecordCommandBuffer(g_commandBuffers[g_currentFrame], imageIndex);
 
     VkSubmitInfo submitInfo {};
@@ -1378,12 +1367,8 @@ void Velox::DrawFrame()
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
 
-    result = vkQueueSubmit(g_graphicsQueue, 1, &submitInfo, g_inFlightFences[g_currentFrame]);
-    if (result != VK_SUCCESS)
-    {
-        printf("ERROR: vkQueueSubmit(): %s\n", string_VkResult(result));
-        throw std::runtime_error("Error submitting to graphics queue");
-    }
+    CheckVkResult(vkQueueSubmit(g_graphicsQueue, 1, &submitInfo, g_inFlightFences[g_currentFrame]),
+        "Failed to submit graphics queue");
 
     VkPresentInfoKHR presentInfo {};
     presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -1404,7 +1389,7 @@ void Velox::DrawFrame()
     }
     else if (result != VK_SUCCESS)
     {
-        throw std::runtime_error("failed to present swapchain image");
+        CheckVkResult(result, "failed to present swapchain image");
     }
 
     g_currentFrame = (g_currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
@@ -1528,14 +1513,20 @@ void Velox::EndSingleTimeCommands(VkCommandBuffer commandBuffer)
 
 void Velox::EndFrame()
 {
-    Velox::DoCopyPass();
-    Velox::DrawFrame();
     // GM: For now we just insert engine stuff here.
     // Mosly just drawing engine UI elements.
-    // Velox::DoFrameEndUpdates();
+    Velox::DoFrameEndUpdates();
 
-    // GM: Finalises and generates ImGui draw data.
-    // ImGui::Render();
+    // Generate ImGui stuff.
+    // imgui_impl_vulkan handles copying their data in recordcommandbuffer().
+    ImGui::Render();
+
+    // Copy our vertex data to GPU.
+    Velox::DoCopyPass();
+
+    // Draw out stuff.
+    Velox::DrawFrame();
+
     g_frameNumber += 1;
 }
 
@@ -1630,9 +1621,11 @@ void Velox::DeInitRenderer()
     vkDestroyBuffer(g_device, g_vertexBuffer, nullptr);
     vkFreeMemory(g_device, g_vertexBufferMemory, nullptr);
 
-
     vkDestroyPipeline(g_device, g_graphicsPipeline, nullptr);
     vkDestroyPipelineLayout(g_device, g_pipelineLayout, nullptr);
+
+    ImGui_ImplVulkan_Shutdown();
+    ImGui_ImplSDL3_Shutdown();
 
     vkDestroyRenderPass(g_device, g_renderPass, nullptr);
 
@@ -1683,12 +1676,8 @@ void Velox::LoadShader(VkShaderModule* shaderModule, const char* filepath, Velox
     shaderModuleCreateInfo.codeSize = fileSize;
     shaderModuleCreateInfo.pCode = reinterpret_cast<const uint32_t*>(shaderCode);
 
-    VkResult result = vkCreateShaderModule(g_device, &shaderModuleCreateInfo, nullptr, shaderModule);
-    if (result != VK_SUCCESS)
-    {
-        printf("ERROR: vkCreateShaderModule(): %s\n", string_VkResult(result));
-        throw std::runtime_error("Failed to create Vulkan ShaderModule");
-    }
+    CheckVkResult(vkCreateShaderModule(g_device, &shaderModuleCreateInfo, nullptr, shaderModule),
+        "Failed to create shader module");
 }
 
 void Velox::CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling,
@@ -1756,7 +1745,7 @@ void Velox::LoadImage(const char* filepath, int index)
         if (convertedSurface == nullptr)
         {
             printf("Error: Loaded image has wrong pixel format and couldn't convert. \
-                    Expected \"SDL_PIXELFORMAT_ABGR888\", \
+                    Expected \"SDL_PIXELFORMAT_ABGR888*\", \
                 found: \"%s\"\n", SDL_GetPixelFormatName(surface->format));
 
             throw std::runtime_error("Loaded image has wrong pixel format.");
@@ -1792,7 +1781,7 @@ void Velox::LoadImage(const char* filepath, int index)
         SDL_DestroySurface(convertedSurface);
 
     Velox::CreateImage(imageWidth, imageHeight,
-        VK_FORMAT_R8G8B8A8_SRGB,
+        VK_FORMAT_R8G8B8A8_UNORM,
         VK_IMAGE_TILING_OPTIMAL,
         VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
@@ -1800,7 +1789,7 @@ void Velox::LoadImage(const char* filepath, int index)
         g_textures[index].imageMemory);
 
     Velox::TransitionImageLayout(g_textures[index].image, 
-        VK_FORMAT_R8G8B8A8_SRGB,
+        VK_FORMAT_R8G8B8A8_UNORM,
         VK_IMAGE_LAYOUT_UNDEFINED,
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
@@ -1808,7 +1797,7 @@ void Velox::LoadImage(const char* filepath, int index)
         static_cast<uint32_t>(imageWidth), static_cast<uint32_t>(imageHeight));
 
     Velox::TransitionImageLayout(g_textures[index].image,
-        VK_FORMAT_R8G8B8A8_SRGB, 
+        VK_FORMAT_R8G8B8A8_UNORM, 
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
@@ -1833,7 +1822,7 @@ int Velox::LoadTextureInternal(const char* filepath)
     Velox::LoadImage(filepath, newIndex);
 
     // Fills imageView.
-    Velox::CreateImageView(newIndex, VK_FORMAT_R8G8B8A8_SRGB);
+    Velox::CreateImageView(newIndex, VK_FORMAT_R8G8B8A8_UNORM);
 
     // Fills sampler.
     Velox::CreateTextureSampler(newIndex);
@@ -1855,7 +1844,7 @@ void Velox::CreateImageView(int index, VkFormat format)
     viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     viewInfo.image = g_textures[index].image;
     viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    viewInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
+    viewInfo.format = format;
     viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     viewInfo.subresourceRange.baseMipLevel = 0;
     viewInfo.subresourceRange.levelCount = 1;

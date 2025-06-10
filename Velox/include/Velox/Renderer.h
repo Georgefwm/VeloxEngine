@@ -8,6 +8,7 @@
 
 #include <SDL3/SDL_events.h>
 #include <vulkan/vulkan_core.h>
+#include <imgui_impl_vulkan.h>
 
 struct SDL_Window;
 
@@ -93,6 +94,8 @@ ivec2 GetWindowSize();
 float GetDisplayScale();
 
 bool InitRenderer();
+
+ImGui_ImplVulkan_InitInfo GetImguiInitInfo();
 
 void CreateInstance();
 

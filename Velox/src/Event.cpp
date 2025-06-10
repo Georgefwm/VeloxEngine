@@ -103,13 +103,13 @@ bool Velox::InterceptEvent(Velox::Event* event)
         
         // SDL window events fall between this range.
         // The renderer only needs to know about window events.
-        if (event->sdlEvent.type > Uint32(0x202) && event->sdlEvent.type < Uint32(0x300))
+        if (event->sdlEvent.type >= Uint32(0x200) && event->sdlEvent.type < Uint32(0x300))
         {
             Velox::ForwardSDLEventToRenderer(&event->sdlEvent);
             return true;
         }
 
-        // Velox::ForwardSDLEvent(event);
+        Velox::ForwardSDLEventToUI(event);
 
         return true;
     }
