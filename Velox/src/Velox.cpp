@@ -1,17 +1,16 @@
 #include "Velox.h"
+#include <PCH.h>
 
 #include "Asset.h"
 #include "Console.h"
 #include "Debug.h"
 #include "UI.h"
-#include "Renderer.h"
+#include "Rendering/Renderer.h"
 
 #include <SDL3/SDL.h>
 
 #include <imgui.h>
 #include <imgui_impl_sdl3.h>
-
-#include <cstdio>
 
 bool g_quitRequested = false;
 

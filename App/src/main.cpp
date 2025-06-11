@@ -1,7 +1,7 @@
 #include "Asset.h"
 #include "Event.h"
 
-#include "Renderer.h"
+#include "Rendering/Renderer.h"
 #include "Velox.h"
 #include "Entity.h"
 #include "Primitive.h"
@@ -34,11 +34,13 @@ void UpdateGame(float deltaTime)
 
 void DoRenderingStuff()
 {
-    Velox::DrawRectangle(vec4(200, 200, 500, 200), vec4(1.0, 0.0, 0.0, 1.0), -1); // Untextured
-    Velox::DrawRectangle(vec4(200, 500, 500, 200), vec4(1.0, 1.0, 1.0, 1.0),  0); // Textured
+    Velox::DrawRectangle(vec4(200, 200, 200, 200), vec4(1.0, 0.0, 0.0, 1.0), -1); // Untextured
+    Velox::DrawRectangle(vec4(200, 500, 200, 200), vec4(1.0, 1.0, 1.0, 1.0),  0); // Textured
 
     Velox::Entity* e = g_entityManager.getMut(e1);
     e->Draw(true);
+
+    Velox::DrawRectangle(vec4(700, 200, 200, 200), vec4(1.0, 1.0, 1.0, 1.0),  0); // Textured
 
     ImGui::ShowDemoWindow();
 }
@@ -51,7 +53,7 @@ void run()
     e1 = g_entityManager.createEntity();
     Velox::Entity* e = g_entityManager.getMut(e1);
     
-    e->position = vec3(100, 100, 0);
+    e->position = vec3(100, 300, 0);
     e->size = vec2(100, 100);
     e->textureIndex = Velox::GetAssetManager()->LoadTexture("star.png");
     e->flags |= Velox::EntityFlags::Visible;

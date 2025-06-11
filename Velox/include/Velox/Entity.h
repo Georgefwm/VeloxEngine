@@ -1,8 +1,5 @@
 #pragma once
 
-#include "Core.h"
-
-#include <cstdint>
 #include <utility>  // pair
 
 constexpr size_t MAX_ENTITIES = 1024;

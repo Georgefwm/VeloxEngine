@@ -1,4 +1,5 @@
 #include "ConsoleCommands.h"
+#include <PCH.h>
 
 #include "Console.h"
 #include "Velox.h"

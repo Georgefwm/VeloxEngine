@@ -1,6 +1,7 @@
 #include "UI.h"
+#include <PCH.h>
 
-#include "Renderer.h"
+#include "Rendering/Renderer.h"
 #include "Event.h"
 
 #include <SDL3/SDL.h>
@@ -9,7 +10,6 @@
 #include "imgui_impl_sdl3.h"
 #include "imgui_impl_vulkan.h"
 
-#include <cstdio>
 
 void Velox::InitUI()
 {

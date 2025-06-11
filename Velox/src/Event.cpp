@@ -1,7 +1,8 @@
 #include "Event.h"
+#include <PCH.h>
 
 #include "Console.h"
-#include "Renderer.h"
+#include "Rendering/Renderer.h"
 #include "SDL3/SDL_events.h"
 #include "UI.h"
 #include "Velox.h"

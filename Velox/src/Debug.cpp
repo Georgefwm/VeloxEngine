@@ -1,7 +1,7 @@
 #include "Debug.h"
+#include <PCH.h>
 
 #include "Asset.h"
-#include "SDL3/SDL_timer.h"
 #include "Util.h"
 #include "imgui.h"
 
@@ -40,7 +40,7 @@ void Velox::DrawPerformanceStats()
 
         validCount += 1;
 
-        if (sumToSecond <= SDL_MS_PER_SECOND)
+        if (sumToSecond <= MS_PER_SECOND)
         {
             sumToSecond += value;
             fps += 1;

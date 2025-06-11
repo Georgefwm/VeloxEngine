@@ -1,9 +1,6 @@
 #include "Arena.h"
+#include <PCH.h>
 
-#include <cassert>
-#include <cstddef>
-#include <cstdio>
-#include <cstdlib>
 
 Velox::Arena::Arena(size_t bytes)
     : size(bytes), buffer(static_cast<char*>(malloc(bytes))), offset(0)

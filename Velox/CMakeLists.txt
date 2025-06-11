@@ -25,9 +25,7 @@ target_include_directories(
     ${Vulkan_INCLUDE_DIRS}
 )
 
-# We can worry about PCH setup when API is a bit more concrete :)
-# include(PrecompiledHeaders)
-# target_precompile_headers(Velox PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/Velox/EnginePCH.h)
+target_precompile_headers(Velox PUBLIC "include/Velox/PCH.h")
 
 # Libs from /vendor/CMakeLists.txt
 target_link_libraries(Velox PUBLIC SDL3::SDL3 SDL3_image::SDL3_image ImGui glm::glm)

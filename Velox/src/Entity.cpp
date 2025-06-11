@@ -1,7 +1,7 @@
 #include "Entity.h"
-#include "Primitive.h"
+#include <PCH.h>
 
-#include <cassert>
+#include "Primitive.h"
 
 //
 // Entity

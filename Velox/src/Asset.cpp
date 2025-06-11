@@ -1,5 +1,8 @@
 #include "Asset.h"
-#include "Renderer.h"
+#include <PCH.h>
+
+#include "Arena.h"
+#include "Rendering/Renderer.h"
 
 static Velox::Arena g_assetStorage(1024);
 static Velox::AssetManager g_assetManager {};

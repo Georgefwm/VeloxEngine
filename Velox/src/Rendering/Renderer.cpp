@@ -1,12 +1,14 @@
 #include "Velox.h"
+#include <PCH.h>
+
 #ifndef VK_EXT_DEBUG_REPORT_EXTENSION_NAME
 #define VK_EXT_DEBUG_REPORT_EXTENSION_NAME "VK_EXT_debug_report"
 #endif
 
-#include "Renderer.h"
+#include "Rendering/Renderer.h"
 #include "Arena.h"
 
-#include <glm/glm.hpp>
+#include "glm/common.hpp"
 #include <SDL3/SDL_filesystem.h>
 #include <SDL3/SDL_pixels.h>
 #include <SDL3/SDL_video.h>
@@ -17,13 +19,10 @@
 #include <vulkan/vulkan_core.h>
 #include <vulkan/vk_enum_string_helper.h> 
 
-#include <cstddef>
-#include <cstdio>
 #include <fstream>
 #include <map>
 #include <set>
 #include <stdexcept>
-#include <vector>
 
 #ifdef NDEBUG
     constexpr bool enableValidationLayers = false;
@@ -337,6 +336,9 @@ void Velox::PickPhysicalDevice()
         int score = Velox::RateDeviceSuitability(device);
         candidates.insert(std::make_pair(score, device));
     }
+
+    if (candidates.size() <= 0)
+        throw std::runtime_error("Failed to find a suitable GPU");
 
     // Check if the best candidate is suitable at all.
     if (candidates.rbegin()->first > 0)
@@ -1080,7 +1082,6 @@ void Velox::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageInd
     renderPassBeginInfo.pClearValues = &clearColor;
 
     vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, g_graphicsPipeline);
 
     VkViewport viewport {};
     viewport.x = 0.0f;
@@ -1095,6 +1096,8 @@ void Velox::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageInd
     scissor.offset = { 0, 0 };
     scissor.extent = g_swapchainExtent;
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, g_graphicsPipeline);
 
     VkBuffer vertexBuffers[] = { g_vertexBuffer };
     VkDeviceSize offsets[] = { 0 };

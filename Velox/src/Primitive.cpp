@@ -1,6 +1,7 @@
 #include "Primitive.h"
+#include <PCH.h>
 
-#include "Renderer.h"
+#include "Rendering/Renderer.h"
 
 
 void Velox::DrawRectangle(vec4 rectangle, vec4 color, int textureIndex)

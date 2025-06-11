@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Core.h"
-
 namespace Velox {
 
 // Texture index of -1 signifies "no texture, only use color".
