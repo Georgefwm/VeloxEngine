@@ -10,8 +10,9 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(ImGui)
 
-add_library(ImGui)
 find_package(Vulkan REQUIRED)
+
+add_library(ImGui STATIC)
 
 target_include_directories(ImGui
     PUBLIC
