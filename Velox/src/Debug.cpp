@@ -17,12 +17,12 @@ void Velox::DrawPerformanceStats()
         Velox::UpdateFrameHistory();
     
     int count = 0;
-    int validCount = 0;
+    int validCount = 0; // Count w/ non-zero values (at the start of recording not all are set).
     float max = 0;
     float min = 10000;
     float sum = 0;
     float sumToSecond = 0;
-    int i = g_currentIndex; // Reverse order indexing.
+    int i = g_currentIndex;
     int fps = 0;
     while (count <= FRAME_HISTORY_COUNT)
     {
@@ -43,7 +43,7 @@ void Velox::DrawPerformanceStats()
         if (sumToSecond <= SDL_MS_PER_SECOND)
         {
             sumToSecond += value;
-            fps++;
+            fps += 1;
         }
 
         if (value > max)
