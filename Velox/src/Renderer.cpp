@@ -150,7 +150,7 @@ float Velox::GetDisplayScale()
     return SDL_GetWindowDisplayScale(g_window);
 }
 
-Velox::InitRenderer()
+void Velox::InitRenderer()
 {
     if (enableValidationLayers && !CheckValidationLayerSupport())
         throw std::runtime_error("validation layers requested, but not available!");
