@@ -24,8 +24,10 @@ struct AssetManager {
         { "default_texture", 0 },
     };
 
-    // Returns default texture on failure.
+    // Get texture, load if it hasn't been yet.
     int LoadTexture(const char* filepath);
+    // Get texture, dont try to load if it hasn't been yet.
+    int GetTextureIndex(const char* filepath);
 
     void DeInit();
 };

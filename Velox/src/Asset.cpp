@@ -30,6 +30,18 @@ int Velox::AssetManager::LoadTexture(const char* filepath)
     return newIndex;
 }
 
+int Velox::AssetManager::GetTextureIndex(const char* filepath)
+{
+    for (auto pair : textureMap)
+    {
+        if (strcmp(pair.first, filepath) == 0)
+            return pair.second;
+    }
+
+    printf("WARNING: Texture \"%s\" is not loaded\n", filepath);
+    return 0;
+}
+
 void Velox::AssetManager::DeInit()
 {
 
