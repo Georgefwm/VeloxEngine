@@ -1,7 +1,7 @@
 #include "Asset.h"
 #include "Renderer.h"
 
-static Velox::Arena g_assetStorage(10000);
+static Velox::Arena g_assetStorage(1024);
 static Velox::AssetManager g_assetManager {};
 
 char defaultTexture[] = "missing_texture.png";
@@ -60,7 +60,7 @@ void Velox::InitAssets()
 
 void Velox::GetAssetMemoryUsage(size_t* used, size_t* capacity)
 {
-    *used     = 1;
-    *capacity = 2;
+    if (used)     *used     = g_assetStorage.offset;
+    if (capacity) *capacity = g_assetStorage.size;
 }
 

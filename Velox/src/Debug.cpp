@@ -128,7 +128,7 @@ void Velox::DrawMemoryUsageStats() {
     size_t used, capacity;
     Velox::GetAssetMemoryUsage(&used, &capacity);
 
-    float percentage = ((float)used / capacity);
+    float percentage = (static_cast<float>(used) / static_cast<float>(capacity));
 
     ImGui::Text("Bytes used / allocated");
     ImGui::Text("Assets: %zu / %zu", used, capacity);
@@ -136,7 +136,7 @@ void Velox::DrawMemoryUsageStats() {
 
     ImGui::Text("percentage:");
 
-    char buf[32];
+    char buf[64];
     sprintf(buf, "%c%.1f", '%', percentage * 100);
     ImGui::ProgressBar(percentage, ImVec2(-1.f, 0.f), buf);
     ImGui::Spacing();
