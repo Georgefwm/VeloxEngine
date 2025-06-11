@@ -8,20 +8,21 @@
 constexpr size_t FRAME_HISTORY_COUNT = 1000;
 
 static float g_frameTimeHistory[FRAME_HISTORY_COUNT];
-static int   g_currentIndex    = FRAME_HISTORY_COUNT;
-static bool  g_capturingPaused = false;
+static int  g_currentIndex    = FRAME_HISTORY_COUNT;
+static bool g_capturingPaused = false;
 
 void Velox::DrawPerformanceStats()
 {
     if (!g_capturingPaused)
         Velox::UpdateFrameHistory();
     
-    float count = 0;
+    int count = 0;
+    int validCount = 0;
     float max = 0;
     float min = 10000;
     float sum = 0;
     float sumToSecond = 0;
-    int i = g_currentIndex;
+    int i = g_currentIndex; // Reverse order indexing.
     int fps = 0;
     while (count <= FRAME_HISTORY_COUNT)
     {
@@ -32,10 +33,12 @@ void Velox::DrawPerformanceStats()
 
         float value = g_frameTimeHistory[i];
 
-        i = (i - 1) % FRAME_HISTORY_COUNT;
+        i = (i + 1) % FRAME_HISTORY_COUNT;
 
         if (value <= 0)
             continue;
+
+        validCount += 1;
 
         if (sumToSecond <= SDL_MS_PER_SECOND)
         {
@@ -52,7 +55,7 @@ void Velox::DrawPerformanceStats()
         sum += value;    
     }
 
-    float average = sum / FRAME_HISTORY_COUNT;
+    float average = sum / validCount;
 
     // Draw UI.
     ImGuiWindowFlags flags = 0;
@@ -150,7 +153,9 @@ void Velox::UpdateFrameHistory()
     // GM: Wrap around to start.
     g_currentIndex -= 1;
     if (g_currentIndex < 0)
-            g_currentIndex = FRAME_HISTORY_COUNT;
+    {
+        g_currentIndex = FRAME_HISTORY_COUNT;
+    }
 
     g_frameTimeHistory[g_currentIndex] = Velox::DeltaTimeMS();
 }
