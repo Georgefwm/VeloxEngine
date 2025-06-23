@@ -21,8 +21,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    
-    - name: Install Ninja
     - uses: seanmiddleditch/gha-setup-ninja@v6
       
     - name: Install dependancies
