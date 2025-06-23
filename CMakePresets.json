@@ -4,7 +4,6 @@
     {
       "name": "Debug",
       "displayName": "Debug",
-      "preferredGenerator": "Ninja",
       "binaryDir": "${sourceDir}/build/bin/debug",
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
@@ -14,7 +13,6 @@
     {
       "name": "Release",
       "displayName": "Release",
-      "preferredGenerator": "Ninja",
       "binaryDir": "${sourceDir}/build/bin/release",
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
@@ -24,7 +22,6 @@
     {
       "name": "RelWithDebugInfo",
       "displayName": "Release with Debug information",
-      "preferredGenerator": "Ninja",
       "binaryDir": "${sourceDir}/build/bin/relwithdebuginfo",
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
