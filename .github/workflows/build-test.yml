@@ -21,11 +21,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-
+    
+    - name: Install Ninja
+      run: winget install Ninja-build.Ninja
+      
     - name: Install dependancies
       run: vcpkg install
 
     - name: Build
-      # Build your program with the given configuration
       run: ./build
 
