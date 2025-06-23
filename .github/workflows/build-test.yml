@@ -28,6 +28,6 @@ jobs:
     #- name: Install dependancies
     #  run: vcpkg install
 
-    #- name: Build
-    #  run: ./build
+    - name: Build
+      run: ./build
 
