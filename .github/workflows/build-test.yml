@@ -23,9 +23,15 @@ jobs:
     - uses: actions/checkout@v4
     - uses: lukka/get-cmake@latest   
   
-    #- name: Install dependancies
-    #  run: vcpkg install
+    - name: Install dependancies
+      run: vcpkg install
+
+    - name: Configure cmake
+      run: cmake --preset=Debug -B build -W no-deprecated
 
     - name: Build
-      run: ./build
+      run: cmake --build ${{github.workspace}}/build
+
+    #- name: Build
+    #  run: ./build
 
