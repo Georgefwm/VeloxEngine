@@ -1,7 +1,7 @@
 @echo off
 
 echo Generating ninja build...
-cmake --preset=Debug -B build -Wno-deprecated
+cmake --preset=Debug -Bbuild -GNinja -Wno-deprecated
 if %errorlevel% neq 0 exit /b %errorlevel%
 echo Done
 
