@@ -1,7 +1,13 @@
 #version 460
 
-layout(binding=0) uniform UniformBufferObject {
-    ivec2 screen_resolution;
+layout(std140, binding = 0) uniform ubo
+{
+    mat4 u_projection;
+    mat4 u_view;
+    ivec2 u_resolution;    // Add resolution as ivec2 (2 ints)
+    // Padding for std140 alignment: ivec2 is 2 ints (8 bytes),
+    // std140 requires 16-byte alignment, so add padding:
+    int padding[2];
 } ubo;
 
 layout(location=0) in vec3 in_position;
@@ -18,7 +24,7 @@ void main()
 {
     // Convert pixel coords to shader coords.
     vec2 normalised_position = ((in_position.xy / ubo.screen_resolution.xy) * 2.0) - 1.0;
-
+    
     // Leave the z value as is.
     gl_Position = vec4(normalised_position, in_position.z, 1.0f);
 

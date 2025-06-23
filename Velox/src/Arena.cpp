@@ -45,3 +45,8 @@ void Velox::Arena::Reset()
     offset = 0;
 }
 
+void Velox::Arena::PrintUsage()
+{
+    printf("Arena using %zu / %zu bytes\n", offset, size);
+}
+

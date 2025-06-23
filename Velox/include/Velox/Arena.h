@@ -20,6 +20,7 @@ struct Arena {
     }
 
     void Reset();
+    void PrintUsage();
 };
 
 }

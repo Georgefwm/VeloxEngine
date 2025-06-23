@@ -1,6 +1,8 @@
 CmakeFiles/
 build/
 .cache/
-ImGui.ini
+vcpkg_installed/
 .vs
 .vscode
+ImGui.ini
+CMakeUserPresets.json

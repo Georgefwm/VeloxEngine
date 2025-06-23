@@ -4,8 +4,9 @@
 #include "Asset.h"
 #include "Console.h"
 #include "Debug.h"
+#include "Text.h"
 #include "UI.h"
-#include "Rendering/Renderer.h"
+#include "Renderer.h"
 
 #include <SDL3/SDL.h>
 
@@ -24,8 +25,9 @@ void Velox::Init()
         return;
     }
 
-    Velox::InitRenderer();
     Velox::InitAssets();
+    Velox::InitRenderer();
+    Velox::InitText();
     Velox::InitUI();
     Velox::InitConsole();
 }
@@ -58,6 +60,8 @@ bool Velox::QuitRequested()
 
 void Velox::DeInit()
 {
+    Velox::DeInitAssets(); // Must be cleaned up before GLContext is destroyed (in DeInitRenderer()).
+
     Velox::DeInitRenderer();
     Velox::DeInitUI();
 

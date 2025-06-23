@@ -1,14 +1,14 @@
 #include "UI.h"
 #include <PCH.h>
 
-#include "Rendering/Renderer.h"
+#include "Renderer.h"
 #include "Event.h"
 
 #include <SDL3/SDL.h>
 
 #include <imgui.h>
 #include "imgui_impl_sdl3.h"
-#include "imgui_impl_vulkan.h"
+#include "imgui_impl_opengl3.h"
 
 
 void Velox::InitUI()
@@ -20,14 +20,11 @@ void Velox::InitUI()
 
     ImGui::StyleColorsDark();
 
-    SDL_Window* window    = Velox::GetWindow();
+    SDL_Window* window = Velox::GetWindow();
+    SDL_GLContext* glContext = Velox::GetGLContext();
 
-    ImGui_ImplSDL3_InitForVulkan(window);
-    ImGui_ImplVulkan_InitInfo init_info = Velox::GetImguiInitInfo();
-    ImGui_ImplVulkan_Init(&init_info);
-
-    // GM: Account for display scaling!
-    // (I can read the text now without putting my face in the screen)
+    ImGui_ImplSDL3_InitForOpenGL(window, glContext);
+    ImGui_ImplOpenGL3_Init();
     io.FontGlobalScale = Velox::GetDisplayScale();
 }
 
@@ -43,5 +40,7 @@ ImDrawData* Velox::GetUIDrawData()
 
 void Velox::DeInitUI()
 {
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();
 }

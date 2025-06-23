@@ -2,35 +2,35 @@ cmake_minimum_required(VERSION 3.16)
 
 project(TestProject
     VERSION 0.1.0
-    LANGUAGES CXX
+    LANGUAGES CXX C
 )
 
-# Set unified output directories for Visual Studio (and others)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
-
-# Also set per-configuration outputs (important for multi-config generators like Visual Studio)
-foreach(OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES})
-    string(TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIG_UPPER)
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${OUTPUTCONFIG_UPPER} "${CMAKE_BINARY_DIR}/bin")
-    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${OUTPUTCONFIG_UPPER} "${CMAKE_BINARY_DIR}/lib")
-    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${OUTPUTCONFIG_UPPER} "${CMAKE_BINARY_DIR}/lib")
-endforeach()
+option(VELOX_BUILD_TESTS "Generate test executable" OFF)
 
 # Generate compile_commands.json which LSPs use.
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+if (NOT CMAKE_BUILD_TYPE STREQUAL "Release")
+    set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+endif()
 
 # Sets C++ standard.
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-# Sets valid build configs.
-set(CMAKE_CONFIGURATION_TYPES "Debug;Release")
+if (NOT CMAKE_BUILD_TYPE STREQUAL "Release")
+    add_compile_definitions(_ITERATOR_DEBUG_LEVEL=2 _HAS_ITERATOR_DEBUGGING=1)
+endif()
 
-# Set default build to debug (generates pdb file).
-set(CMAKE_BUILD_MODE "Debug")
-set(CMAKE_DEBUG_POSTFIX "-g")
+set(CMAKE_MSVC_RUNTIME_LIBRARY_DEBUG "MultiThreadedDebugDLL")
+set(CMAKE_MSVC_RUNTIME_LIBRARY_RELEASE "MultiThreadedDLL")
+
+# Add iterator debug macros only for Debug config
+set(CMAKE_CONFIGURATION_TYPES "Debug;Release;RelWithDebugInfo")
+foreach(OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES})
+    string(TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIG_UPPER)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${OUTPUTCONFIG_UPPER} "${CMAKE_BINARY_DIR}/bin/${OUTPUTCONFIG}")
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${OUTPUTCONFIG_UPPER} "${CMAKE_BINARY_DIR}/bin/${OUTPUTCONFIG}")
+    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${OUTPUTCONFIG_UPPER} "${CMAKE_BINARY_DIR}/lib/${OUTPUTCONFIG}")
+endforeach()
 
 # Thanks Microsoft (:
 add_compile_options("-D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH")
@@ -41,6 +41,6 @@ add_subdirectory(vendor)
 add_subdirectory(Velox)
 add_subdirectory(App)
 
-if (BUILD_VELOX_TESTS)
+if (VELOX_BUILD_TESTS)
     add_subdirectory(tests)
 endif()

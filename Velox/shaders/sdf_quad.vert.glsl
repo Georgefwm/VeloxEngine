@@ -18,7 +18,7 @@ void main()
 {
     // Convert pixel coords to shader coords.
     vec2 normalised_position = ((in_position.xy / u_resolution.xy) * 2.0) - 1.0;
-
+    
     // Leave the z value as is.
     gl_Position = vec4(normalised_position, in_position.z, 1.0f);
 

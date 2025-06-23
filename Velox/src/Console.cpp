@@ -3,7 +3,7 @@
 
 #include "ConsoleCommands.h"
 #include "Util.h"
-#include "Rendering/Renderer.h"
+#include "Renderer.h"
 
 #include <glm/common.hpp>  // clamp()
 #include <imgui.h>

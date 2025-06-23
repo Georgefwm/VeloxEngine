@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
 
-find_package(Vulkan REQUIRED)
-
 # Just regex all files in these dirs for simplicity.
 file(GLOB_RECURSE VELOX_SOURCES 
     ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
@@ -22,13 +20,24 @@ target_include_directories(
     Velox
     PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include/Velox
-    ${Vulkan_INCLUDE_DIRS}
 )
 
 target_precompile_headers(Velox PUBLIC "include/Velox/PCH.h")
 
-# Libs from /vendor/CMakeLists.txt
-target_link_libraries(Velox PUBLIC SDL3::SDL3 SDL3_image::SDL3_image ImGui glm::glm)
+find_package(OpenGL REQUIRED)
+find_package(SDL3 CONFIG REQUIRED)
+find_package(SDL3_image CONFIG REQUIRED)
+find_package(glm CONFIG REQUIRED)
 
-target_link_libraries(Velox PRIVATE Vulkan::Vulkan)
+# Libs from /vendor/CMakeLists.txt
+target_link_libraries(Velox PUBLIC
+    SDL3::SDL3
+    SDL3_image::SDL3_image
+    ImGui
+    glm::glm
+    glad_using_ver
+    msdf-atlas-gen::msdf-atlas-gen
+)
+
+target_link_libraries(Velox PRIVATE OpenGL::GL)
 

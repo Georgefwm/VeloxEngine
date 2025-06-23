@@ -10,8 +10,6 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(ImGui)
 
-find_package(Vulkan REQUIRED)
-
 add_library(ImGui STATIC)
 
 target_include_directories(ImGui
@@ -30,7 +28,10 @@ target_sources(
     ${imgui_SOURCE_DIR}/imgui_tables.cpp
     ${imgui_SOURCE_DIR}/imgui_widgets.cpp
     ${imgui_SOURCE_DIR}/backends/imgui_impl_sdl3.cpp
-    ${imgui_SOURCE_DIR}/backends/imgui_impl_vulkan.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
 )
 
-target_link_libraries(ImGui PRIVATE SDL3::SDL3 Vulkan::Vulkan)
+find_package(SDL3 CONFIG REQUIRED)
+find_package(OpenGL REQUIRED)
+
+target_link_libraries(ImGui PRIVATE SDL3::SDL3 OpenGL::GL)

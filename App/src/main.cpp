@@ -1,7 +1,8 @@
 #include "Asset.h"
 #include "Event.h"
 
-#include "Rendering/Renderer.h"
+#include "Renderer.h"
+#include "Text.h"
 #include "Velox.h"
 #include "Entity.h"
 #include "Primitive.h"
@@ -11,7 +12,10 @@
 #include <iostream>
 #include <ostream>
 
-Velox::EntityManager g_entityManager;;
+Velox::EntityManager g_entityManager;
+
+unsigned int g_fontShaderId;
+Velox::Font* g_font;
 
 Velox::EntityHandle e1;
 float direction = 1.0;
@@ -26,6 +30,7 @@ void UpdateGame(float deltaTime)
     Velox::Entity* e = g_entityManager.getMut(e1);
 
     e->position.x += (300 * direction) * deltaTime;
+    e->rotation += (40 * direction) * deltaTime;
 
     ivec2 windowSize = Velox::GetWindowSize();
     if (e->position.x > windowSize.x * 0.95) direction = -1.0;
@@ -34,13 +39,22 @@ void UpdateGame(float deltaTime)
 
 void DoRenderingStuff()
 {
-    Velox::DrawRectangle(vec4(200, 200, 200, 200), vec4(1.0, 0.0, 0.0, 1.0), -1); // Untextured
-    Velox::DrawRectangle(vec4(200, 500, 200, 200), vec4(1.0, 1.0, 1.0, 1.0),  0); // Textured
+    Velox::DrawRectangle(vec4(200, 200, 200, 200), vec4(1.0, 0.0, 0.0, 1.0), 0, 0); // Untextured
+    Velox::DrawRectangle(vec4(200, 500, 200, 200), vec4(1.0, 1.0, 1.0, 1.0), 0, 0); // Textured
 
     Velox::Entity* e = g_entityManager.getMut(e1);
     e->Draw(true);
 
-    Velox::DrawRectangle(vec4(700, 200, 200, 200), vec4(1.0, 1.0, 1.0, 1.0),  0); // Textured
+    // msdf font atlas
+    Velox::DrawRectangle(vec4(200, 800, 200, 200), vec4(1.0), 0, g_font->textureId, g_fontShaderId);
+
+    Velox::PushFont("martius.ttf");
+
+    Velox::DrawText("Hello Sailor!", { vec3(700, 500, 0), 300 });
+
+    Velox::PopFont();
+
+    Velox::DrawText("Hello Sailor!", { vec3(700, 400, 0), 100 });
 
     ImGui::ShowDemoWindow();
 }
@@ -55,13 +69,18 @@ void run()
     
     e->position = vec3(100, 300, 0);
     e->size = vec2(100, 100);
-    e->textureIndex = Velox::GetAssetManager()->LoadTexture("star.png");
+    e->textureId = Velox::GetAssetManager()->LoadTexture("star.png");
     e->flags |= Velox::EntityFlags::Visible;
 
-    // for (auto [handle, entity] : entityManager.iter())
-    // {
-    //     printf("Iterator test 1: %i\n", entity->test);
-    // }
+    // g_font = Velox::GetAssetManager()->GetFontRef("spicy_kebab.ttf");
+    g_font = Velox::GetAssetManager()->LoadFont("martius.ttf");
+    Velox::PushFont("martius.ttf");
+
+    if (g_font == nullptr)
+        printf("font is null\n");
+
+    //g_fontShaderId = Velox::GetAssetManager()->GetShaderProgramID("sdf_quad");
+    g_fontShaderId = 0;
 
     while (!Velox::QuitRequested())
     {

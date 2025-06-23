@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Renderer.h"
 #include <utility>  // pair
 
 constexpr size_t MAX_ENTITIES = 1024;
@@ -38,7 +39,7 @@ struct Entity {
 
     // Rendering
     vec2 size = vec4(10.0);
-    int textureIndex = 0;
+    unsigned int textureId = 0;
     vec4 colorOverride = vec4(1.0);
 
     bool HasFlag(EntityFlags flag) const { return (flags & flag) != 0; }

@@ -9,9 +9,12 @@
 #include <cstddef>  // x_t types e.g. uint32_t
 #include <cstdio>   // printf()
 #include <cassert>  // assert()
+#include <stdexcept>
 
 // vendor libs
 // #include <SDL3/SDL.h>
+#include <glm/common.hpp>
+#include <glm/trigonometric.hpp>
 
 // typedefs
 #include <Types.h>

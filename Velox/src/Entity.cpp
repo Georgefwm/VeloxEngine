@@ -19,7 +19,7 @@ void Velox::Entity::Draw(bool centerOrigin)
         area.y -= (size.y / 2);
     }
 
-    Velox::DrawRectangle(area, colorOverride, textureIndex);
+    Velox::DrawRectangle(area, colorOverride, rotation, textureId);
 }
 
 //
