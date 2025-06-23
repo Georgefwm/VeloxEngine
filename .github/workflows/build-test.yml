@@ -21,9 +21,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - uses: seanmiddleditch/gha-setup-ninja@v6
+    
     - name: Test if ninja available
       run: ninja --version
+
+    - name: Add Ninja to PATH
+      run: echo "C:\ProgramData\chocolatey\bin" >> $GITHUB_PATH
       
     #- name: Install dependancies
     #  run: vcpkg install
