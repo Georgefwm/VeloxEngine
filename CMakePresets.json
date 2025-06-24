@@ -2,31 +2,37 @@
   "version": 6,
   "configurePresets": [
     {
-      "name": "Debug",
-      "displayName": "Debug",
-      "binaryDir": "${sourceDir}/build/bin/debug",
+      "name": "x64Base",
+      "hidden": true,
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "generator": "Ninja",
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-        "CMAKE_BUILD_TYPE": "Debug"
+        "CMAKE_BUILD_TYPE": "${presetName}"
       }
+    },
+    {
+      "name": "Debug",
+      "displayName": "Debug",
+      "inherits": "x64Base"
     },
     {
       "name": "Release",
       "displayName": "Release",
-      "binaryDir": "${sourceDir}/build/bin/release",
-      "cacheVariables": {
-        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-        "CMAKE_BUILD_TYPE": "Release"
-      }
+      "inherits": "x64Base"
     },
     {
       "name": "RelWithDebugInfo",
       "displayName": "Release with Debug information",
-      "binaryDir": "${sourceDir}/build/bin/relwithdebuginfo",
-      "cacheVariables": {
-        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-        "CMAKE_BUILD_TYPE": "RelWithDebugInfo"
-      }
+      "inherits": "x64Base"
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "app-Debug",
+      "displayName": "App Debug Build",
+      "configurePreset": "Debug",
+      "configuration": "Debug"
     }
   ]
 }

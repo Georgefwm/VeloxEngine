@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Renderer.h"
 #include <utility>  // pair
 
 constexpr size_t MAX_ENTITIES = 1024;

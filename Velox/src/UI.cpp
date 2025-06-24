@@ -1,7 +1,7 @@
 #include "UI.h"
 #include <PCH.h>
 
-#include "Renderer.h"
+#include "Rendering/Renderer.h"
 #include "Event.h"
 
 #include <SDL3/SDL.h>

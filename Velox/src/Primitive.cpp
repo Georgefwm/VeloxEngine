@@ -1,7 +1,7 @@
 #include "Primitive.h"
 #include <PCH.h>
 
-#include "Renderer.h"
+#include "Rendering/Renderer.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 

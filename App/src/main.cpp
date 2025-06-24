@@ -1,7 +1,7 @@
 #include "Asset.h"
 #include "Event.h"
 
-#include "Renderer.h"
+#include "Rendering/Renderer.h"
 #include "Text.h"
 #include "Velox.h"
 #include "Entity.h"

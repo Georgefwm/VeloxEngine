@@ -1,11 +1,14 @@
 {
-    "dependencies": [
-        "sdl3",
-        {
-            "name": "sdl3-image",
-            "features": ["png"]
-        },
-        "glm",
-        "msdfgen"
-    ]
+  "dependencies": [
+    "sdl3",
+    {
+      "name": "sdl3-image",
+      "features": [
+        "png"
+      ]
+    },
+    "glm",
+    "msdfgen"
+  ],
+  "builtin-baseline": "0cf34c184ce990471435b5b9c92edcf7424930b1"
 }

@@ -6,7 +6,7 @@
 #include "Debug.h"
 #include "Text.h"
 #include "UI.h"
-#include "Renderer.h"
+#include "Rendering/Renderer.h"
 
 #include <SDL3/SDL.h>
 

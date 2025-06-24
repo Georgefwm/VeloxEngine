@@ -1,4 +1,4 @@
-#include "Renderer.h"
+#include "Rendering/Renderer.h"
 #include <PCH.h>
 
 #include "Arena.h"
@@ -496,8 +496,8 @@ void Velox::Draw(std::vector<Velox::Vertex>& vertices, std::vector<GLuint>& indi
     command.indexOffset = g_indexCount;
     command.numIndices = indices.size();
 
-    command.texture.id = textureId <= 0 ? g_errorTexture.id         : textureId;
-    command.shader.id  = shaderId  <= 0 ? g_defaultShaderProgram.id : shaderId;
+    command.texture.id = textureId == 0 ? g_errorTexture.id         : textureId;
+    command.shader.id  = shaderId  == 0 ? g_defaultShaderProgram.id : shaderId;
 
     for (int i = 0; i < indices.size(); i++)
         indices[i] += g_vertexCount;

@@ -2,7 +2,7 @@
 #include <PCH.h>
 
 #include "Arena.h"
-#include "Renderer.h"
+#include "Rendering/Renderer.h"
 #include "msdf-atlas-gen/types.h"
 #include <SDL3/SDL_filesystem.h>
 #include <SDL3/SDL_oldnames.h>
