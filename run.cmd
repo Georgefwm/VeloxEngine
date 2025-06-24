@@ -1,3 +1,3 @@
 @echo off
 
-.\build\Debug\bin\App.exe
+.\build\bin\Debug\App.exe
