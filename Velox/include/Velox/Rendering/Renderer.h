@@ -1,6 +1,5 @@
 #pragma once
 
-#include <glad/gl.h>
 #include <SDL3/SDL_events.h>
 
 struct SDL_Window;
@@ -16,25 +15,45 @@ struct UniformBufferObject {
     i32   padding[2]; // padding to match GLSL std140 layout
 };
 
-struct Vertex {
+struct TextDrawInfo {
+    vec3 position = vec3(100.0, 100.0, 0);
+    u32 textSize = 48;
+    vec4 color = vec4(1.0);
+};
+
+struct TextureVertex {
     vec3 position;
     vec4 color;
     vec2 uv;
 };
 
+struct LineVertex {
+    vec3 position;
+    vec4 color;
+};
+
+struct FontVertex {
+    vec3 position;
+    vec4 color;
+    vec2 uv;
+    vec2 outlineColor;
+};
+
 struct Texture {
-    unsigned int id;
+    u32 id;
     void Use();
 };
 
 struct ShaderProgram {
-    unsigned int id;
+    u32 id;
     void Use();
 };
 
+struct Pipeline;
 struct DrawCommand {
-    ShaderProgram shader;
-    Texture       texture;
+    Velox::Pipeline* pipeline;
+    ShaderProgram    shader;
+    Texture          texture;
     u32 indexOffset = 0;
     u32 numIndices  = 0;
 };
@@ -60,14 +79,21 @@ void DoCopyPass();
 
 void DoRenderPass();
 
-ShaderProgram LoadShaderProgram(const char* vertexFilepath, const char* fragmentFilepath);
-
 void DeInitRenderer();
 
-Velox::Texture LoadTexture(const char* filepath, Velox::Arena* allocator);
+void DrawQuad(const mat4& transform, const vec4& color,
+        const u32& textureID, const u32& shaderID = 0);
 
-void Draw(std::vector<Velox::Vertex>& vertices, std::vector<GLuint>& indices,
-        unsigned int textureId, unsigned int shaderId = 0);
+void DrawQuad(const vec3& position, const vec2& size, const vec4& color,
+        const u32& textureID = 0, const u32& shaderID = 0);
+
+void DrawLine(const vec3& p0, const vec3& p1, const vec4& color);
+
+void DrawRect(const vec3& position, const vec2& size, const vec4& color);
+
+void DrawText(const char* text, const Velox::TextDrawInfo& textDrawInfo);
+// void Draw(std::vector<Velox::Vertex>& vertices, std::vector<u32>& indices,
+//       u32 textureId, u32 shaderId = 0);
 
 
 }

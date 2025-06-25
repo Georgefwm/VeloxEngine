@@ -50,6 +50,8 @@ struct Console {
 
 Console* GetConsole();
 
+void PrintToConsole(const std::string& string);
+
 void InitConsole();
 
 void ToggleConsole();

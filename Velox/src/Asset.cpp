@@ -3,7 +3,9 @@
 
 #include "Arena.h"
 #include "Rendering/Renderer.h"
-#include "msdf-atlas-gen/types.h"
+
+#include <SDL3_image/SDL_image.h>
+#include <msdf-atlas-gen/types.h>
 #include <SDL3/SDL_filesystem.h>
 #include <SDL3/SDL_oldnames.h>
 #include <SDL3/SDL_pixels.h>
@@ -11,11 +13,13 @@
 #include <glad/gl.h>
 #include <msdf-atlas-gen/msdf-atlas-gen.h>
 
+#include <fstream>
+
 static Velox::Arena g_assetStorage(1024);
 static Velox::AssetManager g_assetManager {};
 static msdfgen::FreetypeHandle* g_freetype;
 
-unsigned int Velox::AssetManager::LoadTexture(const char* filepath)
+u32 Velox::AssetManager::LoadTexture(const char* filepath)
 {
     for (auto pair : textureMap)
     {
@@ -25,16 +29,64 @@ unsigned int Velox::AssetManager::LoadTexture(const char* filepath)
 
     Velox::Arena tempData(2048);
     // Haven't loaded texture before so send load for renderer to deal with.
-    Velox::Texture texture = Velox::LoadTexture(filepath, &tempData);
+
+    const size_t pathSize = 1024;
+    char* absolutePath = tempData.Alloc<char>(pathSize);
+
+    SDL_strlcpy(absolutePath, SDL_GetBasePath(), pathSize);
+    SDL_strlcat(absolutePath, "assets\\textures\\", pathSize);
+    SDL_strlcat(absolutePath, filepath, pathSize);
+
+    SDL_Surface* surface = IMG_Load(absolutePath);
+    if (surface == nullptr)
+    {
+        printf("Error: Failed to load image from path: %s\n", absolutePath);
+        printf("Error: %s\n", SDL_GetError());
+        throw std::runtime_error("Failed to load image from disk");
+    }
+
+    if (surface->format != SDL_PIXELFORMAT_ABGR8888)
+    {
+        SDL_Surface* convertedSurface;
+        convertedSurface = SDL_ConvertSurface(surface, SDL_PIXELFORMAT_ABGR8888);
+
+        if (convertedSurface == nullptr)
+        {
+            printf("Error: Loaded image has wrong pixel format and couldn't convert. \
+                    Expected \"SDL_PIXELFORMAT_ABGR888*\", \
+                found: \"%s\"\n", SDL_GetPixelFormatName(surface->format));
+
+            throw std::runtime_error("Loaded image has wrong pixel format.");
+        }
+
+        SDL_DestroySurface(surface);
+        surface = convertedSurface;
+    }
+
+    // SDL loads images upside down (think this is standard for non-opengl rendering APIs).
+    SDL_FlipSurface(surface, SDL_FLIP_VERTICAL);
+
+    u32 id;
+    glGenTextures(1, &id);
+    glBindTexture(GL_TEXTURE_2D, id);  
+    glObjectLabel(GL_TEXTURE, id, -1, filepath);
+
+    u32 mipmapLevel = 0;
+
+    glTexImage2D(GL_TEXTURE_2D, mipmapLevel, GL_RGBA, surface->w, surface->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface->pixels);
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    SDL_DestroySurface(surface);
 
     char* ptr = g_assetStorage.Alloc<char>(strlen(filepath) + 1);
     strcpy_s(ptr, strlen(filepath) + 1, filepath);
 
-    textureMap[ptr] = texture;
-    return texture.id;
+    textureMap[ptr] = { id };
+
+    return id;
 }
 
-unsigned int Velox::AssetManager::GetTextureID(const char* filepath)
+u32 Velox::AssetManager::GetTextureID(const char* filepath)
 {
     for (auto pair : textureMap)
     {
@@ -46,7 +98,57 @@ unsigned int Velox::AssetManager::GetTextureID(const char* filepath)
     return 0;
 }
 
-unsigned int Velox::AssetManager::LoadShaderProgram(const char* vertFilepath, const char* fragFilepath, const char* name)
+char* LoadShaderFile(const char* filepath, size_t* byteSize, Velox::Arena* allocator)
+{
+    const size_t pathSize = 1024;
+    char* absolutePath = allocator->Alloc<char>(pathSize);
+
+    SDL_strlcpy(absolutePath, SDL_GetBasePath(), pathSize);
+    SDL_strlcat(absolutePath, filepath, pathSize);
+
+    std::ifstream file(absolutePath, std::ios::ate | std::ios::binary);
+    if (!file.is_open())
+    {
+        printf("No file found at \'%s\'\n", absolutePath);
+        throw std::runtime_error("failed to open file");
+    }
+
+    size_t fileSize = (size_t)file.tellg();
+    char* shaderCode = allocator->Alloc<char>(fileSize + 1);
+
+    file.seekg(0);
+    file.read(shaderCode, fileSize);
+
+    shaderCode[fileSize] = '\0';
+
+    file.close();
+
+    *byteSize = fileSize;
+    return shaderCode;
+}
+
+u32 CompileShader(char* shaderCode, int shaderStage, Velox::Arena* allocator)
+{
+    u32 shader = glCreateShader(shaderStage);
+    glShaderSource(shader, 1, &shaderCode, NULL);
+    glCompileShader(shader);
+
+    char* logData = allocator->Alloc<char>(1024);
+
+    int result;
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &result);
+    if(!result)
+    {
+        glGetShaderInfoLog(shader, 512, NULL, logData);
+        printf("Shader failed to compile: %s\n", logData);
+        glDeleteShader(shader); // don't keep a bad shader
+        return 0;
+    };
+
+    return shader;
+}
+
+u32 Velox::AssetManager::LoadShaderProgram(const char* vertFilepath, const char* fragFilepath, const char* name)
 {
     for (auto pair : shaderProgramMap)
     {
@@ -54,20 +156,51 @@ unsigned int Velox::AssetManager::LoadShaderProgram(const char* vertFilepath, co
             return pair.second.id;
     }
 
-    Velox::Arena tempData(2048);
+    // Might need more if we have a big shader to load.
+    Velox::Arena tempData(8192);
 
-    // Haven't loaded texture before so send load for renderer to deal with.
-    Velox::ShaderProgram shaderProgram {};
-    shaderProgram = Velox::LoadShaderProgram(vertFilepath, fragFilepath);
+    size_t vertCodeSize, fragCodeSize;
+    char* vertCode = LoadShaderFile(vertFilepath, &vertCodeSize, &tempData);
+    char* fragCode = LoadShaderFile(fragFilepath, &fragCodeSize, &tempData);
 
+    u32 vertShader = CompileShader(vertCode, GL_VERTEX_SHADER,   &tempData);
+    u32 fragShader = CompileShader(fragCode, GL_FRAGMENT_SHADER, &tempData);
+
+    if (vertShader == 0 || fragShader == 0)
+        throw std::runtime_error("Failed to compile shader");
+
+    u32 id = glCreateProgram();
+    glAttachShader(id, vertShader);
+    glAttachShader(id, fragShader);
+    glLinkProgram(id);
+
+    // print linking errors if any
+    char* logData = tempData.Alloc<char>(2048);
+
+    int result;
+    glGetProgramiv(id, GL_LINK_STATUS, &result);
+    if(!result)
+    {
+        glGetProgramInfoLog(id, 512, NULL, logData);
+        printf("Shader failed to create shader module: %s\n", logData);
+    }
+      
+    // delete the shaders as they're linked into our program now and no longer necessary
+    glDeleteShader(vertShader);
+    glDeleteShader(fragShader);
+    
+    glObjectLabel(GL_PROGRAM, id, -1, name);
+
+    // Register shader
     char* ptr = g_assetStorage.Alloc<char>(strlen(name) + 1);
     strcpy_s(ptr, strlen(name) + 1, name);
 
-    shaderProgramMap[ptr] = shaderProgram;
-    return shaderProgram.id;
+    shaderProgramMap[ptr] = { id };
+
+    return id;
 }
 
-unsigned int Velox::AssetManager::GetShaderProgramID(const char* name)
+u32 Velox::AssetManager::GetShaderProgramID(const char* name)
 {
     for (auto pair : shaderProgramMap)
     {
@@ -189,7 +322,8 @@ Velox::Font* Velox::AssetManager::LoadFont(const char* filepath)
     // Generate texture
     glGenTextures(1, &fontTexture.id);
     glBindTexture(GL_TEXTURE_2D, fontTexture.id);
-    unsigned int mipmapLevel = 0;
+    glObjectLabel(GL_TEXTURE, fontTexture.id, -1, filepath);
+    u32 mipmapLevel = 0;
 
 #if USE_SURFACE
     glTexImage2D(GL_TEXTURE_2D, mipmapLevel, GL_RGB8, surface->w, surface->h, 0, GL_RGB, GL_UNSIGNED_BYTE, (void*)surface->pixels);

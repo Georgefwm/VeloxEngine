@@ -25,3 +25,4 @@ typedef uint64_t u64;
 typedef float    f32;
 typedef double   f64;
 
+#define COLOR_RED vec4(1.0f, 0.0f, 0.0f, 1.0f)

@@ -1,33 +1,39 @@
 #include "Rendering/Renderer.h"
 #include <PCH.h>
 
-#include "Arena.h"
 #include "Asset.h"
+#include "Rendering/Pipeline.h"
+#include "Text.h"
 #include "Velox.h"
 #include "imgui.h"
 
-#include <SDL3/SDL_surface.h>
 #include <glad/gl.h> // Must be included before SDL
 #include <SDL3/SDL_filesystem.h>
+#include <SDL3/SDL_surface.h>
 #include <SDL3/SDL_pixels.h>
 #include <SDL3/SDL_video.h>
 #include <SDL3/SDL_opengl.h>
 #include <SDL3_image/SDL_image.h>
+#include <glm/ext/matrix_clip_space.hpp>
+#include <glm/ext/matrix_transform.hpp>
 #include <imgui_impl_sdl3.h>
 #include <imgui_impl_opengl3.h>
 
-#include <fstream>
 
 constexpr i32 WINDOW_WIDTH  = 1920;
 constexpr i32 WINDOW_HEIGHT = 1080;
 
-// Per frame max.
-constexpr u32 MAX_QUADS    = 1024; // Everything we render is a quad.
-constexpr u32 MAX_VERTICES = MAX_QUADS * 4;
-constexpr u32 MAX_INDICES  = MAX_QUADS * 6;
 constexpr u32 MAX_TEXTURES = 512;
 
 constexpr char DEFAULT_SHADER_NAME[] = "default_shader";
+
+constexpr u32 QUAD_VERTEX_INDICES[6] = { 0, 1, 2, 2, 3, 0 };
+constexpr vec4 QUAD_VERTEX_POSITIONS[4] = {
+    {  0.0f, 0.0f, 0.0f, 1.0f },
+	{  0.0f, 1.0f, 0.0f, 1.0f },
+	{  1.0f, 1.0f, 0.0f, 1.0f },
+	{  1.0f, 0.0f, 0.0f, 1.0f }
+};
 
 SDL_Window* g_window;
 SDL_GLContext g_glContext;
@@ -35,28 +41,28 @@ SDL_GLContext g_glContext;
 SDL_Window*    Velox::GetWindow()    { return  g_window;    }
 SDL_GLContext* Velox::GetGLContext() { return &g_glContext; }
 
-uint32_t g_currentFrame = 0;
 bool g_frameBufferResized = false;
 
-unsigned int g_vertexAttributeObject;
-unsigned int g_vertexBufferObject;
-unsigned int g_indexBufferObject;
-unsigned int g_uniformBufferObject;
+u32 g_uniformBufferObject;
 
-GLuint        g_vertexCount = 0;
-Velox::Vertex g_vertices[MAX_VERTICES];
+Velox::TexturedQuadPipeline g_texturedQuadPipeline;
+Velox::LinePipeline         g_linePipeline;
+Velox::FontPipeline         g_fontPipeline;
 
-GLuint g_indexCount = 0;
-GLuint g_indices[MAX_INDICES];
+mat4 g_projection;
+mat4 g_view;
 
-mat4 g_projectionMatrix;
-mat4 g_viewMatrix;
-
-GLuint g_drawCommandCount = 0;
+u32 g_drawCommandCount = 0;
 std::vector<Velox::DrawCommand> g_drawCommands;
 
 Velox::ShaderProgram g_defaultShaderProgram;
+Velox::ShaderProgram g_fontShaderProgram;
+Velox::ShaderProgram g_colorShaderProgram;
+
 Velox::Texture g_errorTexture;
+Velox::Texture g_whiteTexture;
+
+u32 g_lineWidth = 2;
 
 void CheckGLError()
 {
@@ -137,42 +143,20 @@ void Velox::InitRenderer()
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);  
 
-    // glEnable(GL_CULL_FACE); 
-    // glCullFace(GL_BACK);
-    // glFrontFace(GL_CW); // Vertices are defind clockwise. This is standard in mordern model formats.
+    glEnable(GL_CULL_FACE); 
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CW); // Vertices are defind clockwise. This is standard in mordern model formats.
 
-    glGenVertexArrays(1, &g_vertexAttributeObject);
-    glGenBuffers(1, &g_vertexBufferObject);
 
-    glGenBuffers(1, &g_indexBufferObject);
-
-    glBindVertexArray(g_vertexAttributeObject);
-
-    // Vertex buffer
-    glBindBuffer(GL_ARRAY_BUFFER, g_vertexBufferObject);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertices), g_vertices, GL_DYNAMIC_DRAW);
-    glObjectLabel(GL_BUFFER, g_vertexBufferObject, -1, "Vertex Buffer");
-
-    // Vertex attributes
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Velox::Vertex), (void*)offsetof(Velox::Vertex, position));
-    glEnableVertexAttribArray(0);
-
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Velox::Vertex), (void*)offsetof(Velox::Vertex, color));
-    glEnableVertexAttribArray(1);
-
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Velox::Vertex), (void*)offsetof(Velox::Vertex, uv));
-    glEnableVertexAttribArray(2);
-
-    // Index buffer
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_indexBufferObject);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(g_indices), g_indices, GL_DYNAMIC_DRAW);
-    glObjectLabel(GL_BUFFER, g_indexBufferObject, -1, "Index Buffer");
+    g_texturedQuadPipeline.Init(1);
+    g_linePipeline.Init(2);
+    g_fontPipeline.Init(3);
 
     // Uniform buffer
     glGenBuffers(1, &g_uniformBufferObject);
     glBindBuffer(GL_UNIFORM_BUFFER, g_uniformBufferObject);
 
-    // Allocate memory for UBO struct (2 mats + ivec2 + padding)
+    // Allocate memory for UBO struct.
     glBufferData(GL_UNIFORM_BUFFER, sizeof(Velox::UniformBufferObject), nullptr, GL_DYNAMIC_DRAW);
 
     // Bind UBO to binding point 0
@@ -188,7 +172,22 @@ void Velox::InitRenderer()
         "shaders\\textured_quad.frag.glsl",
         DEFAULT_SHADER_NAME);
 
+    g_fontShaderProgram.id = assetManager->LoadShaderProgram(
+        "shaders\\sdf_quad.vert.glsl",
+        "shaders\\sdf_quad.frag.glsl",
+        "sdf_quad");
+
+    g_colorShaderProgram.id = assetManager->LoadShaderProgram(
+        "shaders\\colored.vert.glsl",
+        "shaders\\colored.frag.glsl",
+        "color");
+
     g_errorTexture.id = assetManager->LoadTexture("missing_texture.png");
+    g_whiteTexture.id = assetManager->LoadTexture("white.png");
+
+    g_projection =  glm::ortho(0.0f, (float)WINDOW_WIDTH, 0.0f, (float)WINDOW_HEIGHT, -1.0f, 1.0f);
+    g_view = glm::mat4(1.0f);
+    // g_view = glm::translate(g_view, glm::vec3(0.0f, 0.0f, -3.0f)); 
 
     CheckGLError();
 }
@@ -204,8 +203,9 @@ void Velox::StartFrame()
     ImGui_ImplSDL3_NewFrame();
     ImGui::NewFrame();
 
-    g_vertexCount = 0;
-    g_indexCount = 0;
+    g_texturedQuadPipeline.ClearFrameData();
+    g_linePipeline.ClearFrameData();
+    g_fontPipeline.ClearFrameData();
 }
 
 void Velox::DrawFrame()
@@ -232,31 +232,30 @@ void Velox::EndFrame()
 
 void Velox::DoCopyPass()
 {
-    glBindBuffer(GL_ARRAY_BUFFER, g_vertexBufferObject);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(g_vertices), &g_vertices);
+    glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "Copy Pass");
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_indexBufferObject);
-    glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, sizeof(g_indices), &g_indices);
+    g_texturedQuadPipeline.CopyData();
+    g_linePipeline.CopyData();
+    g_fontPipeline.CopyData();
 
     // Uniform
     UniformBufferObject ubo {};
-    ubo.projection = g_projectionMatrix;
-    ubo.view = g_viewMatrix;
+    ubo.projection = g_projection;
+    ubo.view = g_view;
     SDL_GetWindowSize(g_window, &ubo.resolution.x, &ubo.resolution.y);
 
     glBindBuffer(GL_UNIFORM_BUFFER, g_uniformBufferObject);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(UniformBufferObject), &ubo);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+    glPopDebugGroup();
 }
 
 void Velox::DoRenderPass()
 {
+    glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "Velox render Pass");
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    glUseProgram(g_defaultShaderProgram.id);
-
-    glBindVertexArray(g_vertexAttributeObject);
-    glBindBufferBase(GL_UNIFORM_BUFFER, 0, g_uniformBufferObject);
 
     if (g_drawCommands.size() <= 0)
     {
@@ -266,35 +265,52 @@ void Velox::DoRenderPass()
     }
 
     Velox::DrawCommand& firstCommand = g_drawCommands[0];
-    unsigned int currentShaderId  = firstCommand.shader.id;
+
+    Velox::Pipeline* currentPipeline = firstCommand.pipeline;
+    currentPipeline->Use(g_uniformBufferObject);
+
+    u32 currentShaderID  = firstCommand.shader.id;
     firstCommand.shader.Use();
-    unsigned int currentTextureId = firstCommand.texture.id;
+
+    u32 currentTextureID = firstCommand.texture.id;
     firstCommand.texture.Use();
 
-    unsigned int batchOffset = 0;
-    unsigned int batchIndexCount = 0;
+    u32 batchOffset = 0;
+    u32 batchIndexCount = 0;
+
     for (int i = 0; i < g_drawCommands.size(); i++)
     {
         Velox::DrawCommand& command = g_drawCommands[i];
 
-        int textureIdx = static_cast<int>(command.texture.id);
-        int shaderIdx = static_cast<int>(command.shader.id);
+        // int textureIdx = static_cast<int>(command.texture.id);
+        // int shaderIdx = static_cast<int>(command.shader.id);
 
-        if (command.shader.id != currentShaderId || command.texture.id != currentTextureId)
+        if (command.pipeline->id   != currentPipeline->id || 
+                command.shader.id  != currentShaderID     ||
+                command.texture.id != currentTextureID)
         {
-            if (currentShaderId <= 0) g_defaultShaderProgram.Use();
-            if (currentTextureId <= 0) g_errorTexture.Use();
+            if (currentShaderID  <= 0) g_defaultShaderProgram.Use();
+            if (currentTextureID <= 0) g_errorTexture.Use();
 
             // Submit batch of draws.
-            glDrawElements(GL_TRIANGLES, batchIndexCount, GL_UNSIGNED_INT, (void*)(uintptr_t)batchOffset);
-            batchOffset = command.indexOffset * sizeof(unsigned int);
-            batchIndexCount = 0;
+            glDrawElements(currentPipeline->GLDrawType, batchIndexCount, GL_UNSIGNED_INT, (void*)(uintptr_t)batchOffset);
+
+            // Update pipeline progress.
+            // pipelineOffsets[currentPipeline->id] += batchIndexCount;
 
             // Reset with new batch.
+            currentPipeline = command.pipeline;
+            currentPipeline->Use(g_uniformBufferObject);
+
+            currentShaderID = command.shader.id;
             command.shader.Use();
-            currentShaderId = command.shader.id;
+
+            currentTextureID = command.texture.id;
             command.texture.Use();
-            currentTextureId = command.texture.id;
+
+            batchOffset = command.indexOffset * sizeof(u32);
+            batchIndexCount = 0;
+
         }
         
         batchIndexCount += command.numIndices;
@@ -303,10 +319,10 @@ void Velox::DoRenderPass()
     // Render last batch if any left.
     if (batchIndexCount > 0)
     {
-        if (currentShaderId <= 0)  g_defaultShaderProgram.Use();
-        if (currentTextureId <= 0) g_errorTexture.Use();
+        if (currentShaderID  <= 0)  g_defaultShaderProgram.Use();
+        if (currentTextureID <= 0) g_errorTexture.Use();
 
-        glDrawElements(GL_TRIANGLES, batchIndexCount, GL_UNSIGNED_INT, (void*)(uintptr_t)batchOffset);
+        glDrawElements(currentPipeline->GLDrawType, batchIndexCount, GL_UNSIGNED_INT, (void*)(uintptr_t)batchOffset);
     }
 
     g_drawCommands.clear();
@@ -314,159 +330,21 @@ void Velox::DoRenderPass()
     glBindTexture(GL_TEXTURE_2D, 0);
     glUseProgram(0);
 
+    glPopDebugGroup();
+
+    glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "ImGui");
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    glPopDebugGroup();
+
     SDL_GL_SwapWindow(g_window);
-}
-
-char* LoadShaderFile(const char* filepath, size_t* byteSize, Velox::Arena* allocator)
-{
-    Velox::ShaderProgram shaderProgram {};
-
-    const size_t pathSize = 1024;
-    char* absolutePath = allocator->Alloc<char>(pathSize);
-
-    SDL_strlcpy(absolutePath, SDL_GetBasePath(), pathSize);
-    SDL_strlcat(absolutePath, filepath, pathSize);
-
-    std::ifstream file(absolutePath, std::ios::ate | std::ios::binary);
-    if (!file.is_open())
-    {
-        printf("No file found at \'%s\'\n", absolutePath);
-        throw std::runtime_error("failed to open file");
-    }
-
-    size_t fileSize = (size_t)file.tellg();
-    char* shaderCode = allocator->Alloc<char>(fileSize + 1);
-
-    file.seekg(0);
-    file.read(shaderCode, fileSize);
-
-    shaderCode[fileSize] = '\0';
-
-    file.close();
-
-    *byteSize = fileSize;
-    return shaderCode;
-}
-
-unsigned int CompileShader(char* shaderCode, int shaderStage, Velox::Arena* allocator)
-{
-    unsigned int shader = glCreateShader(shaderStage);
-    glShaderSource(shader, 1, &shaderCode, NULL);
-    glCompileShader(shader);
-
-    char* logData = allocator->Alloc<char>(1024);
-
-    int result;
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &result);
-    if(!result)
-    {
-        glGetShaderInfoLog(shader, 512, NULL, logData);
-        printf("Shader failed to compile: %s\n", logData);
-        glDeleteShader(shader); // don't keep a bad shader
-        return 0;
-    };
-
-    return shader;
-}
-
-Velox::ShaderProgram Velox::LoadShaderProgram(const char* vertexFilepath, const char* fragmentFilepath)
-{
-    Velox::Arena tempData(100000);
-
-    size_t vertCodeSize, fragCodeSize;
-    char* vertCode = LoadShaderFile(vertexFilepath,   &vertCodeSize, &tempData);
-    char* fragCode = LoadShaderFile(fragmentFilepath, &fragCodeSize, &tempData);
-
-    unsigned int vertShader = CompileShader(vertCode, GL_VERTEX_SHADER,   &tempData);
-    unsigned int fragShader = CompileShader(fragCode, GL_FRAGMENT_SHADER, &tempData);
-
-    if (vertShader == 0 || fragShader == 0)
-        throw std::runtime_error("Failed to compile shader");
-
-    unsigned int id = glCreateProgram();
-    glAttachShader(id, vertShader);
-    glAttachShader(id, fragShader);
-    glLinkProgram(id);
-
-    // print linking errors if any
-    char* logData = tempData.Alloc<char>(2048);
-
-    int result;
-    glGetProgramiv(id, GL_LINK_STATUS, &result);
-    if(!result)
-    {
-        glGetProgramInfoLog(id, 512, NULL, logData);
-        printf("Shader failed to create shader module: %s\n", logData);
-    }
-      
-    // delete the shaders as they're linked into our program now and no longer necessary
-    glDeleteShader(vertShader);
-    glDeleteShader(fragShader);
-
-    // tempData.PrintUsage();
-
-    return Velox::ShaderProgram { id };
-}
-
-Velox::Texture Velox::LoadTexture(const char* filepath, Velox::Arena* allocator)
-{
-    Velox::Texture texture {};
-
-    const size_t pathSize = 1024;
-    char* absolutePath = allocator->Alloc<char>(pathSize);
-
-    SDL_strlcpy(absolutePath, SDL_GetBasePath(), pathSize);
-    SDL_strlcat(absolutePath, "assets\\textures\\", pathSize);
-    SDL_strlcat(absolutePath, filepath, pathSize);
-
-    SDL_Surface* surface = IMG_Load(absolutePath);
-    if (surface == nullptr)
-    {
-        printf("Error: Failed to load image from path: %s\n", absolutePath);
-        printf("Error: %s\n", SDL_GetError());
-        throw std::runtime_error("Failed to load image from disk");
-    }
-
-    if (surface->format != SDL_PIXELFORMAT_ABGR8888)
-    {
-        SDL_Surface* convertedSurface;
-        convertedSurface = SDL_ConvertSurface(surface, SDL_PIXELFORMAT_ABGR8888);
-
-        if (convertedSurface == nullptr)
-        {
-            printf("Error: Loaded image has wrong pixel format and couldn't convert. \
-                    Expected \"SDL_PIXELFORMAT_ABGR888*\", \
-                found: \"%s\"\n", SDL_GetPixelFormatName(surface->format));
-
-            throw std::runtime_error("Loaded image has wrong pixel format.");
-        }
-
-        SDL_DestroySurface(surface);
-        surface = convertedSurface;
-    }
-
-    // SDL loads images upside down (think this is standard for non-opengl rendering APIs).
-    SDL_FlipSurface(surface, SDL_FLIP_VERTICAL);
-
-    glGenTextures(1, &texture.id);
-    glBindTexture(GL_TEXTURE_2D, texture.id);  
-
-    unsigned int mipmapLevel = 0;
-
-    glTexImage2D(GL_TEXTURE_2D, mipmapLevel, GL_RGBA, surface->w, surface->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface->pixels);
-    glGenerateMipmap(GL_TEXTURE_2D);
-
-    SDL_DestroySurface(surface);
-
-    return texture;
 }
 
 void Velox::DeInitRenderer()
 {
-    glDeleteBuffers(1, &g_vertexBufferObject);
-    glDeleteBuffers(1, &g_vertexAttributeObject);
-    glDeleteBuffers(1, &g_indexBufferObject);
+    g_texturedQuadPipeline.DeInit();
+    g_linePipeline.DeInit();
+    g_fontPipeline.DeInit();
+
     glDeleteBuffers(1, &g_uniformBufferObject);
 
     glDeleteProgram(g_defaultShaderProgram.id);
@@ -476,39 +354,234 @@ void Velox::DeInitRenderer()
     SDL_Quit();
 }
 
-void Velox::Draw(std::vector<Velox::Vertex>& vertices, std::vector<GLuint>& indices,
-        unsigned int textureId, unsigned int shaderId)
+void Velox::DrawQuad(const mat4& transform, const vec4& color,
+        const u32& textureID, const u32& shaderID)
 {
-    if (vertices.size() + g_vertexCount > MAX_VERTICES)
+    const u32 startVertexOffset = g_texturedQuadPipeline.vertexCount;
+    const u32 startIndexOffset = g_texturedQuadPipeline.indexCount;
+
+    if (startIndexOffset + 6 > MAX_INDICES)
     {
-        printf("WARNING: Vertex frame limit reached\n");
+        printf("WARNING: TexturedQuadPipeline is full\n");
         return;
     }
 
-    if (indices.size() + g_indexCount > MAX_INDICES)
-    {
-        printf("WARNING: Index frame limit reached\n");
-        return;
-    }
+    constexpr u32 quadVertexCount = 4;
+    constexpr u32 quadIndexCount  = 6;
+
+    constexpr vec2 uvs[4] = { { 0.0f, 0.0f }, { 0.0f, 1.0f }, { 1.0f, 1.0f }, { 1.0f, 0.0f } };
 
     Velox::DrawCommand command {};
+    command.pipeline = &g_texturedQuadPipeline;
+    command.texture = { textureID == 0 ? g_whiteTexture.id         : textureID };
+    command.shader  = { shaderID  == 0 ? g_defaultShaderProgram.id : shaderID  };
+    command.indexOffset = startIndexOffset;
+    command.numIndices  = quadIndexCount;  // Always 6 for a quad.
 
-    command.indexOffset = g_indexCount;
-    command.numIndices = indices.size();
+    for (u32 i = 0; i < quadVertexCount; i++)
+    {
+        Velox::TextureVertex vertex {};
+        vertex.position = transform * QUAD_VERTEX_POSITIONS[i];
+        vertex.color    = color;
+        vertex.uv       = uvs[i];
 
-    command.texture.id = textureId == 0 ? g_errorTexture.id         : textureId;
-    command.shader.id  = shaderId  == 0 ? g_defaultShaderProgram.id : shaderId;
+        g_texturedQuadPipeline.vertices[startVertexOffset + i] = vertex;
+    }
 
-    for (int i = 0; i < indices.size(); i++)
-        indices[i] += g_vertexCount;
+    for (u32 i = 0; i < quadIndexCount; i++)
+    {
+        g_texturedQuadPipeline.indices[startIndexOffset + i] = 
+            QUAD_VERTEX_INDICES[i] + startVertexOffset;
+    }
 
-    SDL_memcpy(&g_vertices[g_vertexCount], vertices.data(), sizeof(Velox::Vertex) * vertices.size());
-    SDL_memcpy(&g_indices[g_indexCount], indices.data(), sizeof(GLuint) * indices.size());
-
-    g_vertexCount += vertices.size();
-    g_indexCount += indices.size();
+    g_texturedQuadPipeline.vertexCount += quadVertexCount;
+    g_texturedQuadPipeline.indexCount += quadIndexCount;
 
     g_drawCommands.push_back(command);
 }
 
+void Velox::DrawQuad(const vec3& position, const vec2& size, const vec4& color,
+        const u32& textureID, const u32& shaderID)
+{
+    glm::mat4 transform = 
+        glm::translate(glm::mat4(1.0f), position) *
+        glm::scale(glm::mat4(1.0f), { size.x, size.y, 1.0f });
+
+    Velox::DrawQuad(transform, color, textureID, shaderID);
+}
+
+void Velox::DrawLine(const vec3& p0, const vec3& p1, const vec4& color)
+{
+    const u32 startVertexOffset = g_linePipeline.vertexCount;
+    const u32 startIndexOffset  = g_linePipeline.indexCount;
+
+    if (startIndexOffset + 6 > MAX_INDICES)
+    {
+        printf("WARNING: TexturedQuadPipeline is full\n");
+        return;
+    }
+
+    Velox::DrawCommand command {};
+    command.pipeline = &g_linePipeline;
+    command.texture = { g_whiteTexture.id };
+    command.shader  = { g_colorShaderProgram.id };
+    command.indexOffset = startIndexOffset;
+    command.numIndices  = 2;
+
+    g_linePipeline.vertices[startVertexOffset + 0] = Velox::LineVertex {
+        .position = p0,
+        .color    = color,
+    };
+
+    g_linePipeline.vertices[startVertexOffset + 1] = Velox::LineVertex {
+        .position = p1,
+        .color    = color,
+    };
+
+    g_linePipeline.indices[startIndexOffset + 0] = startVertexOffset + 0;
+    g_linePipeline.indices[startIndexOffset + 1] = startVertexOffset + 1;
+
+    g_linePipeline.vertexCount += 2;
+    g_linePipeline.indexCount += 2;
+
+    g_drawCommands.push_back(command);
+}
+
+void Velox::DrawRect(const vec3& position, const vec2& size, const vec4& color)
+{
+    glm::vec3 p0 = glm::vec3(position.x,          position.y,          position.z);
+    glm::vec3 p1 = glm::vec3(position.x,          position.y + size.y, position.z);
+    glm::vec3 p2 = glm::vec3(position.x + size.x, position.y + size.y, position.z);
+    glm::vec3 p3 = glm::vec3(position.x + size.x, position.y,          position.z);
+
+    Velox::DrawLine(p0, p1, color);
+    Velox::DrawLine(p1, p2, color);
+    Velox::DrawLine(p2, p3, color);
+    Velox::DrawLine(p3, p0, color);
+}
+
+// GM: For reference of how fonts are organised on screen see:
+// https://freetype.org/freetype2/docs/tutorial/step2.html#section-1
+void Velox::DrawText(const char* text, const Velox::TextDrawInfo& textDrawInfo)
+{
+    Velox::Font* usingFont = Velox::GetUsingFont();
+
+    const msdf_atlas::FontGeometry& fontGeometry = usingFont->fontGeometry;
+
+    msdfgen::FontMetrics metrics = fontGeometry.getMetrics();
+
+    double x = 0.0;
+    double fontScale = 1 / (metrics.ascenderY - metrics.descenderY) * textDrawInfo.textSize;
+    double y = 0.0;
+    
+    size_t charCount = SDL_strlen(text);
+    for (size_t i = 0; i < charCount; i++)
+    {
+        char character = text[i];
+
+        const msdf_atlas::GlyphGeometry* glyph = fontGeometry.getGlyph(character);
+        
+        if (glyph == nullptr)
+            glyph = fontGeometry.getGlyph('?'); // fallback char
+        if (glyph == nullptr)
+            printf("WARNING: Font is fucked m8\n");
+
+        double atlasLeft, atlasBot, atlasRight, atlasTop;
+        glyph->getQuadAtlasBounds(atlasLeft, atlasBot, atlasRight, atlasTop);
+
+        vec2 textureCoordMin((f32)atlasLeft,  (f32)atlasBot);
+        vec2 textureCoordMax((f32)atlasRight, (f32)atlasTop);
+
+        double planeLeft, planeBot, planeRight, planeTop;
+        glyph->getQuadPlaneBounds(planeLeft, planeBot, planeRight, planeTop);
+
+        vec2 quadMin((f32)planeLeft,  (f32)planeBot);
+        vec2 quadMax((f32)planeRight, (f32)planeTop);
+        
+        quadMin *= fontScale;
+        quadMax *= fontScale;
+        
+        vec2 currentAdvance((f32)x, (f32)y); 
+        quadMin += currentAdvance;
+        quadMax += currentAdvance;
+
+        vec2 texelSize(1.0 / usingFont->atlasResolution.x, 1.0 / usingFont->atlasResolution.y);
+        textureCoordMin *= texelSize;
+        textureCoordMax *= texelSize;
+
+        // Draw. 
+
+        u32 startVertexOffset = g_fontPipeline.vertexCount;
+        u32 startIndexOffset  = g_fontPipeline.indexCount;
+
+        if (startIndexOffset + 6 > MAX_INDICES)
+        {
+            printf("WARNING: Font Pipeline is full\n");
+            return;
+        }
+
+        constexpr u32 quadVertexCount = 4;
+        constexpr u32 quadIndexCount  = 6;
+
+        Velox::DrawCommand command {};
+        command.pipeline = &g_fontPipeline;
+        command.texture = { usingFont->textureId };
+        command.shader  = g_fontShaderProgram;
+        command.indexOffset = startIndexOffset;
+        command.numIndices  = quadIndexCount;  // Always 6 for a quad.
+
+        glm::mat4 transform = 
+            glm::translate(glm::mat4(1.0f), textDrawInfo.position);
+            //glm::scale(glm::mat4(1.0f), { quadMax.x, quadMin.y, 1.0f });
+
+        g_fontPipeline.vertices[startVertexOffset + 0] = Velox::FontVertex {
+            .position = transform * vec4(quadMin.x, quadMin.y, 0.0f, 1.0f),
+            .color    = textDrawInfo.color,
+            .uv       = { textureCoordMin.x, textureCoordMin.y },
+            .outlineColor  = textDrawInfo.color,
+        };
+
+        g_fontPipeline.vertices[startVertexOffset + 1] = Velox::FontVertex {
+            .position = transform * vec4(quadMin.x, quadMax.y, 0.0f, 1.0f),
+            .color    = textDrawInfo.color,
+            .uv       = { textureCoordMin.x, textureCoordMax.y },
+            .outlineColor  = textDrawInfo.color,
+        };
+        
+        g_fontPipeline.vertices[startVertexOffset + 2] = Velox::FontVertex {
+            .position = transform * vec4(quadMax.x, quadMax.y, 0.0f, 1.0f),
+            .color    = textDrawInfo.color,
+            .uv       = { textureCoordMax.x, textureCoordMax.y },
+            .outlineColor  = textDrawInfo.color,
+        };
+
+        g_fontPipeline.vertices[startVertexOffset + 3] = Velox::FontVertex {
+            .position = transform * vec4(quadMax.x, quadMin.y, 0.0f, 1.0f),
+            .color    = textDrawInfo.color,
+            .uv       = { textureCoordMax.x, textureCoordMin.y },
+            .outlineColor  = textDrawInfo.color,
+        };
+
+        for (u32 i = 0; i < quadIndexCount; i++)
+        {
+            g_fontPipeline.indices[startIndexOffset + i] = 
+                QUAD_VERTEX_INDICES[i] + startVertexOffset;
+        }
+
+        g_fontPipeline.vertexCount += quadVertexCount;
+        g_fontPipeline.indexCount  += quadIndexCount;
+
+        g_drawCommands.push_back(command);
+
+        // Update advance.
+
+        double advance = glyph->getAdvance(); 
+
+        if (i < charCount - 1)
+            fontGeometry.getAdvance(advance, character, text[i + 1]);
+
+        float kerningOffset = 0.0;
+        x += fontScale * advance + kerningOffset;
+    }
+}
 

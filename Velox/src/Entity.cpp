@@ -1,7 +1,7 @@
 #include "Entity.h"
 #include <PCH.h>
 
-#include "Primitive.h"
+#include "Rendering/Renderer.h"
 
 //
 // Entity
@@ -10,16 +10,16 @@ void Velox::Entity::Draw(bool centerOrigin)
 {
     if (!(flags & Visible)) 
         return;
-
-    vec4 area = { position.x, position.y, size.x, size.y };
     
+    vec3 usePosition = position;
+
     if (centerOrigin)
     {
-        area.x -= (size.x / 2);
-        area.y -= (size.y / 2);
+        usePosition.x -= size.x * 0.5f;
+        usePosition.y -= size.y * 0.5f;
     }
 
-    Velox::DrawRectangle(area, colorOverride, rotation, textureId);
+    Velox::DrawQuad(usePosition, size, colorOverride, textureId);
 }
 
 //

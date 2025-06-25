@@ -69,6 +69,16 @@ bool Velox::Console::ExecuteCommand(const std::string& inputLine)
     return true;
 }
 
+void Velox::PrintToConsole(const std::string& string)
+{
+    Velox::ConsoleRecord record {
+        .command = "",
+        .response = string,
+    };
+
+    g_console.history.push_back(record);
+}
+
 // TODO: Tab autocomplete on available commands.
 std::vector<std::string> GetSuggestions(const std::string& prefix) 
 {
@@ -122,8 +132,11 @@ void Velox::DrawConsole()
     // history entriesfor
     for (auto record = g_console.history.rbegin(); record != g_console.history.rend(); record++)
     {                    
-        ImGui::Text("> %s", record->command.c_str());
-        ImGui::Text("%s", record->response.c_str());
+        if (record->command.size() > 0)
+            ImGui::Text("> %s", record->command.c_str());
+        
+        if (record->response.size() > 0)
+            ImGui::Text("%s", record->response.c_str());
     }
     
     ImGui::PopTextWrapPos();

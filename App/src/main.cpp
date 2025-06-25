@@ -5,7 +5,6 @@
 #include "Text.h"
 #include "Velox.h"
 #include "Entity.h"
-#include "Primitive.h"
 #include "Util.h"
 
 #include <imgui.h>
@@ -14,7 +13,7 @@
 
 Velox::EntityManager g_entityManager;
 
-unsigned int g_fontShaderId;
+u32 g_fontShaderId;
 Velox::Font* g_font;
 
 Velox::EntityHandle e1;
@@ -30,7 +29,7 @@ void UpdateGame(float deltaTime)
     Velox::Entity* e = g_entityManager.getMut(e1);
 
     e->position.x += (300 * direction) * deltaTime;
-    e->rotation += (40 * direction) * deltaTime;
+    // e->rotation += (40 * direction) * deltaTime;
 
     ivec2 windowSize = Velox::GetWindowSize();
     if (e->position.x > windowSize.x * 0.95) direction = -1.0;
@@ -39,22 +38,34 @@ void UpdateGame(float deltaTime)
 
 void DoRenderingStuff()
 {
-    Velox::DrawRectangle(vec4(200, 200, 200, 200), vec4(1.0, 0.0, 0.0, 1.0), 0, 0); // Untextured
-    Velox::DrawRectangle(vec4(200, 500, 200, 200), vec4(1.0, 1.0, 1.0, 1.0), 0, 0); // Textured
+    Velox::DrawQuad(vec3(100.0f, 100.0f, 0.0f), vec2(200.0f, 200.0f), vec4(1.0f));
+
+    Velox::DrawRect(vec3(90.0f, 90.0f, 0.0f), vec2(220.0f, 220.0f), vec4(1.0f));
+
+    Velox::DrawQuad(vec3(100.0f, 400.0f, 0.0f), vec2(200.0f, 200.0f), vec4(1.0f),
+            Velox::GetAssetManager()->GetTextureID("missing_texture.png"));
+
+    Velox::DrawQuad(vec3(400.0f, 100.0f, 0.0f), vec2(500.0f, 500.0f), vec4(1.0f), g_font->textureId);
 
     Velox::Entity* e = g_entityManager.getMut(e1);
     e->Draw(true);
 
-    // msdf font atlas
-    Velox::DrawRectangle(vec4(200, 800, 200, 200), vec4(1.0), 0, g_font->textureId, g_fontShaderId);
-
     Velox::PushFont("martius.ttf");
 
-    Velox::DrawText("Hello Sailor!", { vec3(700, 500, 0), 300 });
+    Velox::TextDrawInfo textInfo {};
+    textInfo.position = vec3(1000.0f, 500.0f, 0.0f);
+    textInfo.textSize = 90.0f;
+    textInfo.color = vec4(1.0f);
+    Velox::DrawText("<- MSDF Texture", textInfo);
 
     Velox::PopFont();
 
-    Velox::DrawText("Hello Sailor!", { vec3(700, 400, 0), 100 });
+    textInfo.position.y -= 100.0f;
+    Velox::DrawText("text in another font", textInfo);
+
+    Velox::DrawLine(vec3(100.0f, 600.0f, 0.0f), vec3(900.0f, 600.0f, 0.0f), COLOR_RED);
+
+    Velox::DrawLine(vec3(100.0f, 615.0f, 0.0f), vec3(900.0f, 615.0f, 0.0f), COLOR_RED);
 
     ImGui::ShowDemoWindow();
 }
@@ -72,14 +83,11 @@ void run()
     e->textureId = Velox::GetAssetManager()->LoadTexture("star.png");
     e->flags |= Velox::EntityFlags::Visible;
 
-    // g_font = Velox::GetAssetManager()->GetFontRef("spicy_kebab.ttf");
     g_font = Velox::GetAssetManager()->LoadFont("martius.ttf");
-    Velox::PushFont("martius.ttf");
 
     if (g_font == nullptr)
         printf("font is null\n");
 
-    //g_fontShaderId = Velox::GetAssetManager()->GetShaderProgramID("sdf_quad");
     g_fontShaderId = 0;
 
     while (!Velox::QuitRequested())

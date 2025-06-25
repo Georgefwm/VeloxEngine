@@ -10,8 +10,12 @@
 
 #include <SDL3/SDL.h>
 
+#include <SDL3/SDL_time.h>
+#include <SDL3/SDL_timer.h>
 #include <imgui.h>
 #include <imgui_impl_sdl3.h>
+
+#include <format>
 
 bool g_quitRequested = false;
 
@@ -25,11 +29,24 @@ void Velox::Init()
         return;
     }
 
+    SDL_Time initStartTime;
+    SDL_GetCurrentTime(&initStartTime);
+
     Velox::InitAssets();
     Velox::InitRenderer();
     Velox::InitText();
     Velox::InitUI();
     Velox::InitConsole();
+
+    SDL_Time initEndTime;
+    SDL_GetCurrentTime(&initEndTime);
+
+    SDL_Time t = SDL_NS_TO_MS(initEndTime) - SDL_NS_TO_MS(initStartTime);
+    std::string initString = "Engine initialiased, took ";
+    initString += std::to_string(t);
+    initString += " ms";
+
+    Velox::PrintToConsole(initString);
 }
 
 Velox::EngineState* Velox::GetEngineState()
