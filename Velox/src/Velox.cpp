@@ -15,8 +15,6 @@
 #include <imgui.h>
 #include <imgui_impl_sdl3.h>
 
-#include <format>
-
 bool g_quitRequested = false;
 
 static Velox::EngineState engineState {};
@@ -77,7 +75,7 @@ bool Velox::QuitRequested()
 
 void Velox::DeInit()
 {
-    Velox::DeInitAssets(); // Must be cleaned up before GLContext is destroyed (in DeInitRenderer()).
+    Velox::DeInitAssets(); // Must be cleaned up before GLContext is destroyed (in DeInitRenderer()). (I think...)
 
     Velox::DeInitRenderer();
     Velox::DeInitUI();

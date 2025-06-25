@@ -5,7 +5,6 @@
 #include "Rendering/Pipeline.h"
 #include "Text.h"
 #include "Velox.h"
-#include "imgui.h"
 
 #include <glad/gl.h> // Must be included before SDL
 #include <SDL3/SDL_filesystem.h>
@@ -16,6 +15,7 @@
 #include <SDL3_image/SDL_image.h>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
+#include <imgui.h>
 #include <imgui_impl_sdl3.h>
 #include <imgui_impl_opengl3.h>
 
