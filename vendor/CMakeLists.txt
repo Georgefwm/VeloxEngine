@@ -1,8 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
 
-# UI
-add_subdirectory("ImGui")
-
 # OpenGL function loader
 add_subdirectory("glad")
 

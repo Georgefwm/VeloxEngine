@@ -28,12 +28,15 @@ find_package(OpenGL            REQUIRED)
 find_package(SDL3       CONFIG REQUIRED)
 find_package(SDL3_image CONFIG REQUIRED)
 find_package(glm        CONFIG REQUIRED)
+find_package(freetype   CONFIG REQUIRED)
+find_package(imgui      CONFIG REQUIRED)
 
 # Libs from /vendor/CMakeLists.txt
 target_link_libraries(Velox PUBLIC
     SDL3::SDL3
     SDL3_image::SDL3_image
-    ImGui
+    Freetype::Freetype
+    imgui::imgui
     glm::glm
     glad_using_ver
     msdf-atlas-gen::msdf-atlas-gen

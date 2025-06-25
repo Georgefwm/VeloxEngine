@@ -8,7 +8,16 @@
       ]
     },
     "glm",
-    "msdfgen"
+    "msdfgen",
+    "freetype",
+    {
+      "name": "imgui",
+      "features": [
+        "opengl3-binding",
+        "sdl3-binding",
+        "freetype"
+      ]
+    }
   ],
   "builtin-baseline": "0cf34c184ce990471435b5b9c92edcf7424930b1"
 }
