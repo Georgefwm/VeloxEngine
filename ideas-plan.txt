@@ -25,3 +25,8 @@ Immediately necessary:
 - Renderer (initially based on data from DearImGui)
 - Event system
     - Really not sure how to structure this yet
+
+TODO:
+- SDF text features (outlines, softness, etc)
+- Proper frame timing/pacing
+- Simple transform animations
