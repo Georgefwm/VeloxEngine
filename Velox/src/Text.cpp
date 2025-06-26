@@ -48,9 +48,10 @@ Velox::Font* Velox::GetUsingFont()
     return s_fontStack.top();
 }
 
+// GM: Would be nice to push/pop indiviudal styles, quick n dirty for now :)
 void Velox::PushTextStyle(const Velox::TextDrawStyle& style)
 {
-    // Don't allow same font to be pushed repeatedly. Simpler I think.
+    // Don't allow same style to be pushed twice.
     if (s_textStyleStack.size() > 0)
     {
         if (style == s_textStyleStack.top())
