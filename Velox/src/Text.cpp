@@ -5,8 +5,11 @@
 #include <stack>
 #include <msdf-atlas-gen/msdf-atlas-gen.h>
 
-Velox::Font* g_defaultFont;
-std::stack<Velox::Font*> g_fontStack;
+static Velox::Font* g_defaultFont;
+static std::stack<Velox::Font*> s_fontStack {};
+
+static Velox::TextDrawStyle s_defaultTextStyle {};
+static std::stack<Velox::TextDrawStyle> s_textStyleStack {};
 
 void Velox::PushFont(const char* fontName)
 {
@@ -18,38 +21,65 @@ void Velox::PushFont(const char* fontName)
     }
 
     // Don't allow same font to be pushed repeatedly. Simpler I think.
-    if (g_fontStack.size() > 0)
+    if (s_fontStack.size() > 0)
     {
-        if (SDL_strcmp(g_fontStack.top()->name, requestedFont->name) == 0)
+        if (SDL_strcmp(s_fontStack.top()->name, requestedFont->name) == 0)
             return;
     }
 
-    g_fontStack.push(requestedFont);
+    s_fontStack.push(requestedFont);
 }
 
 void Velox::PopFont()
 {
-    if (g_fontStack.size() == 0)
+    if (s_fontStack.size() == 0)
     {
         return;
     }
 
-    g_fontStack.pop();
+    s_fontStack.pop();
 }
 
 Velox::Font* Velox::GetUsingFont()
 {
-    if (g_fontStack.size() == 0)
+    if (s_fontStack.size() == 0)
         return g_defaultFont;
 
-    return g_fontStack.top();
+    return s_fontStack.top();
+}
+
+void Velox::PushTextStyle(const Velox::TextDrawStyle& style)
+{
+    // Don't allow same font to be pushed repeatedly. Simpler I think.
+    if (s_textStyleStack.size() > 0)
+    {
+        if (style == s_textStyleStack.top())
+            return;
+    }
+
+    s_textStyleStack.push(style);
+}
+
+void Velox::PopTextStyle()
+{
+    if (s_textStyleStack.size() == 0)
+    {
+        return;
+    }
+
+    s_textStyleStack.pop();
+}
+Velox::TextDrawStyle* Velox::GetUsingTextStyle()
+{
+    if (s_textStyleStack.size() == 0)
+        return &s_defaultTextStyle;
+
+    return &s_textStyleStack.top();
 }
 
 
 void Velox::InitText()
 {
-    g_fontStack = {};
-
     Velox::AssetManager* assetManager = Velox::GetAssetManager();
 
     g_defaultFont = assetManager->LoadFont("spicy_kebab.ttf");

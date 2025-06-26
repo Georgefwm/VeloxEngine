@@ -10,6 +10,8 @@ struct Config {
 
 Config* GetConfig();
 
+void SaveUserConfig();
+
 void InitConfig(bool* userConfigExists);
 
 }

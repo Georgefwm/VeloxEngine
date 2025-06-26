@@ -15,10 +15,16 @@ struct UniformBufferObject {
     i32   padding[2]; // padding to match GLSL std140 layout
 };
 
-struct TextDrawInfo {
-    vec3 position = vec3(100.0, 100.0, 0);
-    u32 textSize = 48;
-    vec4 color = vec4(1.0);
+struct TextDrawStyle {
+    u32  textSize = 24;
+    vec4 color    = vec4(1.0f);
+
+    bool operator==(TextDrawStyle const& rhs) const
+    {
+        if (textSize != rhs.textSize) return false;
+        if (color    != rhs.color   ) return false;
+        return true;
+    }
 };
 
 struct TextureVertex {
@@ -40,12 +46,12 @@ struct FontVertex {
 };
 
 struct Texture {
-    u32 id;
+    u32  id;
     void Use();
 };
 
 struct ShaderProgram {
-    u32 id;
+    u32  id;
     void Use();
 };
 
@@ -67,6 +73,8 @@ i32 GetVsyncMode();
 f32 GetDisplayScale();
 
 void SetResolution(ivec2 newResolution);
+void SetVsyncMode(int newMode);
+bool IsAdaptiveVsyncSupported();
 
 void InitRenderer();
 
@@ -94,7 +102,7 @@ void DrawLine(const vec3& p0, const vec3& p1, const vec4& color);
 
 void DrawRect(const vec3& position, const vec2& size, const vec4& color);
 
-void DrawText(const char* text, const Velox::TextDrawInfo& textDrawInfo);
+void DrawText(const char* text, const vec3& position);
 // void Draw(std::vector<Velox::Vertex>& vertices, std::vector<u32>& indices,
 //       u32 textureId, u32 shaderId = 0);
 

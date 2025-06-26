@@ -27,15 +27,16 @@ void Velox::InitUI()
     ImGui_ImplSDL3_InitForOpenGL(window, glContext);
     ImGui_ImplOpenGL3_Init();
 
-
+    float baseFontSize = 24.0f;
     float displayScale = Velox::GetDisplayScale();
 
     ImGuiStyle& style = ImGui::GetStyle();
     style.ScaleAllSizes(displayScale);
 
+    // io.FontGlobalScale = displayScale;
+
     ImFontConfig fontConfig {};
     fontConfig.RasterizerDensity = displayScale;
-
 
     Velox::Arena tempData(2048);
 
@@ -46,7 +47,8 @@ void Velox::InitUI()
     SDL_strlcat(absolutePath, "assets\\fonts\\", pathSize);
     SDL_strlcat(absolutePath, "commit_mono.ttf", pathSize);
 
-    ImFont* commitMonoFont = io.Fonts->AddFontFromFileTTF(absolutePath, 30, &fontConfig);
+    ImFont* commitMonoFont = 
+        io.Fonts->AddFontFromFileTTF(absolutePath, baseFontSize * displayScale, &fontConfig);
 }
 
 void Velox::ForwardSDLEventToUI(Velox::Event* event)

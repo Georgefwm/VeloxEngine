@@ -36,6 +36,7 @@ constexpr vec4 QUAD_VERTEX_POSITIONS[4] = {
 };
 
 Velox::Config* s_config;
+static bool s_adaptiveVsyncSupported = false;
 
 static ivec2 s_windowSize;
 static int s_vsyncMode;
@@ -95,19 +96,54 @@ void Velox::SetResolution(ivec2 newResolution)
 {
     s_windowSize = newResolution;
 
+    s_config->windowWidth = s_windowSize.x;
+    s_config->windowHeight = s_windowSize.y;
+
+    // Prevent changes pre-SDL_CreateWindow
+    if (g_window == nullptr)
+        return;
+
     SDL_SetWindowSize(g_window, s_windowSize.x, s_windowSize.y);
     SDL_SetWindowPosition(g_window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+
+    // Prevent being called pre-SDL_GL_CreateContext().
+    if (g_glContext == nullptr)
+        return;
 
     // Update OpenGL things.
     glViewport(0, 0, s_windowSize.x, s_windowSize.y);
     g_projection =  glm::ortho(0.0f, (float)s_windowSize.x, 0.0f, (float)s_windowSize.y, -1.0f, 1.0f);
 }
 
+void Velox::SetVsyncMode(int newMode)
+{
+    if (!s_adaptiveVsyncSupported && newMode == -1)
+    {
+        printf("Adaptive vsync is not supported on this machine, falling back to: On\n");
+        s_vsyncMode = 1;
+    }
+    else
+        s_vsyncMode = newMode;
+
+    s_config->vsyncMode = s_vsyncMode; 
+
+    // Prevent being called pre-SDL_GL_CreateContext().
+    if (g_glContext != nullptr)
+        SDL_GL_SetSwapInterval(s_vsyncMode);
+}
+
+bool Velox::IsAdaptiveVsyncSupported() { return s_adaptiveVsyncSupported; }
+
 void Velox::InitRenderer()
 {
+    // Support checks
+    s_adaptiveVsyncSupported = SDL_GL_ExtensionSupported("WGL_EXT_swap_control_tear"); // Windows
+    // s_adaptiveVsyncSupported = SDL_GL_ExtensionSupported("GLX_EXT_swap_control"); // Linux
+
+    // Apply config
     s_config = Velox::GetConfig();
-    s_windowSize = ivec2(s_config->windowWidth, s_config->windowHeight);
-    s_vsyncMode = s_config->vsyncMode;
+    Velox::SetResolution(ivec2(s_config->windowWidth, s_config->windowHeight));
+    Velox::SetVsyncMode(s_config->vsyncMode);
 
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD))
     {
@@ -144,7 +180,7 @@ void Velox::InitRenderer()
 
     SDL_GL_MakeCurrent(g_window, g_glContext);
 
-    SDL_GL_SetSwapInterval(s_vsyncMode);
+    SetVsyncMode(s_vsyncMode);
 
     SDL_SetWindowPosition(g_window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
     SDL_ShowWindow(g_window);
@@ -480,16 +516,17 @@ void Velox::DrawRect(const vec3& position, const vec2& size, const vec4& color)
 
 // GM: For reference of how fonts are organised on screen see:
 // https://freetype.org/freetype2/docs/tutorial/step2.html#section-1
-void Velox::DrawText(const char* text, const Velox::TextDrawInfo& textDrawInfo)
+void Velox::DrawText(const char* text, const vec3& position)
 {
     Velox::Font* usingFont = Velox::GetUsingFont();
+    Velox::TextDrawStyle* usingStyle = Velox::GetUsingTextStyle();
 
     const msdf_atlas::FontGeometry& fontGeometry = usingFont->fontGeometry;
 
     msdfgen::FontMetrics metrics = fontGeometry.getMetrics();
 
     double x = 0.0;
-    double fontScale = 1 / (metrics.ascenderY - metrics.descenderY) * textDrawInfo.textSize;
+    double fontScale = 1 / (metrics.ascenderY - metrics.descenderY) * usingStyle->textSize;
     double y = 0.0;
     
     size_t charCount = SDL_strlen(text);
@@ -549,35 +586,35 @@ void Velox::DrawText(const char* text, const Velox::TextDrawInfo& textDrawInfo)
         command.numIndices  = quadIndexCount;  // Always 6 for a quad.
 
         glm::mat4 transform = 
-            glm::translate(glm::mat4(1.0f), textDrawInfo.position);
+            glm::translate(glm::mat4(1.0f), position);
             //glm::scale(glm::mat4(1.0f), { quadMax.x, quadMin.y, 1.0f });
 
         g_fontPipeline.vertices[startVertexOffset + 0] = Velox::FontVertex {
             .position = transform * vec4(quadMin.x, quadMin.y, 0.0f, 1.0f),
-            .color    = textDrawInfo.color,
+            .color    = usingStyle->color,
             .uv       = { textureCoordMin.x, textureCoordMin.y },
-            .outlineColor  = textDrawInfo.color,
+            .outlineColor  = usingStyle->color,
         };
 
         g_fontPipeline.vertices[startVertexOffset + 1] = Velox::FontVertex {
             .position = transform * vec4(quadMin.x, quadMax.y, 0.0f, 1.0f),
-            .color    = textDrawInfo.color,
+            .color    = usingStyle->color,
             .uv       = { textureCoordMin.x, textureCoordMax.y },
-            .outlineColor  = textDrawInfo.color,
+            .outlineColor  = usingStyle->color,
         };
         
         g_fontPipeline.vertices[startVertexOffset + 2] = Velox::FontVertex {
             .position = transform * vec4(quadMax.x, quadMax.y, 0.0f, 1.0f),
-            .color    = textDrawInfo.color,
+            .color    = usingStyle->color,
             .uv       = { textureCoordMax.x, textureCoordMax.y },
-            .outlineColor  = textDrawInfo.color,
+            .outlineColor  = usingStyle->color,
         };
 
         g_fontPipeline.vertices[startVertexOffset + 3] = Velox::FontVertex {
             .position = transform * vec4(quadMax.x, quadMin.y, 0.0f, 1.0f),
-            .color    = textDrawInfo.color,
+            .color    = usingStyle->color,
             .uv       = { textureCoordMax.x, textureCoordMin.y },
-            .outlineColor  = textDrawInfo.color,
+            .outlineColor  = usingStyle->color,
         };
 
         for (u32 i = 0; i < quadIndexCount; i++)

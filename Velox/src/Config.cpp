@@ -19,38 +19,73 @@ Velox::Config s_config;
 
 Velox::Config* Velox::GetConfig() { return &s_config; }
 
-void LoadConfigToStruct(toml::table* table)
+bool TomlToConfig(toml::table* table, Velox::Config* config)
 {
     if (table == nullptr)
     {
         printf("ERROR: Config table is null\n");
-        return;
+        return false;
     }
 
-    s_config.windowWidth  = table->at_path("rendering.window_width" ).value_or(s_config.windowWidth);
-    s_config.windowHeight = table->at_path("rendering.window_height").value_or(s_config.windowHeight);
-    s_config.vsyncMode    = table->at_path("rendering.vsync_mode"   ).value_or(s_config.vsyncMode);
+    config->windowWidth  = table->at_path("rendering.window_width" ).value_or(config->windowWidth);
+    config->windowHeight = table->at_path("rendering.window_height").value_or(config->windowHeight);
+    config->vsyncMode    = table->at_path("rendering.vsync_mode"   ).value_or(config->vsyncMode);
+
+    return true;
 }
 
-void WriteToFile(const char* filepath, toml::table* table)
+bool ConfigToToml(Velox::Config* config, toml::table* table)
+{
+    if (table == nullptr)
+    {
+        printf("ERROR: Config table is null\n");
+        return false;
+    }
+
+    toml::table renderingConfig = toml::table {
+        { "window_width",  config->windowWidth  },
+        { "window_height", config->windowHeight },
+        { "vsync_mode",    config->vsyncMode    },
+    };
+
+    *table = toml::table {
+        { "rendering", renderingConfig },
+    };
+
+    return true;
+}
+
+// Overwrites file, remember to include *all* information every write.
+bool WriteToFile(const char* filepath, toml::table* table)
 {
     if (table == nullptr)
     {
         printf("ERROR: Failed to write to file, table is nullptr\n");
-        return;
+        return false;
     }
 
     std::ofstream file;
-    file.open(filepath);
+
+    // Open file at start, discard old data.
+    file.open(filepath, std::ofstream::trunc);
 
     if (!file.is_open())
     {
         printf("Failed to write new default config file\n");
-        return;
+        return false;
     }
 
     file << *table;
     file.close();
+
+    return true;
+}
+
+void Velox::SaveUserConfig()
+{
+    toml::table newUserTable {};
+    ConfigToToml(&s_config, &newUserTable);
+    WriteToFile(s_userConfigPath, &newUserTable);
 }
 
 void CreateDefaultConfig()
@@ -115,9 +150,9 @@ void Velox::InitConfig(bool* userConfigExists)
     }
 
     if (userExists)
-        LoadConfigToStruct(&s_userTable);        
+        TomlToConfig(&s_userTable, &s_config);        
     else
-        LoadConfigToStruct(&s_defaultTable);        
+        TomlToConfig(&s_defaultTable, &s_config);        
 
 }
 

@@ -4,6 +4,7 @@
 
 #include "Arena.h"
 #include "Asset.h"
+#include "Config.h"
 #include "Rendering/Renderer.h"
 #include "Util.h"
 #include "Velox.h"
@@ -180,12 +181,12 @@ static i32 s_selectedVsync = 1;
 
 void SaveSettings()
 {
-
+    Velox::SaveUserConfig();
 }
 
 void ApplySettings()
 {
-
+    printf("I do nothing atm\n");
 }
 
 void Velox::DrawSettings() {
@@ -200,26 +201,38 @@ void Velox::DrawSettings() {
 
         ivec2 currentWindowSize = Velox::GetWindowSize();
 
-        s_displayModes.resize(displayModeCount);
-        s_displayModeLabels.resize(displayModeCount);
+        s_displayModes.clear();
+        s_displayModeLabels.clear();
 
+        int insertedIndex = 0;
         for (int i = 0; i < displayModeCount; i++)
         {
-            // Copy mode value from pointer
-            s_displayModes[i] = *displayModes[i];
+            if (s_displayModes.size() > 0)
+            {
+                // Skip entries with only different refresh rates (only max is ever used).
+                if (displayModes[i]->w == s_displayModes.back().w && 
+                    displayModes[i]->h == s_displayModes.back().h)
+                    continue;
+            }
 
-            // Create human-readable label
-            size_t maxLabelSize = 20;
-            s_displayModeLabels[i] = s_data.Alloc<char>(maxLabelSize);
-            SDL_snprintf(s_displayModeLabels[i], maxLabelSize, "%i x %i @ %.0fHz",
-                s_displayModes[i].w, s_displayModes[i].h, s_displayModes[i].refresh_rate);
+            // Copy mode value from pointer
+            s_displayModes.push_back(*displayModes[i]);
+
+            size_t maxLabelSize = 14; // (5 chars) + " x " + (5 chars) + '\0'.
+            char* labelPtr  = s_data.Alloc<char>(maxLabelSize);
+            SDL_snprintf(labelPtr, maxLabelSize, "%i x %i",
+                s_displayModes[insertedIndex].w, s_displayModes[insertedIndex].h);
+
+            s_displayModeLabels.push_back(labelPtr);
 
             if (s_selectedDisplayMode < 0)
             {
-                if (currentWindowSize.x == s_displayModes[i].w &&
-                    currentWindowSize.y == s_displayModes[i].h)
+                if (currentWindowSize.x == s_displayModes[insertedIndex].w &&
+                    currentWindowSize.y == s_displayModes[insertedIndex].h)
                     s_selectedDisplayMode = i;
             }
+
+            insertedIndex += 1;
         }
 
         SDL_free(displayModes);
@@ -259,9 +272,12 @@ void Velox::DrawSettings() {
 
     if (ImGui::Button("Save"))
     {
-        printf("I do nothing atm\n");
-        ApplySettings();
+        SaveSettings();
     }
+
+    ImGui::SameLine();
+    if (ImGui::Button("Force Update"))
+        s_updateDisplayModes = true;
 
     ImGui::Separator();
 
@@ -269,17 +285,27 @@ void Velox::DrawSettings() {
     {
         ImGui::Spacing();
 
-        ImGui::PushItemWidth(ImGui::GetFontSize() * 13);
-        ImGui::Text("Resolution: ");
-        ImGui::SameLine();
+        // Set to the longest label name (currently Resolution)
+        const float alignedElementOffset = ImGui::GetFontSize() * 10;
 
+        ImGui::Text("Resolution:");
+
+        ImGui::SameLine(alignedElementOffset);
+        ImGui::PushItemWidth(ImGui::GetFontSize() * 10);
         if (ImGui::BeginCombo("##resolution combo", s_displayModeLabels[s_selectedDisplayMode], flags))
         {
             for (int n = 0; n < s_displayModes.size(); n++)
             {
                 const bool isSelected = (s_selectedDisplayMode == n);
                 if (ImGui::Selectable(s_displayModeLabels[n], isSelected))
+                {
+                    // Prevent re-applying same resolution.
+                    if (s_selectedDisplayMode == n)
+                        continue;
+
+                    Velox::SetResolution(ivec2(s_displayModes[n].w, s_displayModes[n].h));
                     s_selectedDisplayMode = n;
+                }
 
                 // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
                 if (isSelected)
@@ -288,17 +314,29 @@ void Velox::DrawSettings() {
 
             ImGui::EndCombo();
         }
+        ImGui::PopItemWidth();
 
         ImGui::Text("Vsync: ");
-        ImGui::SameLine();
 
+        ImGui::SameLine(alignedElementOffset);
+        ImGui::PushItemWidth(ImGui::GetFontSize() * 8);
         if (ImGui::BeginCombo("##vsync combo", s_vsyncModes[s_selectedVsync], flags))
         {
-            for (int n = 0; n < 3; n++)
+            // Adaptive vsync is always first item, so skip if not supported.
+            int vsyncStartIndex = Velox::IsAdaptiveVsyncSupported() ? 0 : 1;
+
+            for (int n = vsyncStartIndex; n < 3; n++)
             {
                 const bool isSelected = (s_selectedVsync == n);
                 if (ImGui::Selectable(s_vsyncModes[n], isSelected))
+                {
+                    // Prevent re-applying same resolution.
+                    if (s_selectedVsync == n)
+                        continue;
+
+                    Velox::SetVsyncMode(n - 1);
                     s_selectedVsync = n;
+                }
 
                 // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
                 if (isSelected)
@@ -307,12 +345,10 @@ void Velox::DrawSettings() {
 
             ImGui::EndCombo();
         }
-
         ImGui::PopItemWidth();
+
     }
 
-
-    ImGui::PopItemWidth();
     ImGui::End();
 }
 
