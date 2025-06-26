@@ -6,6 +6,8 @@ void DrawPerformanceStats();
 
 void DrawMemoryUsageStats();
 
+void DrawSettings();
+
 void UpdateFrameHistory();
 
 }

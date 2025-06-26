@@ -2,6 +2,7 @@
 #include <PCH.h>
 
 #include "Asset.h"
+#include "Config.h"
 #include "Console.h"
 #include "Debug.h"
 #include "Text.h"
@@ -30,6 +31,12 @@ void Velox::Init()
     SDL_Time initStartTime;
     SDL_GetCurrentTime(&initStartTime);
 
+    bool userConfigExists;
+    Velox::InitConfig(&userConfigExists);
+
+    // if (!userConfigExists)
+    //     perform some first time setup
+
     Velox::InitAssets();
     Velox::InitRenderer();
     Velox::InitText();
@@ -40,7 +47,7 @@ void Velox::Init()
     SDL_GetCurrentTime(&initEndTime);
 
     SDL_Time t = SDL_NS_TO_MS(initEndTime) - SDL_NS_TO_MS(initStartTime);
-    std::string initString = "Engine initialiased, took ";
+    std::string initString = "Engine initialised, took ";
     initString += std::to_string(t);
     initString += " ms";
 
@@ -61,6 +68,9 @@ void Velox::DoFrameEndUpdates()
 
     if (engineState.showMemoryUsageStats)
         Velox::DrawMemoryUsageStats();
+
+    if (engineState.showSettings)
+        Velox::DrawSettings();
 }
 
 void Velox::Quit()

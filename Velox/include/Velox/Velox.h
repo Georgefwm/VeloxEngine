@@ -5,6 +5,7 @@ namespace Velox {
 struct EngineState {
     bool showPerformanceStats = false;
     bool showMemoryUsageStats = false;
+    bool showSettings         = false;
 };
 
 // GM: Sets up all framework systems.

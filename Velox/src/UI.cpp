@@ -1,6 +1,7 @@
 #include "UI.h"
 #include <PCH.h>
 
+#include "Arena.h"
 #include "Rendering/Renderer.h"
 #include "Event.h"
 
@@ -25,7 +26,27 @@ void Velox::InitUI()
 
     ImGui_ImplSDL3_InitForOpenGL(window, glContext);
     ImGui_ImplOpenGL3_Init();
-    io.FontGlobalScale = Velox::GetDisplayScale();
+
+
+    float displayScale = Velox::GetDisplayScale();
+
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.ScaleAllSizes(displayScale);
+
+    ImFontConfig fontConfig {};
+    fontConfig.RasterizerDensity = displayScale;
+
+
+    Velox::Arena tempData(2048);
+
+    const size_t pathSize = 1024;
+    char* absolutePath = tempData.Alloc<char>(pathSize);
+
+    SDL_strlcpy(absolutePath, SDL_GetBasePath(), pathSize);
+    SDL_strlcat(absolutePath, "assets\\fonts\\", pathSize);
+    SDL_strlcat(absolutePath, "commit_mono.ttf", pathSize);
+
+    ImFont* commitMonoFont = io.Fonts->AddFontFromFileTTF(absolutePath, 30, &fontConfig);
 }
 
 void Velox::ForwardSDLEventToUI(Velox::Event* event)

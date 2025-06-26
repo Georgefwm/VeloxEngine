@@ -24,12 +24,13 @@ target_include_directories(
 
 target_precompile_headers(Velox PUBLIC "include/Velox/PCH.h")
 
-find_package(OpenGL            REQUIRED)
-find_package(SDL3       CONFIG REQUIRED)
-find_package(SDL3_image CONFIG REQUIRED)
-find_package(glm        CONFIG REQUIRED)
-find_package(freetype   CONFIG REQUIRED)
-find_package(imgui      CONFIG REQUIRED)
+find_package(OpenGL              REQUIRED)
+find_package(SDL3         CONFIG REQUIRED)
+find_package(SDL3_image   CONFIG REQUIRED)
+find_package(glm          CONFIG REQUIRED)
+find_package(freetype     CONFIG REQUIRED)
+find_package(imgui        CONFIG REQUIRED)
+find_package(tomlplusplus CONFIG REQUIRED)
 
 # Libs from /vendor/CMakeLists.txt
 target_link_libraries(Velox PUBLIC
@@ -40,6 +41,7 @@ target_link_libraries(Velox PUBLIC
     glm::glm
     glad_using_ver
     msdf-atlas-gen::msdf-atlas-gen
+    tomlplusplus::tomlplusplus
 )
 
 target_link_libraries(Velox PRIVATE OpenGL::GL)

@@ -2,6 +2,7 @@
 #include <PCH.h>
 
 #include "Asset.h"
+#include "Config.h"
 #include "Rendering/Pipeline.h"
 #include "Text.h"
 #include "Velox.h"
@@ -19,9 +20,8 @@
 #include <imgui_impl_sdl3.h>
 #include <imgui_impl_opengl3.h>
 
-
-constexpr i32 WINDOW_WIDTH  = 1920;
-constexpr i32 WINDOW_HEIGHT = 1080;
+// Aparently windows uses this as 'default' scale.
+constexpr float USER_DEFAULT_SCREEN_DPI = 96.0f;
 
 constexpr u32 MAX_TEXTURES = 512;
 
@@ -34,6 +34,11 @@ constexpr vec4 QUAD_VERTEX_POSITIONS[4] = {
 	{  1.0f, 1.0f, 0.0f, 1.0f },
 	{  1.0f, 0.0f, 0.0f, 1.0f }
 };
+
+Velox::Config* s_config;
+
+static ivec2 s_windowSize;
+static int s_vsyncMode;
 
 SDL_Window* g_window;
 SDL_GLContext g_glContext;
@@ -74,13 +79,8 @@ void CheckGLError()
 void Velox::ShaderProgram::Use() { glUseProgram(id); }
 void Velox::Texture::Use() { glBindTexture(GL_TEXTURE_2D, id); }
 
-ivec2 Velox::GetWindowSize()
-{
-    ivec2 size {};
-    SDL_GetWindowSize(g_window, &size.x, &size.y);
-
-    return size;
-}
+ivec2 Velox::GetWindowSize() { return s_windowSize; }
+i32 Velox::GetVsyncMode()    { return s_vsyncMode;  }
 
 f32 Velox::GetDisplayScale()
 {
@@ -90,8 +90,25 @@ f32 Velox::GetDisplayScale()
     return SDL_GetWindowDisplayScale(g_window);
 }
 
+// Currently doesn't account for fullscreen stuff.
+void Velox::SetResolution(ivec2 newResolution)
+{
+    s_windowSize = newResolution;
+
+    SDL_SetWindowSize(g_window, s_windowSize.x, s_windowSize.y);
+    SDL_SetWindowPosition(g_window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+
+    // Update OpenGL things.
+    glViewport(0, 0, s_windowSize.x, s_windowSize.y);
+    g_projection =  glm::ortho(0.0f, (float)s_windowSize.x, 0.0f, (float)s_windowSize.y, -1.0f, 1.0f);
+}
+
 void Velox::InitRenderer()
 {
+    s_config = Velox::GetConfig();
+    s_windowSize = ivec2(s_config->windowWidth, s_config->windowHeight);
+    s_vsyncMode = s_config->vsyncMode;
+
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD))
     {
         printf("Error: SDL_Init(): %s\n", SDL_GetError());
@@ -111,7 +128,7 @@ void Velox::InitRenderer()
         SDL_WINDOW_HIGH_PIXEL_DENSITY |
         SDL_WINDOW_HIDDEN;
     
-    g_window = SDL_CreateWindow("GLProject", WINDOW_WIDTH, WINDOW_HEIGHT, windowFlags);
+    g_window = SDL_CreateWindow("GLProject", s_windowSize.x, s_windowSize.y, windowFlags);
     if (g_window == nullptr)
     {
         printf("Error: SDL_CreateWindow(): %s\n", SDL_GetError());
@@ -126,7 +143,9 @@ void Velox::InitRenderer()
     }
 
     SDL_GL_MakeCurrent(g_window, g_glContext);
-    SDL_GL_SetSwapInterval(1); // Enable vsync
+
+    SDL_GL_SetSwapInterval(s_vsyncMode);
+
     SDL_SetWindowPosition(g_window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
     SDL_ShowWindow(g_window);
 
@@ -137,7 +156,7 @@ void Velox::InitRenderer()
     printf("OpenGL Version: %s\n", versionStr);
 
     glClearColor(0, 0, 0, 1.0);
-    glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+    glViewport(0, 0, s_windowSize.x, s_windowSize.y);
 
     // Render settings
     glEnable(GL_BLEND);
@@ -146,7 +165,6 @@ void Velox::InitRenderer()
     glEnable(GL_CULL_FACE); 
     glCullFace(GL_BACK);
     glFrontFace(GL_CW); // Vertices are defind clockwise. This is standard in mordern model formats.
-
 
     g_texturedQuadPipeline.Init(1);
     g_linePipeline.Init(2);
@@ -185,7 +203,7 @@ void Velox::InitRenderer()
     g_errorTexture.id = assetManager->LoadTexture("missing_texture.png");
     g_whiteTexture.id = assetManager->LoadTexture("white.png");
 
-    g_projection =  glm::ortho(0.0f, (float)WINDOW_WIDTH, 0.0f, (float)WINDOW_HEIGHT, -1.0f, 1.0f);
+    g_projection =  glm::ortho(0.0f, (float)s_windowSize.x, 0.0f, (float)s_windowSize.y, -1.0f, 1.0f);
     g_view = glm::mat4(1.0f);
     // g_view = glm::translate(g_view, glm::vec3(0.0f, 0.0f, -3.0f)); 
 

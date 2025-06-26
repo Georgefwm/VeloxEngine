@@ -21,7 +21,7 @@ struct Console {
     float currentHeight        = 0.0;
     float openSpeed            = 3000.0;
     bool  shouldBeOpen         = false;
-    bool  shouldScrollToBottom = false;
+    bool  shouldScrollToBottom = false; // Currently goes to top.
 
     std::vector<ConsoleRecord> history;
     int historyIndex = -1;

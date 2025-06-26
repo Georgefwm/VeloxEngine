@@ -143,7 +143,7 @@ void Velox::DrawConsole()
 
     // Auto-scroll logs.
     if (g_console.shouldScrollToBottom && (ImGui::GetScrollY() >= ImGui::GetScrollMaxY()))
-        ImGui::SetScrollHereY(1.0f);
+        ImGui::SetScrollHereY(0.0f);
 
     g_console.shouldScrollToBottom = false;
 

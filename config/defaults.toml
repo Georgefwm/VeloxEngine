@@ -1,0 +1,4 @@
+[rendering]
+window_height = "1920"
+window_width = "1080"
+use_vsync = true

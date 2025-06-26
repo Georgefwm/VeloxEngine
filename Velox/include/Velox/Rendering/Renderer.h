@@ -62,8 +62,11 @@ SDL_Window*    GetWindow();
 SDL_GLContext* GetGLContext();
 
 ivec2 GetWindowSize();
+i32 GetVsyncMode();
 
 f32 GetDisplayScale();
+
+void SetResolution(ivec2 newResolution);
 
 void InitRenderer();
 
