@@ -516,7 +516,8 @@ void Velox::DrawRect(const vec3& position, const vec2& size, const vec4& color)
 
 // GM: For reference of how fonts are organised on screen see:
 // https://freetype.org/freetype2/docs/tutorial/step2.html#section-1
-void Velox::DrawText(const char* text, const vec3& position)
+Velox::TextContinueInfo Velox::DrawText(const char* text, const vec3& position,
+        Velox::TextContinueInfo* textContinueInfo)
 {
     Velox::Font* usingFont = Velox::GetUsingFont();
     Velox::TextDrawStyle* usingStyle = Velox::GetUsingTextStyle();
@@ -528,8 +529,22 @@ void Velox::DrawText(const char* text, const vec3& position)
     double x = 0.0;
     double fontScale = 1 / (metrics.ascenderY - metrics.descenderY) * usingStyle->textSize;
     double y = 0.0;
-    
+
     size_t charCount = SDL_strlen(text);
+
+    // Info conintue info is given then resume advance positions.
+    // Probably not going to work well if fonts are switched between DrawText calls.
+    if (textContinueInfo != nullptr && charCount > 0)
+    {
+        x = textContinueInfo->advanceX;
+        y = textContinueInfo->advanceY;
+
+        double advance;
+        fontGeometry.getAdvance(advance, textContinueInfo->lastChar, text[0]);
+
+        x += fontScale * advance;
+    }
+    
     for (size_t i = 0; i < charCount; i++)
     {
         char character = text[i];
@@ -570,10 +585,7 @@ void Velox::DrawText(const char* text, const vec3& position)
         u32 startIndexOffset  = g_fontPipeline.indexCount;
 
         if (startIndexOffset + 6 > MAX_INDICES)
-        {
-            printf("WARNING: Font Pipeline is full\n");
-            return;
-        }
+            throw std::runtime_error("Font pipeline is full");
 
         constexpr u32 quadVertexCount = 4;
         constexpr u32 quadIndexCount  = 6;
@@ -630,13 +642,34 @@ void Velox::DrawText(const char* text, const vec3& position)
 
         // Update advance.
 
-        double advance = glyph->getAdvance(); 
-
-        if (i < charCount - 1)
+        if (i < charCount - 1) // Last iteration.
+        {
+            double advance; 
             fontGeometry.getAdvance(advance, character, text[i + 1]);
 
-        float kerningOffset = 0.0;
-        x += fontScale * advance + kerningOffset;
+            float kerningOffset = 0.0;
+            x += fontScale * advance + kerningOffset;
+        }
     }
+
+    return Velox::TextContinueInfo { 
+        .lastChar = text[charCount - 1],
+        .advanceX = x,
+        .advanceY = y,
+    };
+}
+
+
+Velox::TextContinueInfo Velox::DrawColoredText(const char* text, const vec3& position,
+        const vec4& color, Velox::TextContinueInfo* textContinueInfo)
+{
+    Velox::TextDrawStyle* style = Velox::GetUsingTextStyle();
+    style->color = color;
+
+    Velox::PushTextStyle(*style);
+    Velox::TextContinueInfo continueInfo = Velox::DrawText(text, position, textContinueInfo);
+    Velox::PopTextStyle();
+
+    return continueInfo;
 }
 

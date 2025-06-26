@@ -15,18 +15,6 @@ struct UniformBufferObject {
     i32   padding[2]; // padding to match GLSL std140 layout
 };
 
-struct TextDrawStyle {
-    u32  textSize = 24;
-    vec4 color    = vec4(1.0f);
-
-    bool operator==(TextDrawStyle const& rhs) const
-    {
-        if (textSize != rhs.textSize) return false;
-        if (color    != rhs.color   ) return false;
-        return true;
-    }
-};
-
 struct TextureVertex {
     vec3 position;
     vec4 color;
@@ -43,6 +31,24 @@ struct FontVertex {
     vec4 color;
     vec2 uv;
     vec2 outlineColor;
+};
+
+struct TextDrawStyle {
+    u32  textSize = 24;
+    vec4 color    = vec4(1.0f);
+
+    bool operator==(TextDrawStyle const& rhs) const
+    {
+        if (textSize != rhs.textSize) return false;
+        if (color    != rhs.color   ) return false;
+        return true;
+    }
+};
+
+struct TextContinueInfo {
+    char   lastChar;
+    double advanceX;
+    double advanceY;
 };
 
 struct Texture {
@@ -102,9 +108,9 @@ void DrawLine(const vec3& p0, const vec3& p1, const vec4& color);
 
 void DrawRect(const vec3& position, const vec2& size, const vec4& color);
 
-void DrawText(const char* text, const vec3& position);
-// void Draw(std::vector<Velox::Vertex>& vertices, std::vector<u32>& indices,
-//       u32 textureId, u32 shaderId = 0);
+TextContinueInfo DrawText(const char* text, const vec3& position, TextContinueInfo* textContinueInfo = nullptr);
 
+Velox::TextContinueInfo DrawColoredText(const char* text, const vec3& position,
+        const vec4& color, Velox::TextContinueInfo* textContinueInfo = nullptr);
 
 }

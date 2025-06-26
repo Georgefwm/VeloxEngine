@@ -59,9 +59,14 @@ void DoRenderingStuff()
     Velox::DrawText("<- MSDF Texture", vec3(1000.0f, 500.0f, 0.0f));
     Velox::PopFont();
     Velox::DrawText("text in another font", vec3(1000.0f, 400.0f, 0.0f));
-    Velox::PopTextStyle();
 
-    Velox::DrawLine(vec3(100.0f, 600.0f, 0.0f), vec3(900.0f, 600.0f, 0.0f), COLOR_RED);
+    vec3 continueTextPosition = vec3(1000.0f, 300, 0.0f);
+    Velox::TextContinueInfo contInfo = Velox::DrawText("con", continueTextPosition);
+    contInfo = Velox::DrawColoredText("tin", continueTextPosition, COLOR_RED, &contInfo);
+    contInfo = Velox::DrawColoredText("ued ", continueTextPosition, COLOR_GREEN, &contInfo);
+    contInfo = Velox::DrawColoredText("text", continueTextPosition, COLOR_RED, &contInfo);
+
+    Velox::PopTextStyle();
 
     Velox::DrawLine(vec3(100.0f, 615.0f, 0.0f), vec3(900.0f, 615.0f, 0.0f), COLOR_RED);
 
