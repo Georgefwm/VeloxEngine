@@ -34,8 +34,9 @@ struct FontVertex {
 };
 
 struct TextDrawStyle {
-    u32  textSize = 24;
-    vec4 color    = vec4(1.0f);
+    u32  textSize     = 24;
+    vec4 color        = vec4(1.0f);
+    float lineSpacing = 0.0;
 
     bool operator==(TextDrawStyle const& rhs) const
     {

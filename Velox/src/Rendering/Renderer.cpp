@@ -556,6 +556,13 @@ Velox::TextContinueInfo Velox::DrawText(const char* text, const vec3& position,
         if (glyph == nullptr)
             printf("WARNING: Font is fucked m8\n");
 
+        if (character == '\n')
+        {
+            x = 0;
+            y -= fontScale * metrics.lineHeight + usingStyle->lineSpacing;
+            continue;
+        }
+
         double atlasLeft, atlasBot, atlasRight, atlasTop;
         glyph->getQuadAtlasBounds(atlasLeft, atlasBot, atlasRight, atlasTop);
 

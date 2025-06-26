@@ -3,6 +3,7 @@
 
 #include "Rendering/Renderer.h"
 #include "Text.h"
+#include "Types.h"
 #include "Velox.h"
 #include "Entity.h"
 #include "Util.h"
@@ -64,7 +65,8 @@ void DoRenderingStuff()
     Velox::TextContinueInfo contInfo = Velox::DrawText("con", continueTextPosition);
     contInfo = Velox::DrawColoredText("tin", continueTextPosition, COLOR_RED, &contInfo);
     contInfo = Velox::DrawColoredText("ued ", continueTextPosition, COLOR_GREEN, &contInfo);
-    contInfo = Velox::DrawColoredText("text", continueTextPosition, COLOR_RED, &contInfo);
+    contInfo = Velox::DrawColoredText("text and\non ", continueTextPosition, COLOR_BLUE, &contInfo);
+    contInfo = Velox::DrawColoredText("new line", continueTextPosition, COLOR_GRAY_LIGHT, &contInfo);
 
     Velox::PopTextStyle();
 
