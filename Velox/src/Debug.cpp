@@ -286,12 +286,12 @@ void Velox::DrawSettings() {
         ImGui::Spacing();
 
         // Set to the longest label name (currently Resolution)
-        const float alignedElementOffset = ImGui::GetFontSize() * 10;
+        const float alignedElementOffset = ImGui::GetFontSize() * 7;
 
         ImGui::Text("Resolution:");
 
         ImGui::SameLine(alignedElementOffset);
-        ImGui::PushItemWidth(ImGui::GetFontSize() * 10);
+        ImGui::PushItemWidth(ImGui::GetFontSize() * 8);
         if (ImGui::BeginCombo("##resolution combo", s_displayModeLabels[s_selectedDisplayMode], flags))
         {
             for (int n = 0; n < s_displayModes.size(); n++)
@@ -319,7 +319,7 @@ void Velox::DrawSettings() {
         ImGui::Text("Vsync: ");
 
         ImGui::SameLine(alignedElementOffset);
-        ImGui::PushItemWidth(ImGui::GetFontSize() * 8);
+        ImGui::PushItemWidth(ImGui::GetFontSize() * 7);
         if (ImGui::BeginCombo("##vsync combo", s_vsyncModes[s_selectedVsync], flags))
         {
             // Adaptive vsync is always first item, so skip if not supported.
