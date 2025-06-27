@@ -559,7 +559,7 @@ Velox::TextContinueInfo Velox::DrawText(const char* text, const vec3& position,
         if (character == '\n')
         {
             x = 0;
-            y -= fontScale * metrics.lineHeight + usingStyle->lineSpacing;
+            y -= fontScale * metrics.lineHeight * usingStyle->lineSpacing;
             continue;
         }
 
@@ -608,33 +608,29 @@ Velox::TextContinueInfo Velox::DrawText(const char* text, const vec3& position,
             glm::translate(glm::mat4(1.0f), position);
             //glm::scale(glm::mat4(1.0f), { quadMax.x, quadMin.y, 1.0f });
 
-        g_fontPipeline.vertices[startVertexOffset + 0] = Velox::FontVertex {
-            .position = transform * vec4(quadMin.x, quadMin.y, 0.0f, 1.0f),
-            .color    = usingStyle->color,
-            .uv       = { textureCoordMin.x, textureCoordMin.y },
-            .outlineColor  = usingStyle->color,
+        Velox::FontVertex baseVertex = {
+            .color        = usingStyle->color,
+            .outlineColor = usingStyle->color,
+            .outlineWidth = usingStyle->outlineWidth,
+            .shadowColor  = usingStyle->shadowColor,
+            .shadowOffset = usingStyle->shadowOffset,
         };
 
-        g_fontPipeline.vertices[startVertexOffset + 1] = Velox::FontVertex {
-            .position = transform * vec4(quadMin.x, quadMax.y, 0.0f, 1.0f),
-            .color    = usingStyle->color,
-            .uv       = { textureCoordMin.x, textureCoordMax.y },
-            .outlineColor  = usingStyle->color,
-        };
+        baseVertex.position = transform * vec4(quadMin.x, quadMin.y, 0.0f, 1.0f);
+        baseVertex.uv       = { textureCoordMin.x, textureCoordMin.y };
+        g_fontPipeline.vertices[startVertexOffset + 0] = baseVertex;
+
+        baseVertex.position = transform * vec4(quadMin.x, quadMax.y, 0.0f, 1.0f);
+        baseVertex.uv       = { textureCoordMin.x, textureCoordMax.y };
+        g_fontPipeline.vertices[startVertexOffset + 1] = baseVertex;
         
-        g_fontPipeline.vertices[startVertexOffset + 2] = Velox::FontVertex {
-            .position = transform * vec4(quadMax.x, quadMax.y, 0.0f, 1.0f),
-            .color    = usingStyle->color,
-            .uv       = { textureCoordMax.x, textureCoordMax.y },
-            .outlineColor  = usingStyle->color,
-        };
+        baseVertex.position = transform * vec4(quadMax.x, quadMax.y, 0.0f, 1.0f);
+        baseVertex.uv       = { textureCoordMax.x, textureCoordMax.y };
+        g_fontPipeline.vertices[startVertexOffset + 2] = baseVertex;
 
-        g_fontPipeline.vertices[startVertexOffset + 3] = Velox::FontVertex {
-            .position = transform * vec4(quadMax.x, quadMin.y, 0.0f, 1.0f),
-            .color    = usingStyle->color,
-            .uv       = { textureCoordMax.x, textureCoordMin.y },
-            .outlineColor  = usingStyle->color,
-        };
+        baseVertex.position = transform * vec4(quadMax.x, quadMin.y, 0.0f, 1.0f);
+        baseVertex.uv       = { textureCoordMax.x, textureCoordMin.y };
+        g_fontPipeline.vertices[startVertexOffset + 3] = baseVertex;
 
         for (u32 i = 0; i < quadIndexCount; i++)
         {

@@ -157,7 +157,7 @@ u32 Velox::AssetManager::LoadShaderProgram(const char* vertFilepath, const char*
     }
 
     // Might need more if we have a big shader to load.
-    Velox::Arena tempData(8192);
+    Velox::Arena tempData(100000);
 
     size_t vertCodeSize, fragCodeSize;
     char* vertCode = LoadShaderFile(vertFilepath, &vertCodeSize, &tempData);
@@ -267,11 +267,12 @@ Velox::Font* Velox::AssetManager::LoadFont(const char* filepath)
     packer.setDimensionsConstraint(msdf_atlas::DimensionsConstraint::SQUARE);
 
     // setScale for a fixed size or setMinimumScale to use the largest that fits
-    packer.setMinimumScale(48.0);
+    packer.setMinimumScale(40.0);
 
     // setPixelRange or setUnitRange
-    packer.setPixelRange(2.0);
+    packer.setPixelRange(4.0);
     packer.setMiterLimit(1.0);
+    packer.setOuterPixelPadding(2.0);
 
     // Compute atlas layout - pack glyphs
     packer.pack(font.glyphs.data(), font.glyphs.size());

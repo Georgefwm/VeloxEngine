@@ -27,16 +27,22 @@ struct LineVertex {
 };
 
 struct FontVertex {
-    vec3 position;
-    vec4 color;
-    vec2 uv;
-    vec2 outlineColor;
+    vec3  position;
+    vec4  color;
+    vec2  uv;
+    vec2  outlineColor;
+    float outlineWidth;
+    vec4  shadowColor;
+    vec2  shadowOffset;
 };
 
 struct TextDrawStyle {
-    u32  textSize     = 24;
-    vec4 color        = vec4(1.0f);
-    float lineSpacing = 0.0;
+    u32   textSize     = 24;
+    vec4  color        = COLOR_WHITE;
+    float lineSpacing  = 1.0f;
+    float outlineWidth = 0.1f;  // Clamped to (0.0f, 0.5f).
+    vec4  shadowColor  = COLOR_BLACK;
+    vec2  shadowOffset = vec2(1.0f, 1.0f);
 
     bool operator==(TextDrawStyle const& rhs) const
     {

@@ -51,12 +51,14 @@ void DoRenderingStuff()
     Velox::Entity* e = g_entityManager.getMut(e1);
     e->Draw(true);
 
+    Velox::DrawQuad(vec3(950.0f, 100.0f, 0.0f), vec2(1200.0f, 500.0f), vec4(1.0f));
+
     Velox::TextDrawStyle textInfo {};
-    textInfo.textSize = 90.0f;
+    textInfo.textSize = 130.0f;
     textInfo.color = vec4(1.0f);
+    Velox::PushTextStyle(textInfo);
 
     Velox::PushFont("martius.ttf");
-    Velox::PushTextStyle(textInfo);
     Velox::DrawText("<- MSDF Texture", vec3(1000.0f, 500.0f, 0.0f));
     Velox::PopFont();
     Velox::DrawText("text in another font", vec3(1000.0f, 400.0f, 0.0f));

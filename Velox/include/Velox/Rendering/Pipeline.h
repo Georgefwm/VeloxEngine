@@ -156,17 +156,33 @@ struct FontPipeline : Pipeline {
         glObjectLabel(GL_BUFFER, vbo, -1, "Font Vertex Buffer");
 
         // Vertex attributes
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Velox::FontVertex), (void*)offsetof(Velox::FontVertex, position));
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Velox::FontVertex),
+                (void*)offsetof(Velox::FontVertex, position));
         glEnableVertexAttribArray(0);
 
-        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Velox::FontVertex), (void*)offsetof(Velox::FontVertex, color));
+        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Velox::FontVertex), 
+                (void*)offsetof(Velox::FontVertex, color));
         glEnableVertexAttribArray(1);
 
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Velox::FontVertex), (void*)offsetof(Velox::FontVertex, uv));
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Velox::FontVertex),
+                (void*)offsetof(Velox::FontVertex, uv));
         glEnableVertexAttribArray(2);
 
-        glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(Velox::FontVertex), (void*)offsetof(Velox::FontVertex, outlineColor));
+        glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(Velox::FontVertex),
+                (void*)offsetof(Velox::FontVertex, outlineColor));
         glEnableVertexAttribArray(3);
+
+        glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, sizeof(Velox::FontVertex),
+                (void*)offsetof(Velox::FontVertex, outlineWidth));
+        glEnableVertexAttribArray(4);
+
+        glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(Velox::FontVertex),
+                (void*)offsetof(Velox::FontVertex, shadowColor));
+        glEnableVertexAttribArray(5);
+
+        glVertexAttribPointer(6, 2, GL_FLOAT, GL_FALSE, sizeof(Velox::FontVertex),
+                (void*)offsetof(Velox::FontVertex, shadowOffset));
+        glEnableVertexAttribArray(6);
 
         glGenBuffers(1, &ibo);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
