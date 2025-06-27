@@ -30,6 +30,12 @@ constexpr char DEFAULT_SHADER_NAME[] = "default_shader";
 constexpr u32  QUAD_VERTEX_INDICES[6]   = { 0, 1, 2, 2, 3, 0 };
 
 // Can also be used for uvs.
+//
+// Quad verter order (clockwise from bottom left):
+//   1--2
+//   |  |
+//   0--3
+//
 constexpr vec4 QUAD_VERTEX_POSITIONS[4] = {
     {  0.0f, 0.0f, 0.0f, 1.0f },
 	{  0.0f, 1.0f, 0.0f, 1.0f },
