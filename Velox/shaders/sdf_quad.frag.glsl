@@ -19,6 +19,10 @@ float median(float r, float g, float b)
     return max(min(r, g), min(max(r, g), b));
 }
 
+// Improvements needed:
+// - Improved sharpness
+// - Make outline thickness relative
+// - Add shadow steepness?
 void main()
 {
     vec4 distances = texture(msdf_texture, uv);

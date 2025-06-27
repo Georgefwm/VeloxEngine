@@ -45,11 +45,11 @@ struct alignas(16) FontVertex {
 };
 
 struct TextDrawStyle {
-    float textSize       = 24;
-    float fontWeightBias = 0.08f;  // Roughly in range (0.01f, 0.1f). Does effect char bounds.
+    float textSize       = 24.0f;
+    float fontWeightBias = 0.08f;  // Range (0.01f, 0.1f). Does effect char bounds.
     vec4  color          = COLOR_WHITE;
-    float lineSpacing    = 1.0f;
-    float outlineWidth   = 0.3f;  // Clamped to (0.0f, 0.5f).
+    float lineSpacing    = 1.0f;  // Scaler ((fontDefaultLineSpacing * fontLineHeight) * lineSpacing)
+    float outlineWidth   = 0.5f;  // Range (0.0f, 0.5f).
     vec4  shadowColor    = COLOR_BLACK;
     vec2  shadowOffset   = vec2(0.0f, 0.0f);
 
