@@ -8,6 +8,13 @@ namespace Velox {
 
 struct Arena;
 
+struct Rectangle {
+    float x;
+    float y;
+    float w;
+    float h;
+};
+
 struct UniformBufferObject {
     mat4  projection;
     mat4  view;
@@ -107,14 +114,19 @@ void DoRenderPass();
 
 void DeInitRenderer();
 
-void DrawQuad(const mat4& transform, const vec4& color,
+void DrawQuad(const mat4& transform, const mat4& uvTransform, const vec4& color,
         const u32& textureID, const u32& shaderID = 0);
 
 void DrawQuad(const vec3& position, const vec2& size, const vec4& color,
         const u32& textureID = 0, const u32& shaderID = 0);
 
+// inRect defines uv positions in uv space (0.0f, 1.0f).
+void DrawQuadUV(const Velox::Rectangle& outRect, const Velox::Rectangle& inRect, 
+        const vec4& color, const u32& textureID = 0, const u32& shaderID = 0);
+
 void DrawLine(const vec3& p0, const vec3& p1, const vec4& color);
 
+void DrawRect(const Velox::Rectangle& rect, const vec4& color);
 void DrawRect(const vec3& position, const vec2& size, const vec4& color);
 
 TextContinueInfo DrawText(const char* text, const vec3& position, TextContinueInfo* textContinueInfo = nullptr);

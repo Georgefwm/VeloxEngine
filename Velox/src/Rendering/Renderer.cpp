@@ -27,12 +27,14 @@ constexpr u32 MAX_TEXTURES = 512;
 
 constexpr char DEFAULT_SHADER_NAME[] = "default_shader";
 
-constexpr u32 QUAD_VERTEX_INDICES[6] = { 0, 1, 2, 2, 3, 0 };
+constexpr u32  QUAD_VERTEX_INDICES[6]   = { 0, 1, 2, 2, 3, 0 };
+
+// Can also be used for uvs.
 constexpr vec4 QUAD_VERTEX_POSITIONS[4] = {
     {  0.0f, 0.0f, 0.0f, 1.0f },
 	{  0.0f, 1.0f, 0.0f, 1.0f },
 	{  1.0f, 1.0f, 0.0f, 1.0f },
-	{  1.0f, 0.0f, 0.0f, 1.0f }
+	{  1.0f, 0.0f, 0.0f, 1.0f },
 };
 
 Velox::Config* s_config;
@@ -408,7 +410,7 @@ void Velox::DeInitRenderer()
     SDL_Quit();
 }
 
-void Velox::DrawQuad(const mat4& transform, const vec4& color,
+void Velox::DrawQuad(const mat4& transform, const mat4& uvTransform, const vec4& color,
         const u32& textureID, const u32& shaderID)
 {
     const u32 startVertexOffset = g_texturedQuadPipeline.vertexCount;
@@ -423,8 +425,6 @@ void Velox::DrawQuad(const mat4& transform, const vec4& color,
     constexpr u32 quadVertexCount = 4;
     constexpr u32 quadIndexCount  = 6;
 
-    constexpr vec2 uvs[4] = { { 0.0f, 0.0f }, { 0.0f, 1.0f }, { 1.0f, 1.0f }, { 1.0f, 0.0f } };
-
     Velox::DrawCommand command {};
     command.pipeline = &g_texturedQuadPipeline;
     command.texture = { textureID == 0 ? g_whiteTexture.id         : textureID };
@@ -437,7 +437,7 @@ void Velox::DrawQuad(const mat4& transform, const vec4& color,
         Velox::TextureVertex vertex {};
         vertex.position = transform * QUAD_VERTEX_POSITIONS[i];
         vertex.color    = color;
-        vertex.uv       = uvs[i];
+        vertex.uv       = uvTransform * QUAD_VERTEX_POSITIONS[i];
 
         g_texturedQuadPipeline.vertices[startVertexOffset + i] = vertex;
     }
@@ -457,11 +457,28 @@ void Velox::DrawQuad(const mat4& transform, const vec4& color,
 void Velox::DrawQuad(const vec3& position, const vec2& size, const vec4& color,
         const u32& textureID, const u32& shaderID)
 {
-    glm::mat4 transform = 
+    const mat4 transform = 
         glm::translate(glm::mat4(1.0f), position) *
-        glm::scale(glm::mat4(1.0f), { size.x, size.y, 1.0f });
+        glm::scale(    glm::mat4(1.0f), vec3(size.x, size.y, 1.0f));
 
-    Velox::DrawQuad(transform, color, textureID, shaderID);
+    const mat4 uvTransform = mat4(1.0f);
+
+    Velox::DrawQuad(transform, uvTransform, color, textureID, shaderID);
+}
+
+void Velox::DrawQuadUV(const Velox::Rectangle& outRect, const Velox::Rectangle& inRect, 
+        const vec4& color, const u32& textureID, const u32& shaderID)
+{
+
+    const mat4 quadTransform = 
+        glm::translate(glm::mat4(1.0f), vec3(outRect.x, outRect.y, 0.0f)) *
+        glm::scale(    glm::mat4(1.0f), vec3(outRect.w, outRect.h, 1.0f));
+
+    const mat4 uvTransform =
+        glm::translate(glm::mat4(1.0f), vec3(inRect.x, inRect.y, 0.0f)) *
+        glm::scale(    glm::mat4(1.0f), vec3(inRect.w, inRect.h, 1.0f));
+
+    Velox::DrawQuad(quadTransform, uvTransform, color, textureID, shaderID);
 }
 
 void Velox::DrawLine(const vec3& p0, const vec3& p1, const vec4& color)
@@ -501,12 +518,12 @@ void Velox::DrawLine(const vec3& p0, const vec3& p1, const vec4& color)
     g_drawCommands.push_back(command);
 }
 
-void Velox::DrawRect(const vec3& position, const vec2& size, const vec4& color)
+void Velox::DrawRect(const Velox::Rectangle& rect, const vec4& color)
 {
-    glm::vec3 p0 = glm::vec3(position.x,          position.y,          position.z);
-    glm::vec3 p1 = glm::vec3(position.x,          position.y + size.y, position.z);
-    glm::vec3 p2 = glm::vec3(position.x + size.x, position.y + size.y, position.z);
-    glm::vec3 p3 = glm::vec3(position.x + size.x, position.y,          position.z);
+    glm::vec3 p0 = glm::vec3(rect.x,          rect.y,          0.0f);
+    glm::vec3 p1 = glm::vec3(rect.x,          rect.y + rect.h, 0.0f);
+    glm::vec3 p2 = glm::vec3(rect.x + rect.w, rect.y + rect.h, 0.0f);
+    glm::vec3 p3 = glm::vec3(rect.x + rect.w, rect.y,          0.0f);
 
     Velox::DrawLine(p0, p1, color);
     Velox::DrawLine(p1, p2, color);
@@ -514,7 +531,12 @@ void Velox::DrawRect(const vec3& position, const vec2& size, const vec4& color)
     Velox::DrawLine(p3, p0, color);
 }
 
-// GM: For reference of how fonts are organised on screen see:
+void Velox::DrawRect(const vec3& position, const vec2& size, const vec4& color)
+{
+    DrawRect(Velox::Rectangle { position.x, position.y, size.x, size.y }, color);
+}
+
+// GM: For reference of how fonts are rendered on screen see:
 // https://freetype.org/freetype2/docs/tutorial/step2.html#section-1
 Velox::TextContinueInfo Velox::DrawText(const char* text, const vec3& position,
         Velox::TextContinueInfo* textContinueInfo)
@@ -606,7 +628,6 @@ Velox::TextContinueInfo Velox::DrawText(const char* text, const vec3& position,
 
         glm::mat4 transform = 
             glm::translate(glm::mat4(1.0f), position);
-            //glm::scale(glm::mat4(1.0f), { quadMax.x, quadMin.y, 1.0f });
 
         Velox::FontVertex baseVertex = {
             .color          = usingStyle->color,
