@@ -169,20 +169,24 @@ struct FontPipeline : Pipeline {
         glEnableVertexAttribArray(2);
 
         glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(Velox::FontVertex),
-                (void*)offsetof(Velox::FontVertex, outlineColor));
+                (void*)offsetof(Velox::FontVertex, fontWeightBias));
         glEnableVertexAttribArray(3);
 
         glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, sizeof(Velox::FontVertex),
-                (void*)offsetof(Velox::FontVertex, outlineWidth));
+                (void*)offsetof(Velox::FontVertex, outlineColor));
         glEnableVertexAttribArray(4);
 
-        glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(Velox::FontVertex),
-                (void*)offsetof(Velox::FontVertex, shadowColor));
+        glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, sizeof(Velox::FontVertex),
+                (void*)offsetof(Velox::FontVertex, outlineWidth));
         glEnableVertexAttribArray(5);
 
-        glVertexAttribPointer(6, 2, GL_FLOAT, GL_FALSE, sizeof(Velox::FontVertex),
-                (void*)offsetof(Velox::FontVertex, shadowOffset));
+        glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(Velox::FontVertex),
+                (void*)offsetof(Velox::FontVertex, shadowColor));
         glEnableVertexAttribArray(6);
+
+        glVertexAttribPointer(7, 2, GL_FLOAT, GL_FALSE, sizeof(Velox::FontVertex),
+                (void*)offsetof(Velox::FontVertex, shadowOffset));
+        glEnableVertexAttribArray(7);
 
         glGenBuffers(1, &ibo);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);

@@ -27,6 +27,7 @@ typedef double   f64;
 
 constexpr vec4 COLOR_WHITE       = { 1.0f, 1.0f, 1.0f, 1.0f };
 constexpr vec4 COLOR_BLACK       = { 0.0f, 0.0f, 0.0f, 1.0f };
+constexpr vec4 COLOR_CLEAR       = { 0.0f, 0.0f, 0.0f, 0.0f };
 
 constexpr vec4 COLOR_GRAY_LIGHT  = { 0.75f, 0.75f, 0.75f, 1.0f };
 constexpr vec4 COLOR_GRAY_MEDIUM = { 0.50f, 0.50f, 0.50f, 1.0f };

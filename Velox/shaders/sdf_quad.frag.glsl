@@ -2,10 +2,11 @@
 
 layout(location=0) in vec4  color;
 layout(location=1) in vec2  uv;
-layout(location=2) in vec4  outline_color;
-layout(location=3) in float outline_width;
-layout(location=4) in vec4  shadow_color;
-layout(location=5) in vec2  shadow_offset;
+layout(location=2) in float font_weight_bias;
+layout(location=3) in vec4  outline_color;
+layout(location=4) in float outline_width;
+layout(location=5) in vec4  shadow_color;
+layout(location=6) in vec2  shadow_offset;
 
 layout(location=0) out vec4 frag_color;
 
@@ -26,17 +27,27 @@ void main()
     float screen_px_dist = fwidth(sd) * px_range;
 
     // Fill alpha.
-    float fill_alpha = smoothstep(0.5 - screen_px_dist, 0.5 + screen_px_dist, sd);
+    float fill_alpha = smoothstep(
+        0.5 - screen_px_dist,
+        0.5 + screen_px_dist,
+        sd + font_weight_bias);
 
     // Outline alpha.
-    float outline_alpha = smoothstep(0.5 + outline_width - screen_px_dist, 0.5 + outline_width + screen_px_dist, sd);
+    float outline_alpha = smoothstep(
+        0.5 + outline_width - screen_px_dist,
+        0.5 + outline_width + screen_px_dist,
+        sd + font_weight_bias);
 
     vec2 shadow_uv = uv + shadow_offset / textureSize(msdf_texture, 0); // shift in UV space
 
     vec3 shadow_sample = texture(msdf_texture, shadow_uv).rgb;
     float shadow_sd = median(shadow_sample.r, shadow_sample.g, shadow_sample.b);
     float shadow_px_dist = fwidth(shadow_sd) * px_range;
-    float shadow_alpha = smoothstep(0.5 - shadow_px_dist, 0.5 + shadow_px_dist, shadow_sd);
+
+    float shadow_alpha = smoothstep(
+        0.5 - shadow_px_dist,
+        0.5 + shadow_px_dist,
+        shadow_sd + font_weight_bias);
 
     // Combine colors (shadow -> outline -> fill)
     vec4 result = mix(shadow_color, outline_color, outline_alpha);

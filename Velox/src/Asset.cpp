@@ -267,7 +267,7 @@ Velox::Font* Velox::AssetManager::LoadFont(const char* filepath)
     packer.setDimensionsConstraint(msdf_atlas::DimensionsConstraint::SQUARE);
 
     // setScale for a fixed size or setMinimumScale to use the largest that fits
-    packer.setMinimumScale(40.0);
+    packer.setScale(40.0);
 
     // setPixelRange or setUnitRange
     packer.setPixelRange(4.0);

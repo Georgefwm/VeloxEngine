@@ -191,7 +191,7 @@ void Velox::InitRenderer()
     const char* versionStr = (const char*)glGetString(GL_VERSION);
     printf("OpenGL Version: %s\n", versionStr);
 
-    glClearColor(0, 0, 0, 1.0);
+    glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
     glViewport(0, 0, s_windowSize.x, s_windowSize.y);
 
     // Render settings
@@ -609,11 +609,12 @@ Velox::TextContinueInfo Velox::DrawText(const char* text, const vec3& position,
             //glm::scale(glm::mat4(1.0f), { quadMax.x, quadMin.y, 1.0f });
 
         Velox::FontVertex baseVertex = {
-            .color        = usingStyle->color,
-            .outlineColor = usingStyle->color,
-            .outlineWidth = usingStyle->outlineWidth,
-            .shadowColor  = usingStyle->shadowColor,
-            .shadowOffset = usingStyle->shadowOffset,
+            .color          = usingStyle->color,
+            .fontWeightBias = usingStyle->fontWeightBias,
+            .outlineColor   = usingStyle->color,
+            .outlineWidth   = usingStyle->outlineWidth,
+            .shadowColor    = usingStyle->shadowColor,
+            .shadowOffset   = usingStyle->shadowOffset,
         };
 
         baseVertex.position = transform * vec4(quadMin.x, quadMin.y, 0.0f, 1.0f);

@@ -15,21 +15,22 @@ struct UniformBufferObject {
     i32   padding[2]; // padding to match GLSL std140 layout
 };
 
-struct TextureVertex {
+struct alignas(16) TextureVertex {
     vec3 position;
     vec4 color;
     vec2 uv;
 };
 
-struct LineVertex {
+struct alignas(16) LineVertex {
     vec3 position;
     vec4 color;
 };
 
-struct FontVertex {
+struct alignas(16) FontVertex {
     vec3  position;
     vec4  color;
     vec2  uv;
+    float fontWeightBias;
     vec2  outlineColor;
     float outlineWidth;
     vec4  shadowColor;
@@ -37,12 +38,13 @@ struct FontVertex {
 };
 
 struct TextDrawStyle {
-    u32   textSize     = 24;
-    vec4  color        = COLOR_WHITE;
-    float lineSpacing  = 1.0f;
-    float outlineWidth = 0.1f;  // Clamped to (0.0f, 0.5f).
-    vec4  shadowColor  = COLOR_BLACK;
-    vec2  shadowOffset = vec2(1.0f, 1.0f);
+    float textSize       = 24;
+    float fontWeightBias = 0.08f;  // Roughly in range (0.01f, 0.1f). Does effect char bounds.
+    vec4  color          = COLOR_WHITE;
+    float lineSpacing    = 1.0f;
+    float outlineWidth   = 0.3f;  // Clamped to (0.0f, 0.5f).
+    vec4  shadowColor    = COLOR_BLACK;
+    vec2  shadowOffset   = vec2(0.0f, 0.0f);
 
     bool operator==(TextDrawStyle const& rhs) const
     {

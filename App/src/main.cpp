@@ -54,8 +54,7 @@ void DoRenderingStuff()
     Velox::DrawQuad(vec3(950.0f, 100.0f, 0.0f), vec2(1200.0f, 500.0f), vec4(1.0f));
 
     Velox::TextDrawStyle textInfo {};
-    textInfo.textSize = 130.0f;
-    textInfo.color = vec4(1.0f);
+    textInfo.textSize = 130;
     Velox::PushTextStyle(textInfo);
 
     Velox::PushFont("martius.ttf");
@@ -73,6 +72,18 @@ void DoRenderingStuff()
     Velox::PopTextStyle();
 
     Velox::DrawLine(vec3(100.0f, 615.0f, 0.0f), vec3(900.0f, 615.0f, 0.0f), COLOR_RED);
+
+
+    float startHeight = 620.0f;
+    textInfo.textSize = 20.0f;
+    for (int i = 0; i < 10; i++)
+    {
+        startHeight += textInfo.textSize;
+        textInfo.textSize = textInfo.textSize * 1.5f;
+        Velox::PushTextStyle(textInfo);
+        Velox::DrawText("SAMPLE TEXT", vec3(100.0f, startHeight, 0.0f));
+        Velox::PopTextStyle();
+    }
 
     ImGui::ShowDemoWindow();
 }
