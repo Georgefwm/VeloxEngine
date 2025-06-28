@@ -31,6 +31,7 @@ find_package(glm          CONFIG REQUIRED)
 find_package(freetype     CONFIG REQUIRED)
 find_package(imgui        CONFIG REQUIRED)
 find_package(tomlplusplus CONFIG REQUIRED)
+find_package(fmt          CONFIG REQUIRED)
 
 # Libs from /vendor/CMakeLists.txt
 target_link_libraries(Velox PUBLIC
@@ -42,6 +43,7 @@ target_link_libraries(Velox PUBLIC
     glad_using_ver
     msdf-atlas-gen::msdf-atlas-gen
     tomlplusplus::tomlplusplus
+    fmt::fmt
 )
 
 target_link_libraries(Velox PRIVATE OpenGL::GL)

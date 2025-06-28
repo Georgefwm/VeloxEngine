@@ -15,6 +15,8 @@
 // #include <SDL3/SDL.h>
 #include <glm/common.hpp>
 #include <glm/trigonometric.hpp>
+#include <fmt/base.h>
+#include <fmt/format.h>
 
 // typedefs
 #include <Types.h>

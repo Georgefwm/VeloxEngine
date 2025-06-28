@@ -10,7 +10,6 @@
 #include "Rendering/Renderer.h"
 
 #include <SDL3/SDL.h>
-
 #include <SDL3/SDL_time.h>
 #include <SDL3/SDL_timer.h>
 #include <imgui.h>
@@ -19,6 +18,17 @@
 bool g_quitRequested = false;
 
 static Velox::EngineState engineState {};
+
+SDL_Time TimeStamp(std::string label, SDL_Time& startTime)
+{
+    SDL_Time time;
+    SDL_GetCurrentTime(&time);
+
+    time = SDL_NS_TO_MS(time - startTime);
+    fmt::println(fmt::format("{}: {}ms", label, std::to_string(time)));
+
+    return time;   
+}
 
 void Velox::Init()
 {
@@ -31,27 +41,49 @@ void Velox::Init()
     SDL_Time initStartTime;
     SDL_GetCurrentTime(&initStartTime);
 
+#define SPLIT_TIMES 0
+
     bool userConfigExists;
     Velox::InitConfig(&userConfigExists);
+#if SPLIT_TIMES
+    TimeStamp("Config", initStartTime);
+#endif
 
     // if (!userConfigExists)
     //     perform some first time setup
 
     Velox::InitAssets();
+#if SPLIT_TIMES
+    TimeStamp("Assets", initStartTime);
+#endif
+
     Velox::InitRenderer();
+#if SPLIT_TIMES
+    TimeStamp("Renderer", initStartTime);
+#endif
+
     Velox::InitText();
+#if SPLIT_TIMES
+    TimeStamp("Text", initStartTime);
+#endif
+
     Velox::InitUI();
+#if SPLIT_TIMES
+    TimeStamp("UI", initStartTime);
+#endif
+
     Velox::InitConsole();
+#if SPLIT_TIMES
+    TimeStamp("Console", initStartTime);
+#endif
 
     SDL_Time initEndTime;
     SDL_GetCurrentTime(&initEndTime);
 
-    SDL_Time t = SDL_NS_TO_MS(initEndTime) - SDL_NS_TO_MS(initStartTime);
-    std::string initString = "Engine initialised, took ";
-    initString += std::to_string(t);
-    initString += " ms";
+    std::string initTimeString = fmt::format("Engine initialised, took {}ms",
+            std::to_string(SDL_NS_TO_MS(initEndTime - initStartTime)));
 
-    Velox::PrintToConsole(initString);
+    Velox::PrintToConsole(initTimeString);
 }
 
 Velox::EngineState* Velox::GetEngineState()
