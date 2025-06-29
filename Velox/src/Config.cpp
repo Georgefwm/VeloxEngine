@@ -71,7 +71,7 @@ bool WriteToFile(const char* filepath, toml::table* table)
 
     if (!file.is_open())
     {
-        printf("Failed to write new default config file\n");
+        printf("Failed to write new default config file: %s\n", filepath);
         return false;
     }
 
@@ -123,8 +123,8 @@ void Velox::InitConfig(bool* userConfigExists)
     SDL_strlcpy(s_defaultConfigPath, basePath, pathSize);
     SDL_strlcpy(s_userConfigPath,    basePath, pathSize);
 
-    SDL_strlcat(s_defaultConfigPath, "\\config\\default.toml", pathSize);
-    SDL_strlcat(s_userConfigPath,    "\\config\\user.toml",    pathSize);
+    SDL_strlcat(s_defaultConfigPath, "default.toml", pathSize);
+    SDL_strlcat(s_userConfigPath,    "user.toml",    pathSize);
 
     bool defaultExists = SDL_GetPathInfo(s_defaultConfigPath, nullptr);
     bool userExists    = SDL_GetPathInfo(s_userConfigPath,    nullptr);
