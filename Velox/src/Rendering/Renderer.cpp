@@ -170,7 +170,6 @@ void Velox::InitRenderer()
     SDL_WindowFlags windowFlags = 
         SDL_WINDOW_OPENGL |
         SDL_WINDOW_HIGH_PIXEL_DENSITY |
-        SDL_WINDOW_FULLSCREEN |
         SDL_WINDOW_HIDDEN;
 
     g_window = SDL_CreateWindow("GLProject", s_windowSize.x, s_windowSize.y, windowFlags);
@@ -466,6 +465,23 @@ void Velox::DrawQuad(const vec3& position, const vec2& size, const vec4& color,
     const mat4 transform = 
         glm::translate(glm::mat4(1.0f), position) *
         glm::scale(    glm::mat4(1.0f), vec3(size.x, size.y, 1.0f));
+
+    const mat4 uvTransform = mat4(1.0f);
+
+    Velox::DrawQuad(transform, uvTransform, color, textureID, shaderID);
+}
+
+void Velox::DrawRotatedQuad(const vec3& position, const vec2& size, const vec4& color, 
+        const f32& rotation, const u32& textureID, const u32& shaderID)
+{
+    const vec3 pivotOffset = vec3(-0.5f * size.x, -0.5f * size.y, 0.0f);
+
+    const mat4 transform = 
+        glm::translate(mat4(1.0f), position) *
+        glm::translate(mat4(1.0f), -pivotOffset) *
+        glm::rotate(mat4(1.0f), glm::radians(rotation), vec3(0.0f, 0.0f, 1.0f)) *
+        glm::translate(mat4(1.0f), pivotOffset) *
+        glm::scale(mat4(1.0f), vec3(size.x, size.y, 1.0f));
 
     const mat4 uvTransform = mat4(1.0f);
 

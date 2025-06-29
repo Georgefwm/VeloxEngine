@@ -7,7 +7,6 @@
 #include "Types.h"
 #include "Velox.h"
 #include "Entity.h"
-#include "Util.h"
 
 #include <imgui.h>
 #include <iostream>
@@ -31,7 +30,7 @@ void DoUpdates(double& deltaTime)
     Velox::Entity* e = g_entityManager.getMut(e1);
 
     e->position.x += (300 * direction) * deltaTime;
-    // e->rotation += (40 * direction) * deltaTime;
+    e->rotation += (40 * direction) * deltaTime;
 
     ivec2 windowSize = Velox::GetWindowSize();
     if (e->position.x > windowSize.x * 0.95) direction = -1.0;

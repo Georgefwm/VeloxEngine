@@ -120,6 +120,9 @@ void DrawQuad(const mat4& transform, const mat4& uvTransform, const vec4& color,
 void DrawQuad(const vec3& position, const vec2& size, const vec4& color,
         const u32& textureID = 0, const u32& shaderID = 0);
 
+void DrawRotatedQuad(const vec3& position, const vec2& size, const vec4& color, 
+        const f32& rotation, const u32& textureID = 0, const u32& shaderID = 0);
+
 // inRect defines uv positions in uv space (0.0f, 1.0f).
 void DrawQuadUV(const Velox::Rectangle& outRect, const Velox::Rectangle& inRect, 
         const vec4& color, const u32& textureID = 0, const u32& shaderID = 0);
