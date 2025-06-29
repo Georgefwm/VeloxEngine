@@ -6,6 +6,7 @@
 #include "Asset.h"
 #include "Config.h"
 #include "Rendering/Renderer.h"
+#include "Timing.h"
 #include "Util.h"
 #include "Velox.h"
 #include "imgui.h"
@@ -361,5 +362,5 @@ void Velox::UpdateFrameHistory()
         s_currentIndex = FRAME_HISTORY_COUNT;
     }
 
-    s_frameTimeHistory[s_currentIndex] = Velox::DeltaTimeMS();
+    s_frameTimeHistory[s_currentIndex] = Velox::DeltaTime();
 }

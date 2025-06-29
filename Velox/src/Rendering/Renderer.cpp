@@ -170,8 +170,9 @@ void Velox::InitRenderer()
     SDL_WindowFlags windowFlags = 
         SDL_WINDOW_OPENGL |
         SDL_WINDOW_HIGH_PIXEL_DENSITY |
+        SDL_WINDOW_FULLSCREEN |
         SDL_WINDOW_HIDDEN;
-    
+
     g_window = SDL_CreateWindow("GLProject", s_windowSize.x, s_windowSize.y, windowFlags);
     if (g_window == nullptr)
     {
@@ -185,7 +186,6 @@ void Velox::InitRenderer()
         printf("Error: SDL_GL_CreateContext(): %s\n", SDL_GetError());
         throw std::runtime_error("Failed to create GL context");
     }
-
     SDL_GL_MakeCurrent(g_window, g_glContext);
 
     SetVsyncMode(s_vsyncMode);
@@ -290,6 +290,8 @@ void Velox::EndFrame()
 
     // Draw out stuff.
     Velox::DoRenderPass();
+
+    SDL_GL_SwapWindow(g_window);
 }
 
 void Velox::DoCopyPass()
@@ -397,8 +399,6 @@ void Velox::DoRenderPass()
     glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "ImGui");
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     glPopDebugGroup();
-
-    SDL_GL_SwapWindow(g_window);
 }
 
 void Velox::DeInitRenderer()

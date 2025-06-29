@@ -3,6 +3,7 @@
 
 #include "Rendering/Renderer.h"
 #include "Text.h"
+#include "Timing.h"
 #include "Types.h"
 #include "Velox.h"
 #include "Entity.h"
@@ -25,7 +26,7 @@ void HandleEvent(Velox::Event* event)
 
 }
 
-void UpdateGame(float deltaTime)
+void DoUpdates(double& deltaTime)
 {
     Velox::Entity* e = g_entityManager.getMut(e1);
 
@@ -110,24 +111,24 @@ void run()
 
     while (!Velox::QuitRequested())
     {
-        // GM: Has to be called start of every frame.
-        // Can optionally use the returned value.
-        float deltaTime = Velox::RefreshDeltaTime();
 
         Velox::Event event;
         while (Velox::PollEvents(&event))
         {
             HandleEvent(&event);
             // Do something with events.
-        }        
+        }
 
-        UpdateGame(deltaTime);
+        Velox::UpdateGame(DoUpdates);
 
         Velox::StartFrame();
         
         DoRenderingStuff();
 
         Velox::EndFrame();
+
+        // Calculate after frame present.
+        Velox::CalculateDeltaTime();
     }
 
     // Cleanup.

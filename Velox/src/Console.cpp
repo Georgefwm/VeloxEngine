@@ -2,7 +2,7 @@
 #include <PCH.h>
 
 #include "ConsoleCommands.h"
-#include "Util.h"
+#include "Timing.h"
 #include "Rendering/Renderer.h"
 
 #include <glm/common.hpp>  // clamp()
@@ -95,7 +95,7 @@ void Velox::DrawConsole()
     if (!g_console.shouldBeOpen && g_console.currentHeight <= 0.0)
         return;
 
-    float deltaHeight = g_console.openSpeed * Velox::DeltaTime();
+    float deltaHeight = g_console.openSpeed * (float)Velox::DeltaTime();
 
     // Should console be opening or closing.
     deltaHeight *= g_console.shouldBeOpen * 2 - 1;

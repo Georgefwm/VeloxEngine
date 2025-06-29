@@ -6,6 +6,7 @@
 #include "Console.h"
 #include "Debug.h"
 #include "Text.h"
+#include "Timing.h"
 #include "UI.h"
 #include "Rendering/Renderer.h"
 
@@ -49,9 +50,6 @@ void Velox::Init()
     TimeStamp("Config", initStartTime);
 #endif
 
-    // if (!userConfigExists)
-    //     perform some first time setup
-
     Velox::InitAssets();
 #if SPLIT_TIMES
     TimeStamp("Assets", initStartTime);
@@ -75,6 +73,11 @@ void Velox::Init()
     Velox::InitConsole();
 #if SPLIT_TIMES
     TimeStamp("Console", initStartTime);
+#endif
+
+    Velox::InitTimer();
+#if SPLIT_TIMES
+    TimeStamp("Timer", initStartTime);
 #endif
 
     SDL_Time initEndTime;
