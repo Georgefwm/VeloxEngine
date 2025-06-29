@@ -30,16 +30,17 @@ void main()
 
     float screen_px_dist = fwidth(sd) * px_range;
 
+    float tow = 0.5;
     // Fill alpha.
     float fill_alpha = smoothstep(
-        0.5 - screen_px_dist,
-        0.5 + screen_px_dist,
+        0.5 - screen_px_dist - (tow/2),
+        0.5 + screen_px_dist - (tow/2),
         sd + font_weight_bias);
 
     // Outline alpha.
     float outline_alpha = smoothstep(
-        0.5 + outline_width - screen_px_dist,
-        0.5 + outline_width + screen_px_dist,
+        0.5 - screen_px_dist + (tow/2),
+        0.5 + screen_px_dist + (tow/2),
         sd + font_weight_bias);
 
     vec2 shadow_uv = uv + shadow_offset / textureSize(msdf_texture, 0); // shift in UV space
@@ -61,7 +62,4 @@ void main()
     result.a = max(max(shadow_color.a * shadow_alpha, outline_alpha), fill_alpha) * color.a;
 
     frag_color = result;
-
-    // float alpha = smoothstep(0.5 - screenPxDistance, 0.5 + screenPxDistance, distance);
-    // frag_color = vec4(color.rgb, color.a * alpha);
 }

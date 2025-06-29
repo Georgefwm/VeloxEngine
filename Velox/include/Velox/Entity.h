@@ -6,6 +6,8 @@ constexpr size_t MAX_ENTITIES = 1024;
 
 namespace Velox {
 
+struct Texture;
+
 enum EntityFlags : uint32_t {
     None    = 0,
     Visible = 1 << 0,
@@ -38,7 +40,7 @@ struct Entity {
 
     // Rendering
     vec2 size = vec4(10.0);
-    u32 textureId = 0;
+    Velox::Texture* texture = nullptr;
     vec4 colorOverride = vec4(1.0);
 
     bool HasFlag(EntityFlags flag) const { return (flags & flag) != 0; }

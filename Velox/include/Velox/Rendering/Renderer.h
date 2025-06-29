@@ -46,10 +46,11 @@ struct alignas(16) FontVertex {
 
 struct TextDrawStyle {
     float textSize       = 24.0f;
-    float fontWeightBias = 0.08f;  // Range (0.01f, 0.1f). Does effect char bounds.
+    float fontWeightBias = 0.0f;  // Range (0.01f, 0.1f). Does effect char bounds.
     vec4  color          = COLOR_WHITE;
     float lineSpacing    = 1.0f;  // Scaler ((fontDefaultLineSpacing * fontLineHeight) * lineSpacing)
-    float outlineWidth   = 0.5f;  // Range (0.0f, 0.5f).
+    vec4  outlineColor   = COLOR_BLACK;
+    float outlineWidth   = 0.2f;  // Range (0.0f, 0.5f).
     vec4  shadowColor    = COLOR_BLACK;
     vec2  shadowOffset   = vec2(0.0f, 0.0f);
 
@@ -75,13 +76,15 @@ struct Texture {
 struct ShaderProgram {
     u32  id;
     void Use();
+    std::string vertFilepath;
+    std::string fragFilepath;
 };
 
 struct Pipeline;
 struct DrawCommand {
     Velox::Pipeline* pipeline;
-    ShaderProgram    shader;
-    Texture          texture;
+    ShaderProgram*   shader;
+    Texture*         texture;
     u32 indexOffset = 0;
     u32 numIndices  = 0;
 };
@@ -115,17 +118,17 @@ void DoRenderPass();
 void DeInitRenderer();
 
 void DrawQuad(const mat4& transform, const mat4& uvTransform, const vec4& color,
-        const u32& textureID, const u32& shaderID = 0);
+        Velox::Texture* texture = nullptr, Velox::ShaderProgram* shader = nullptr);
 
 void DrawQuad(const vec3& position, const vec2& size, const vec4& color,
-        const u32& textureID = 0, const u32& shaderID = 0);
+        Velox::Texture* texture = nullptr, Velox::ShaderProgram* shader = nullptr);
 
 void DrawRotatedQuad(const vec3& position, const vec2& size, const vec4& color, 
-        const f32& rotation, const u32& textureID = 0, const u32& shaderID = 0);
+        const f32& rotation, Velox::Texture* texture = nullptr, Velox::ShaderProgram* shader = nullptr);
 
 // inRect defines uv positions in uv space (0.0f, 1.0f).
 void DrawQuadUV(const Velox::Rectangle& outRect, const Velox::Rectangle& inRect, 
-        const vec4& color, const u32& textureID = 0, const u32& shaderID = 0);
+        const vec4& color, Velox::Texture* texture = nullptr, Velox::ShaderProgram* shader = nullptr);
 
 void DrawLine(const vec3& p0, const vec3& p1, const vec4& color);
 

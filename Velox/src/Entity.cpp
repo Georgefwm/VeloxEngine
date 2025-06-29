@@ -19,7 +19,10 @@ void Velox::Entity::Draw(bool centerOrigin)
         usePosition.y -= size.y * 0.5f;
     }
 
-    Velox::DrawRotatedQuad(usePosition, size, colorOverride, rotation, textureId);
+    if (texture != nullptr)
+        Velox::DrawRotatedQuad(usePosition, size, colorOverride, rotation, texture);
+    else
+        Velox::DrawRotatedQuad(usePosition, size, colorOverride, rotation, 0);
 }
 
 //

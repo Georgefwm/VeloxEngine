@@ -24,7 +24,7 @@ struct Font {
     std::vector<msdf_atlas::GlyphGeometry> glyphs;
     msdf_atlas::FontGeometry fontGeometry;
     ivec2 atlasResolution;
-    u32 textureId;
+    Velox::Texture* texture;
 };
 
 struct AssetManager {
@@ -33,11 +33,12 @@ struct AssetManager {
     std::unordered_map<const char*, Velox::ShaderProgram> shaderProgramMap = {};
     std::unordered_map<const char*, Velox::Font> fontMap = {};
 
-    u32 LoadTexture(const char* filepath);
-    u32 GetTextureID(const char* filepath);
+    Velox::Texture* LoadTexture(const char* filepath);
+    Velox::Texture* GetTexture(const char* filepath);
 
-    u32 LoadShaderProgram(const char* vertFilepath, const char* fragFilepath, const char* name);
-    u32 GetShaderProgramID(const char* name);
+    Velox::ShaderProgram* LoadShaderProgram(const char* vertFilepath, const char* fragFilepath, const char* name);
+    Velox::ShaderProgram* GetShaderProgram(const char* name);
+    Velox::ShaderProgram* ReloadShaderProgram(const char* name);
 
     Velox::Font* LoadFont(const char* filepath);
     Velox::Font* GetFontRef(const char* filepath);

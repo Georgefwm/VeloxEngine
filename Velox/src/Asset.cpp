@@ -19,12 +19,12 @@ static Velox::Arena g_assetStorage(1024);
 static Velox::AssetManager g_assetManager {};
 static msdfgen::FreetypeHandle* g_freetype;
 
-u32 Velox::AssetManager::LoadTexture(const char* filepath)
+Velox::Texture* Velox::AssetManager::LoadTexture(const char* filepath)
 {
-    for (auto pair : textureMap)
+    for (auto& pair : textureMap)
     {
         if (strcmp(pair.first, filepath) == 0)
-            return pair.second.id;
+            return &pair.second;
     }
 
     Velox::Arena tempData(2048);
@@ -83,19 +83,19 @@ u32 Velox::AssetManager::LoadTexture(const char* filepath)
 
     textureMap[ptr] = { id };
 
-    return id;
+    return &textureMap[ptr];
 }
 
-u32 Velox::AssetManager::GetTextureID(const char* filepath)
+Velox::Texture* Velox::AssetManager::GetTexture(const char* filepath)
 {
-    for (auto pair : textureMap)
+    for (auto& pair : textureMap)
     {
         if (strcmp(pair.first, filepath) == 0)
-            return pair.second.id;
+            return &pair.second;
     }
 
     printf("WARNING: Texture \'%s\' is not loaded\n", filepath);
-    return 0;
+    return nullptr;
 }
 
 char* LoadShaderFile(const char* filepath, size_t* byteSize, Velox::Arena* allocator)
@@ -148,12 +148,13 @@ u32 CompileShader(char* shaderCode, int shaderStage, Velox::Arena* allocator)
     return shader;
 }
 
-u32 Velox::AssetManager::LoadShaderProgram(const char* vertFilepath, const char* fragFilepath, const char* name)
+Velox::ShaderProgram* Velox::AssetManager::LoadShaderProgram(
+        const char* vertFilepath, const char* fragFilepath, const char* name)
 {
-    for (auto pair : shaderProgramMap)
+    for (auto& pair : shaderProgramMap)
     {
         if (strcmp(pair.first, name) == 0)
-            return pair.second.id;
+            return &pair.second;
     }
 
     // Might need more if we have a big shader to load.
@@ -195,21 +196,80 @@ u32 Velox::AssetManager::LoadShaderProgram(const char* vertFilepath, const char*
     char* ptr = g_assetStorage.Alloc<char>(strlen(name) + 1);
     strcpy_s(ptr, strlen(name) + 1, name);
 
-    shaderProgramMap[ptr] = { id };
+    shaderProgramMap[ptr] = Velox::ShaderProgram {
+        .id = id,
+        .vertFilepath = vertFilepath,
+        .fragFilepath = fragFilepath,
+    };
 
-    return id;
+    return &shaderProgramMap[ptr];
 }
 
-u32 Velox::AssetManager::GetShaderProgramID(const char* name)
+Velox::ShaderProgram* Velox::AssetManager::GetShaderProgram(const char* name)
 {
-    for (auto pair : shaderProgramMap)
+    for (auto& pair : shaderProgramMap)
     {
         if (strcmp(pair.first, name) == 0)
-            return pair.second.id;
+            return &pair.second;
     }
 
     printf("WARNING: Shader program \'%s\' is not loaded\n", name);
-    return 0;
+    return nullptr;
+}
+
+Velox::ShaderProgram* Velox::AssetManager::ReloadShaderProgram(const char* name)
+{
+    Velox::ShaderProgram* current = g_assetManager.GetShaderProgram(name);
+    if (current == nullptr)
+    {
+        fmt::println("Nothing to reload, Shader is not registered");
+        return nullptr;
+    }
+
+    glDeleteProgram(current->id);
+
+    Velox::Arena tempData(100000);
+
+    // return g_assetManager.LoadShaderProgram(current->vertFilepath.c_str(), current->fragFilepath.c_str(), name);
+    size_t vertCodeSize, fragCodeSize;
+    char* vertCode = LoadShaderFile(current->vertFilepath.c_str(), &vertCodeSize, &tempData);
+    char* fragCode = LoadShaderFile(current->fragFilepath.c_str(), &fragCodeSize, &tempData);
+
+    u32 vertShader = CompileShader(vertCode, GL_VERTEX_SHADER,   &tempData);
+    u32 fragShader = CompileShader(fragCode, GL_FRAGMENT_SHADER, &tempData);
+
+    if (vertShader == 0 || fragShader == 0)
+        throw std::runtime_error("Failed to compile shader");
+
+    u32 id = glCreateProgram();
+    glAttachShader(id, vertShader);
+    glAttachShader(id, fragShader);
+    glLinkProgram(id);
+
+    // print linking errors if any
+    char* logData = tempData.Alloc<char>(2048);
+
+    int result;
+    glGetProgramiv(id, GL_LINK_STATUS, &result);
+    if(!result)
+    {
+        glGetProgramInfoLog(id, 512, NULL, logData);
+        printf("Shader failed to create shader module: %s\n", logData);
+    }
+      
+    // delete the shaders as they're linked into our program now and no longer necessary
+    glDeleteShader(vertShader);
+    glDeleteShader(fragShader);
+    
+    glObjectLabel(GL_PROGRAM, id, -1, name);
+
+    // Register shader
+    char* ptr = g_assetStorage.Alloc<char>(strlen(name) + 1);
+    strcpy_s(ptr, strlen(name) + 1, name);
+
+    current->id = id;
+
+    return current;
 }
 
 Velox::Font* Velox::AssetManager::LoadFont(const char* filepath)
@@ -343,7 +403,7 @@ Velox::Font* Velox::AssetManager::LoadFont(const char* filepath)
     textureMap[ptr] = fontTexture;
 
     // Register font
-    font.textureId = fontTexture.id;
+    font.texture = &textureMap[ptr];
 
 #if USE_SURFACE
     SDL_DestroySurface(surface);

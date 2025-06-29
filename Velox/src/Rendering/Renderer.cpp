@@ -69,12 +69,12 @@ mat4 g_view;
 u32 g_drawCommandCount = 0;
 std::vector<Velox::DrawCommand> g_drawCommands;
 
-Velox::ShaderProgram g_defaultShaderProgram;
-Velox::ShaderProgram g_fontShaderProgram;
-Velox::ShaderProgram g_colorShaderProgram;
+Velox::ShaderProgram* g_defaultShaderProgram;
+Velox::ShaderProgram* g_fontShaderProgram;
+Velox::ShaderProgram* g_colorShaderProgram;
 
-Velox::Texture g_errorTexture;
-Velox::Texture g_whiteTexture;
+Velox::Texture* g_errorTexture;
+Velox::Texture* g_whiteTexture;
 
 u32 g_lineWidth = 2;
 
@@ -198,7 +198,7 @@ void Velox::InitRenderer()
     const char* versionStr = (const char*)glGetString(GL_VERSION);
     printf("OpenGL Version: %s\n", versionStr);
 
-    glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glViewport(0, 0, s_windowSize.x, s_windowSize.y);
 
     // Render settings
@@ -228,23 +228,23 @@ void Velox::InitRenderer()
     // Load default assets
     Velox::AssetManager* assetManager = Velox::GetAssetManager();
 
-    g_defaultShaderProgram.id = assetManager->LoadShaderProgram(
+    g_defaultShaderProgram = assetManager->LoadShaderProgram(
         "shaders\\textured_quad.vert.glsl",
         "shaders\\textured_quad.frag.glsl",
         DEFAULT_SHADER_NAME);
 
-    g_fontShaderProgram.id = assetManager->LoadShaderProgram(
+    g_fontShaderProgram = assetManager->LoadShaderProgram(
         "shaders\\sdf_quad.vert.glsl",
         "shaders\\sdf_quad.frag.glsl",
         "sdf_quad");
 
-    g_colorShaderProgram.id = assetManager->LoadShaderProgram(
+    g_colorShaderProgram = assetManager->LoadShaderProgram(
         "shaders\\colored.vert.glsl",
         "shaders\\colored.frag.glsl",
         "color");
 
-    g_errorTexture.id = assetManager->LoadTexture("missing_texture.png");
-    g_whiteTexture.id = assetManager->LoadTexture("white.png");
+    g_errorTexture = assetManager->LoadTexture("missing_texture.png");
+    g_whiteTexture = assetManager->LoadTexture("white.png");
 
     g_projection =  glm::ortho(0.0f, (float)s_windowSize.x, 0.0f, (float)s_windowSize.y, -1.0f, 1.0f);
     g_view = glm::mat4(1.0f);
@@ -332,11 +332,11 @@ void Velox::DoRenderPass()
     Velox::Pipeline* currentPipeline = firstCommand.pipeline;
     currentPipeline->Use(g_uniformBufferObject);
 
-    u32 currentShaderID  = firstCommand.shader.id;
-    firstCommand.shader.Use();
+    u32 currentShaderID  = firstCommand.shader->id;
+    firstCommand.shader->Use();
 
-    u32 currentTextureID = firstCommand.texture.id;
-    firstCommand.texture.Use();
+    u32 currentTextureID = firstCommand.texture->id;
+    firstCommand.texture->Use();
 
     u32 batchOffset = 0;
     u32 batchIndexCount = 0;
@@ -348,12 +348,12 @@ void Velox::DoRenderPass()
         // int textureIdx = static_cast<int>(command.texture.id);
         // int shaderIdx = static_cast<int>(command.shader.id);
 
-        if (command.pipeline->id   != currentPipeline->id || 
-                command.shader.id  != currentShaderID     ||
-                command.texture.id != currentTextureID)
+        if (command.pipeline->id != currentPipeline->id || 
+            command.shader->id   != currentShaderID     ||
+            command.texture->id  != currentTextureID)
         {
-            if (currentShaderID  <= 0) g_defaultShaderProgram.Use();
-            if (currentTextureID <= 0) g_errorTexture.Use();
+            if (currentShaderID  <= 0) g_defaultShaderProgram->Use();
+            if (currentTextureID <= 0) g_errorTexture->Use();
 
             // Submit batch of draws.
             glDrawElements(currentPipeline->GLDrawType, batchIndexCount, GL_UNSIGNED_INT, (void*)(uintptr_t)batchOffset);
@@ -365,11 +365,11 @@ void Velox::DoRenderPass()
             currentPipeline = command.pipeline;
             currentPipeline->Use(g_uniformBufferObject);
 
-            currentShaderID = command.shader.id;
-            command.shader.Use();
+            currentShaderID = command.shader->id;
+            command.shader->Use();
 
-            currentTextureID = command.texture.id;
-            command.texture.Use();
+            currentTextureID = command.texture->id;
+            command.texture->Use();
 
             batchOffset = command.indexOffset * sizeof(u32);
             batchIndexCount = 0;
@@ -382,8 +382,8 @@ void Velox::DoRenderPass()
     // Render last batch if any left.
     if (batchIndexCount > 0)
     {
-        if (currentShaderID  <= 0)  g_defaultShaderProgram.Use();
-        if (currentTextureID <= 0) g_errorTexture.Use();
+        if (currentShaderID  <= 0)  g_defaultShaderProgram->Use();
+        if (currentTextureID <= 0) g_errorTexture->Use();
 
         glDrawElements(currentPipeline->GLDrawType, batchIndexCount, GL_UNSIGNED_INT, (void*)(uintptr_t)batchOffset);
     }
@@ -408,7 +408,7 @@ void Velox::DeInitRenderer()
 
     glDeleteBuffers(1, &g_uniformBufferObject);
 
-    glDeleteProgram(g_defaultShaderProgram.id);
+    glDeleteProgram(g_defaultShaderProgram->id);
 
     SDL_GL_DestroyContext(g_glContext);
     SDL_DestroyWindow(g_window);
@@ -416,7 +416,7 @@ void Velox::DeInitRenderer()
 }
 
 void Velox::DrawQuad(const mat4& transform, const mat4& uvTransform, const vec4& color,
-        const u32& textureID, const u32& shaderID)
+        Velox::Texture* texture, Velox::ShaderProgram* shader)
 {
     const u32 startVertexOffset = g_texturedQuadPipeline.vertexCount;
     const u32 startIndexOffset = g_texturedQuadPipeline.indexCount;
@@ -432,8 +432,8 @@ void Velox::DrawQuad(const mat4& transform, const mat4& uvTransform, const vec4&
 
     Velox::DrawCommand command {};
     command.pipeline = &g_texturedQuadPipeline;
-    command.texture = { textureID == 0 ? g_whiteTexture.id         : textureID };
-    command.shader  = { shaderID  == 0 ? g_defaultShaderProgram.id : shaderID  };
+    command.texture  = texture != nullptr ? texture : g_errorTexture;
+    command.shader   = shader  != nullptr ? shader  : g_defaultShaderProgram;
     command.indexOffset = startIndexOffset;
     command.numIndices  = quadIndexCount;  // Always 6 for a quad.
 
@@ -460,7 +460,7 @@ void Velox::DrawQuad(const mat4& transform, const mat4& uvTransform, const vec4&
 }
 
 void Velox::DrawQuad(const vec3& position, const vec2& size, const vec4& color,
-        const u32& textureID, const u32& shaderID)
+        Velox::Texture* texture, Velox::ShaderProgram* shader)
 {
     const mat4 transform = 
         glm::translate(glm::mat4(1.0f), position) *
@@ -468,11 +468,11 @@ void Velox::DrawQuad(const vec3& position, const vec2& size, const vec4& color,
 
     const mat4 uvTransform = mat4(1.0f);
 
-    Velox::DrawQuad(transform, uvTransform, color, textureID, shaderID);
+    Velox::DrawQuad(transform, uvTransform, color, texture != nullptr ? texture : g_whiteTexture, shader);
 }
 
 void Velox::DrawRotatedQuad(const vec3& position, const vec2& size, const vec4& color, 
-        const f32& rotation, const u32& textureID, const u32& shaderID)
+        const f32& rotation, Velox::Texture* texture, Velox::ShaderProgram* shader)
 {
     const vec3 pivotOffset = vec3(-0.5f * size.x, -0.5f * size.y, 0.0f);
 
@@ -485,11 +485,11 @@ void Velox::DrawRotatedQuad(const vec3& position, const vec2& size, const vec4& 
 
     const mat4 uvTransform = mat4(1.0f);
 
-    Velox::DrawQuad(transform, uvTransform, color, textureID, shaderID);
+    Velox::DrawQuad(transform, uvTransform, color, texture, shader);
 }
 
 void Velox::DrawQuadUV(const Velox::Rectangle& outRect, const Velox::Rectangle& inRect, 
-        const vec4& color, const u32& textureID, const u32& shaderID)
+        const vec4& color, Velox::Texture* texture, Velox::ShaderProgram* shader)
 {
 
     const mat4 quadTransform = 
@@ -500,7 +500,7 @@ void Velox::DrawQuadUV(const Velox::Rectangle& outRect, const Velox::Rectangle& 
         glm::translate(glm::mat4(1.0f), vec3(inRect.x, inRect.y, 0.0f)) *
         glm::scale(    glm::mat4(1.0f), vec3(inRect.w, inRect.h, 1.0f));
 
-    Velox::DrawQuad(quadTransform, uvTransform, color, textureID, shaderID);
+    Velox::DrawQuad(quadTransform, uvTransform, color, texture, shader);
 }
 
 void Velox::DrawLine(const vec3& p0, const vec3& p1, const vec4& color)
@@ -516,8 +516,8 @@ void Velox::DrawLine(const vec3& p0, const vec3& p1, const vec4& color)
 
     Velox::DrawCommand command {};
     command.pipeline = &g_linePipeline;
-    command.texture = { g_whiteTexture.id };
-    command.shader  = { g_colorShaderProgram.id };
+    command.texture  = g_whiteTexture;
+    command.shader   = g_colorShaderProgram;
     command.indexOffset = startIndexOffset;
     command.numIndices  = 2;
 
@@ -643,8 +643,8 @@ Velox::TextContinueInfo Velox::DrawText(const char* text, const vec3& position,
 
         Velox::DrawCommand command {};
         command.pipeline = &g_fontPipeline;
-        command.texture = { usingFont->textureId };
-        command.shader  = g_fontShaderProgram;
+        command.texture  = usingFont->texture;
+        command.shader   = g_fontShaderProgram;
         command.indexOffset = startIndexOffset;
         command.numIndices  = quadIndexCount;  // Always 6 for a quad.
 
@@ -654,7 +654,7 @@ Velox::TextContinueInfo Velox::DrawText(const char* text, const vec3& position,
         Velox::FontVertex baseVertex = {
             .color          = usingStyle->color,
             .fontWeightBias = usingStyle->fontWeightBias,
-            .outlineColor   = usingStyle->color,
+            .outlineColor   = usingStyle->outlineColor,
             .outlineWidth   = usingStyle->outlineWidth,
             .shadowColor    = usingStyle->shadowColor,
             .shadowOffset   = usingStyle->shadowOffset,

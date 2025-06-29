@@ -44,9 +44,9 @@ void DoRenderingStuff()
     Velox::DrawRect(vec3(90.0f, 90.0f, 0.0f), vec2(220.0f, 220.0f), vec4(1.0f));
 
     Velox::DrawQuad(vec3(100.0f, 400.0f, 0.0f), vec2(200.0f, 200.0f), vec4(1.0f),
-            Velox::GetAssetManager()->GetTextureID("missing_texture.png"));
+            Velox::GetAssetManager()->GetTexture("missing_texture.png"));
 
-    Velox::DrawQuad(vec3(400.0f, 100.0f, 0.0f), vec2(500.0f, 500.0f), vec4(1.0f), g_font->textureId);
+    Velox::DrawQuad(vec3(400.0f, 100.0f, 0.0f), vec2(500.0f, 500.0f), vec4(1.0f), g_font->texture);
 
     Velox::Entity* e = g_entityManager.getMut(e1);
     e->Draw(true);
@@ -98,7 +98,7 @@ void run()
     
     e->position = vec3(100, 300, 0);
     e->size = vec2(100, 100);
-    e->textureId = Velox::GetAssetManager()->LoadTexture("star.png");
+    e->texture = Velox::GetAssetManager()->LoadTexture("star.png");
     e->flags |= Velox::EntityFlags::Visible;
 
     g_font = Velox::GetAssetManager()->LoadFont("martius.ttf");
