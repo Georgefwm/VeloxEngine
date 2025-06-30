@@ -6,6 +6,7 @@
 #include "Asset.h"
 #include "Config.h"
 #include "Rendering/Renderer.h"
+#include "Text.h"
 #include "Timing.h"
 #include "Util.h"
 #include "Velox.h"
@@ -351,6 +352,57 @@ void Velox::DrawSettings() {
     }
 
     ImGui::End();
+}
+
+static Velox::TextDrawStyle s_editorStyle {};
+
+void Velox::TextStyleEditor(Velox::TextDrawStyle* style, bool useCurrentAsBase)
+{
+    if (style == nullptr)
+        return;
+
+    if (useCurrentAsBase)
+    {
+        *style = *Velox::GetUsingTextStyle();
+    }
+
+    ImGuiWindowFlags flags = 0;
+    
+    ImGuiInputTextFlags inputTextFlags = 0;
+    inputTextFlags |= ImGuiInputTextFlags_EnterReturnsTrue;
+    inputTextFlags |= ImGuiInputTextFlags_CallbackCharFilter; 
+
+    ImVec2 windowSize = { 500, 500 };
+
+    // Don't change size of window, just position; To avoid resizing elements.
+    ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(windowSize,  ImGuiCond_FirstUseEver);
+
+    int valueSpacing = 300;
+
+    ImGui::Begin("Text Style Editor", NULL, flags);
+
+    if (ImGui::Button("Reset"))
+    {
+        s_editorStyle = {};
+    }
+
+    ImGui::Separator();
+
+    const ImGuiSliderFlags flags_for_sliders = flags & ~ImGuiSliderFlags_WrapAround;
+    ImGui::ColorEdit4("Text Color", (float*)&s_editorStyle.color);
+    ImGui::SliderFloat("Font Weight", &s_editorStyle.fontWeightBias, 0.0f, 0.99f, "%.2f", flags_for_sliders);
+    ImGui::ColorEdit4("Outline Color", (float*)&s_editorStyle.outlineColor);
+    ImGui::SliderFloat("OutLine Width", &s_editorStyle.outlineWidth, 0.0f, 1.99f, "%.2f", flags_for_sliders);
+    ImGui::SliderFloat("OutLine Blur", &s_editorStyle.outlineBlur, 0.0f, 1.99f, "%.2f", flags_for_sliders);
+    
+    ImGui::End();
+
+    style->color = s_editorStyle.color;
+    style->fontWeightBias = s_editorStyle.fontWeightBias;
+    style->outlineColor = s_editorStyle.outlineColor;
+    style->outlineWidth = s_editorStyle.outlineWidth;
+    style->outlineBlur = s_editorStyle.outlineBlur;
 }
 
 void Velox::UpdateFrameHistory()
