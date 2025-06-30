@@ -69,12 +69,24 @@ void DoRenderingStuff()
     Velox::PopFont();
     Velox::DrawText("text in another font", vec3(1000.0f, 400.0f, 0.0f));
 
-    vec3 continueTextPosition = vec3(1000.0f, 300, 0.0f);
+    vec3 continueTextPosition = vec3(1000.0f, 300.0f, 0.0f);
     Velox::TextContinueInfo contInfo = Velox::DrawText("con", continueTextPosition);
     contInfo = Velox::DrawColoredText("tin", continueTextPosition, COLOR_RED, &contInfo);
     contInfo = Velox::DrawColoredText("ued ", continueTextPosition, COLOR_GREEN, &contInfo);
     contInfo = Velox::DrawColoredText("text and\non ", continueTextPosition, COLOR_BLUE, &contInfo);
     contInfo = Velox::DrawColoredText("new line", continueTextPosition, COLOR_GRAY_LIGHT, &contInfo);
+
+    vec3 testPos(2200.0f, 300.0f, 0.0f);
+    const char* testText = "boundtest";
+    Velox::DrawText(testText, testPos);
+
+    Velox::Rectangle bounds;
+    Velox::GetStringBounds(testText, &bounds);
+
+    bounds.x += testPos.x;
+    bounds.y += testPos.y;
+
+    Velox::DrawRect(bounds, COLOR_GREEN);
 
     Velox::PopTextStyle();
     Velox::PopTextStyle();
@@ -128,11 +140,9 @@ void run()
 
         Velox::UpdateGame(DoUpdates);
 
-        Velox::StartFrame();
-        
         DoRenderingStuff();
 
-        Velox::EndFrame();
+        Velox::SubmitFrameData();
 
         // Calculate after frame present.
         Velox::CalculateDeltaTime();

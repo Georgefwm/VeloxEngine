@@ -5,6 +5,7 @@ namespace Velox {
 struct Font;
 struct TextDrawStyle;
 struct TextContinueInfo;
+struct Rectangle;
 
 void PushFont(const char* fontName);
 void PopFont();
@@ -16,6 +17,9 @@ Velox::TextDrawStyle* GetUsingTextStyle();
 
 // Get the continues info for a given string.
 void GetStringContinueInfo(const char* text, Velox::TextContinueInfo* resultInfo,
+        Velox::TextContinueInfo* startInfo = nullptr);
+
+void GetStringBounds(const char* text, Velox::Rectangle* bounds,
         Velox::TextContinueInfo* startInfo = nullptr);
 
 void InitText();
