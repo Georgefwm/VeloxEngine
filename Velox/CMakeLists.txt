@@ -32,8 +32,8 @@ find_package(freetype     CONFIG REQUIRED)
 find_package(imgui        CONFIG REQUIRED)
 find_package(tomlplusplus CONFIG REQUIRED)
 find_package(fmt          CONFIG REQUIRED)
+find_package(spdlog       CONFIG REQUIRED)
 
-# Libs from /vendor/CMakeLists.txt
 target_link_libraries(Velox PUBLIC
     SDL3::SDL3
     SDL3_image::SDL3_image
@@ -44,6 +44,7 @@ target_link_libraries(Velox PUBLIC
     msdf-atlas-gen::msdf-atlas-gen
     tomlplusplus::tomlplusplus
     fmt::fmt
+    spdlog::spdlog
 )
 
 target_link_libraries(Velox PRIVATE OpenGL::GL)
