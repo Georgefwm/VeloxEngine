@@ -49,6 +49,11 @@ void Velox::InitUI()
 
     ImFont* commitMonoFont = 
         io.Fonts->AddFontFromFileTTF(absolutePath, baseFontSize * displayScale, &fontConfig);
+
+    // Begin first frame state.
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplSDL3_NewFrame();
+    ImGui::NewFrame();
 }
 
 void Velox::ForwardSDLEventToUI(Velox::Event* event)

@@ -105,11 +105,9 @@ void InitRenderer();
 
 bool ForwardSDLEventToRenderer(SDL_Event* event);
 
-void StartFrame();
-
 void DrawFrame();
 
-void EndFrame();
+void SubmitFrameData();
 
 void DoCopyPass();
 

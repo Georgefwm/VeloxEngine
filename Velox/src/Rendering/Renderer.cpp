@@ -249,7 +249,7 @@ void Velox::InitRenderer()
     g_projection =  glm::ortho(0.0f, (float)s_windowSize.x, 0.0f, (float)s_windowSize.y, -1.0f, 1.0f);
     g_view = glm::mat4(1.0f);
     // g_view = glm::translate(g_view, glm::vec3(0.0f, 0.0f, -3.0f)); 
-
+    //
     CheckGLError();
 }
 
@@ -258,24 +258,13 @@ bool Velox::ForwardSDLEventToRenderer(SDL_Event* event)
     return false;
 }
 
-void Velox::StartFrame()
-{
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplSDL3_NewFrame();
-    ImGui::NewFrame();
-
-    g_texturedQuadPipeline.ClearFrameData();
-    g_linePipeline.ClearFrameData();
-    g_fontPipeline.ClearFrameData();
-}
-
 void Velox::DrawFrame()
 {
 
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-void Velox::EndFrame()
+void Velox::SubmitFrameData()
 {
     // GM: For now we just insert engine stuff here.
     // Mosly just drawing engine UI elements.
@@ -291,6 +280,15 @@ void Velox::EndFrame()
     Velox::DoRenderPass();
 
     SDL_GL_SwapWindow(g_window);
+
+    // Reset render frame state.
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplSDL3_NewFrame();
+    ImGui::NewFrame();
+
+    g_texturedQuadPipeline.ClearFrameData();
+    g_linePipeline.ClearFrameData();
+    g_fontPipeline.ClearFrameData();
 }
 
 void Velox::DoCopyPass()
