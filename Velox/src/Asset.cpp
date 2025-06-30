@@ -344,9 +344,9 @@ Velox::Font* Velox::AssetManager::LoadFont(const char* filepath)
     // The ImmediateAtlasGenerator class facilitates the generation of the atlas bitmap.
     msdf_atlas::ImmediateAtlasGenerator<
         f32,                        // pixel type of buffer for individual glyphs depends on generator function
-        3,                          // number of atlas color channels
-        msdf_atlas::msdfGenerator,  // function to generate bitmaps for individual glyphs
-        msdf_atlas::BitmapAtlasStorage<msdf_atlas::byte, 3> // class that stores the atlas bitmap
+        4,                          // number of atlas color channels
+        msdf_atlas::mtsdfGenerator,  // function to generate bitmaps for individual glyphs
+        msdf_atlas::BitmapAtlasStorage<msdf_atlas::byte, 4> // class that stores the atlas bitmap
     > generator(width, height);
 
     // GeneratorAttributes can be modified to change the generator's default settings.
@@ -356,15 +356,15 @@ Velox::Font* Velox::AssetManager::LoadFont(const char* filepath)
 
     generator.generate(font.glyphs.data(), (int)font.glyphs.size());
 
-    msdfgen::BitmapConstRef<msdf_atlas::byte, 3> bitmap = 
-        (msdfgen::BitmapConstRef<msdf_atlas::byte, 3>)generator.atlasStorage();
+    msdfgen::BitmapConstRef<msdf_atlas::byte, 4> bitmap = 
+        (msdfgen::BitmapConstRef<msdf_atlas::byte, 4>)generator.atlasStorage();
 
 // Not necessary to use a surface here, but we might want to do alterations using surface api.
 #define USE_SURFACE 1
 
 #if USE_SURFACE
     SDL_Surface* surface = 
-        SDL_CreateSurfaceFrom(bitmap.width, bitmap.height, SDL_PIXELFORMAT_RGBX8888, (void*)bitmap.pixels, bitmap.width * 4);
+        SDL_CreateSurfaceFrom(bitmap.width, bitmap.height, SDL_PIXELFORMAT_RGBA8888, (void*)bitmap.pixels, bitmap.width * 4);
     if (surface == nullptr)
     {
         printf("Error: Failed to generate font atlas surface\n");
@@ -387,7 +387,7 @@ Velox::Font* Velox::AssetManager::LoadFont(const char* filepath)
     u32 mipmapLevel = 0;
 
 #if USE_SURFACE
-    glTexImage2D(GL_TEXTURE_2D, mipmapLevel, GL_RGB8, surface->w, surface->h, 0, GL_RGB, GL_UNSIGNED_BYTE, (void*)surface->pixels);
+    glTexImage2D(GL_TEXTURE_2D, mipmapLevel, GL_RGBA, surface->w, surface->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, (void*)surface->pixels);
 #else
     glTexImage2D(GL_TEXTURE_2D, mipmapLevel, GL_RGB8, bitmap.width, bitmap.height, 0, GL_RGB, GL_UNSIGNED_BYTE, (void*)bitmap.pixels);
 #endif

@@ -35,24 +35,24 @@ struct alignas(16) LineVertex {
 
 struct alignas(16) FontVertex {
     vec3  position;
-    vec4  color;
+    vec4  innerColor;
     vec2  uv;
-    float fontWeightBias;
-    vec2  outlineColor;
-    float outlineWidth;
-    vec4  shadowColor;
-    vec2  shadowOffset;
+    float threshold;
+    float outBias;
+    vec4  outerColor;
+    float outlineWidthAbsolute;
+    float outlineWidthRelative;
+    float outlineBlur;
 };
 
 struct TextDrawStyle {
     float textSize       = 24.0f;
-    float fontWeightBias = 0.0f;  // Range (0.01f, 0.1f). Does effect char bounds.
+    float fontWeightBias = 0.5f;  // Range (0.0f, 1.0f)
     vec4  color          = COLOR_WHITE;
     float lineSpacing    = 1.0f;  // Scaler ((fontDefaultLineSpacing * fontLineHeight) * lineSpacing)
     vec4  outlineColor   = COLOR_BLACK;
-    float outlineWidth   = 0.2f;  // Range (0.0f, 0.5f).
-    vec4  shadowColor    = COLOR_BLACK;
-    vec2  shadowOffset   = vec2(0.0f, 0.0f);
+    float outlineWidth   = 1.0f;  // Range (0.0f, 2.0f) for threshold == 0.5f. Range effected by threshold.
+    float outlineBlur    = 1.0f;  // Range (0.0f, 2.0f). Very much depends on outlineWidth;
 
     bool operator==(TextDrawStyle const& rhs) const
     {

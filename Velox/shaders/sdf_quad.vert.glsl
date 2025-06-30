@@ -8,31 +8,34 @@ layout(std140, binding=0) uniform ubo
 };
 
 layout(location=0) in vec3  in_position;
-layout(location=1) in vec4  in_color;
+layout(location=1) in vec4  in_inner_color;
 layout(location=2) in vec2  in_uv;
-layout(location=3) in float in_font_weight_bias;
-layout(location=4) in vec4  in_outline_color;
-layout(location=5) in float in_outline_width;
-layout(location=6) in vec4  in_shadow_color;
-layout(location=7) in vec2  in_shadow_offset;
+layout(location=3) in float in_threshold;
+layout(location=4) in float in_out_bias;
+layout(location=5) in vec4  in_outer_color;
+layout(location=6) in float in_outline_width_absolute;
+layout(location=7) in float in_outline_width_relative;
+layout(location=8) in float in_outline_blur;
 
-layout(location=0) out vec4  out_color;
-layout(location=1) out vec2  out_uv;
-layout(location=2) out float out_font_weight_bias;
-layout(location=3) out vec4  out_outline_color;
-layout(location=4) out float out_outline_width;
-layout(location=5) out vec4  out_shadow_color;
-layout(location=6) out vec2  out_shadow_offset;
+layout(location=0) out vec4  inner_color;
+layout(location=1) out vec2  uv;
+layout(location=2) out float threshold;
+layout(location=3) out float out_bias;
+layout(location=4) out vec4  outer_color;
+layout(location=5) out float outline_width_absolute;
+layout(location=6) out float outline_width_relative;
+layout(location=7) out float outline_blur;
 
 void main()
 {
     gl_Position = u_projection * u_view * vec4(in_position, 1.0f);
 
-    out_color            = in_color;
-    out_uv               = in_uv;
-    out_outline_color    = in_outline_color;
-    out_outline_width    = in_outline_width;
-    out_shadow_color     = in_shadow_color;
-    out_shadow_offset    = in_shadow_offset;
-    out_font_weight_bias = in_font_weight_bias;
+    inner_color            = in_inner_color;
+    uv                     = in_uv;
+    threshold              = in_threshold;
+    out_bias               = in_out_bias;
+    outer_color            = in_outer_color;
+    outline_width_absolute = in_outline_width_absolute;
+    outline_width_relative = in_outline_width_relative;
+    outline_blur           = in_outline_blur;
 }

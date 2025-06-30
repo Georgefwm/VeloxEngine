@@ -1,4 +1,5 @@
 #include "Asset.h"
+#include "Debug.h"
 #include "Event.h"
 
 #include "Rendering/Renderer.h"
@@ -19,6 +20,7 @@ Velox::Font* g_font;
 
 Velox::EntityHandle e1;
 float direction = 1.0;
+
 
 void HandleEvent(Velox::Event* event)
 {
@@ -57,6 +59,11 @@ void DoRenderingStuff()
     textInfo.textSize = 130;
     Velox::PushTextStyle(textInfo);
 
+    Velox::TextDrawStyle editorStyle {};
+    Velox::TextStyleEditor(&editorStyle, true);
+
+    Velox::PushTextStyle(editorStyle);
+
     Velox::PushFont("martius.ttf");
     Velox::DrawText("<- MSDF Texture", vec3(1000.0f, 500.0f, 0.0f));
     Velox::PopFont();
@@ -70,17 +77,18 @@ void DoRenderingStuff()
     contInfo = Velox::DrawColoredText("new line", continueTextPosition, COLOR_GRAY_LIGHT, &contInfo);
 
     Velox::PopTextStyle();
+    Velox::PopTextStyle();
 
     Velox::DrawLine(vec3(100.0f, 615.0f, 0.0f), vec3(900.0f, 615.0f, 0.0f), COLOR_RED);
 
 
     float startHeight = 620.0f;
-    textInfo.textSize = 20.0f;
+    editorStyle.textSize = 20.0f;
     for (int i = 0; i < 10; i++)
     {
-        startHeight += textInfo.textSize;
-        textInfo.textSize = textInfo.textSize * 1.5f;
-        Velox::PushTextStyle(textInfo);
+        startHeight += editorStyle.textSize;
+        editorStyle.textSize = editorStyle.textSize * 1.5f;
+        Velox::PushTextStyle(editorStyle);
         Velox::DrawText("SAMPLE TEXT", vec3(100.0f, startHeight, 0.0f));
         Velox::PopTextStyle();
     }
