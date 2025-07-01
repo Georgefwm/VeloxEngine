@@ -13,7 +13,7 @@
 #include <iostream>
 #include <ostream>
 
-Velox::EntityManager g_entityManager;
+Velox::EntityManager* g_entityManager;
 
 u32 g_fontShaderId;
 Velox::Font* g_font;
@@ -21,6 +21,31 @@ Velox::Font* g_font;
 Velox::EntityHandle e1;
 float direction = 1.0;
 
+void UpdateStar(Velox::Entity& e, double deltaTime)
+{
+    e.position.x += (300 * direction) * deltaTime;
+    e.rotation += (40 * direction) * deltaTime;
+
+    ivec2 windowSize = Velox::GetWindowSize();
+    if (e.position.x > windowSize.x * 0.95) direction = -1.0;
+    if (e.position.x < windowSize.x * 0.05) direction =  1.0;
+}
+
+void DrawStar(Velox::Entity& e)
+{
+    vec3 usePosition = e.position;
+
+    if (e.drawFromCenter)
+    {
+        usePosition.x -= e.size.x * 0.5f;
+        usePosition.y -= e.size.y * 0.5f;
+    }
+
+    if (e.texture != nullptr)
+        Velox::DrawRotatedQuad(usePosition, e.size, e.colorOverride, e.rotation, e.texture);
+    else
+        Velox::DrawRotatedQuad(usePosition, e.size, e.colorOverride, e.rotation, 0);
+}
 
 void HandleEvent(Velox::Event* event)
 {
@@ -29,14 +54,15 @@ void HandleEvent(Velox::Event* event)
 
 void DoUpdates(double& deltaTime)
 {
-    Velox::Entity* e = g_entityManager.getMut(e1);
+    for (auto e : g_entityManager->iter())
+    {
+        Velox::EntityHandle handle = e.first;
+        Velox::Entity* entity = e.second;
 
-    e->position.x += (300 * direction) * deltaTime;
-    e->rotation += (40 * direction) * deltaTime;
+        entity->Update(deltaTime);
+    }
 
-    ivec2 windowSize = Velox::GetWindowSize();
-    if (e->position.x > windowSize.x * 0.95) direction = -1.0;
-    if (e->position.x < windowSize.x * 0.05) direction =  1.0;
+    Velox::Entity* e = g_entityManager->getMut(e1);
 }
 
 void DoRenderingStuff()
@@ -50,8 +76,8 @@ void DoRenderingStuff()
 
     Velox::DrawQuad(vec3(400.0f, 100.0f, 0.0f), vec2(500.0f, 500.0f), vec4(1.0f), g_font->texture);
 
-    Velox::Entity* e = g_entityManager.getMut(e1);
-    e->Draw(true);
+    Velox::Entity* e = g_entityManager->getMut(e1);
+    e->Draw();
 
     Velox::DrawQuad(vec3(950.0f, 100.0f, 0.0f), vec2(1200.0f, 500.0f), vec4(1.0f));
 
@@ -111,14 +137,18 @@ void run()
 {
     Velox::Init();
 
-    g_entityManager = Velox::EntityManager();
-    e1 = g_entityManager.createEntity();
-    Velox::Entity* e = g_entityManager.getMut(e1);
+    g_entityManager = Velox::GetEntityManager();
+    e1 = g_entityManager->createEntity();
+    Velox::Entity* e = g_entityManager->getMut(e1);
     
     e->position = vec3(100, 300, 0);
     e->size = vec2(100, 100);
     e->texture = Velox::GetAssetManager()->LoadTexture("star.png");
     e->flags |= Velox::EntityFlags::Visible;
+
+    // Set Update/draw functions like this.
+    e->updateFunction = UpdateStar;
+    e->drawFunction = DrawStar;
 
     g_font = Velox::GetAssetManager()->LoadFont("martius.ttf");
 

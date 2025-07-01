@@ -3,31 +3,41 @@
 
 #include "Rendering/Renderer.h"
 
-//
-// Entity
-//
-void Velox::Entity::Draw(bool centerOrigin)
+static Velox::EntityManager s_entityManager;
+
+void Velox::InitEntitySystem()
 {
-    if (!(flags & Visible)) 
+    s_entityManager = Velox::EntityManager();
+}
+
+Velox::EntityManager* Velox::GetEntityManager()
+{
+    return &s_entityManager;
+}
+
+void Velox::Entity::Update(double deltaTime)
+{
+    if (updateFunction == nullptr)
         return;
     
-    vec3 usePosition = position;
+    updateFunction(*this, deltaTime);
+}
 
-    if (centerOrigin)
-    {
-        usePosition.x -= size.x * 0.5f;
-        usePosition.y -= size.y * 0.5f;
-    }
+void Velox::Entity::Draw()
+{
+    if (drawFunction == nullptr)
+        return;
 
-    if (texture != nullptr)
-        Velox::DrawRotatedQuad(usePosition, size, colorOverride, rotation, texture);
-    else
-        Velox::DrawRotatedQuad(usePosition, size, colorOverride, rotation, 0);
+    if (!(flags & Visible)) 
+        return;
+
+    drawFunction(*this);    
 }
 
 //
 // EntityManager 
 //
+
 Velox::EntityManager::EntityManager() {
     for (uint32_t i = 0; i < MAX_ENTITIES; ++i) {
         freeIndices[i] = MAX_ENTITIES - i - 1;

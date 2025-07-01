@@ -7,6 +7,7 @@ constexpr size_t MAX_ENTITIES = 1024;
 namespace Velox {
 
 struct Texture;
+struct EntityManager;
 
 enum EntityFlags : uint32_t {
     None    = 0,
@@ -24,6 +25,9 @@ struct EntityHandle {
     }
 };
 
+void InitEntitySystem();
+Velox::EntityManager* GetEntityManager();
+
 // GM: Not entirely sure how to expose this to the user without adding bunch of complexity.
 // The general idea is that I want to have this be sub-classed to only one level deep so
 // that we can take advantage of dynamic dispatch without having silly big inheritance trees.
@@ -34,17 +38,25 @@ struct Entity {
     // Core
     uint32_t flags = None;
 
+    // Functions
+    std::function<void(Velox::Entity&, double&)> updateFunction = nullptr;
+    std::function<void(Velox::Entity&)> drawFunction = nullptr;
+
     // Spacial
-    vec3 position = vec3(0.0, 0.0, 0.0);
+    vec3  position = vec3(0.0, 0.0, 0.0);
     float rotation = 0;
 
     // Rendering
     vec2 size = vec4(10.0);
     Velox::Texture* texture = nullptr;
+    bool drawFromCenter = false;
     vec4 colorOverride = vec4(1.0);
 
     bool HasFlag(EntityFlags flag) const { return (flags & flag) != 0; }
-    void Draw(bool centerOrigin = false);
+
+    // Only for calling update/draw function members
+    void Update(double deltaTime);
+    void Draw();
 };
 
 // Ideas:
@@ -99,6 +111,7 @@ struct EntityManager::EntityIterable {
     Iterator begin();
     Iterator end();
 };
+
 
 }
 
