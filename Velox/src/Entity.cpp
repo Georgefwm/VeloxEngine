@@ -15,15 +15,15 @@ Velox::EntityManager* Velox::GetEntityManager()
     return &s_entityManager;
 }
 
-void Velox::Entity::Update(double deltaTime)
+void Velox::Entity::update(double getDeltaTime)
 {
     if (updateFunction == nullptr)
         return;
     
-    updateFunction(*this, deltaTime);
+    updateFunction(*this, getDeltaTime);
 }
 
-void Velox::Entity::Draw()
+void Velox::Entity::draw()
 {
     if (drawFunction == nullptr)
         return;

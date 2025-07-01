@@ -4,20 +4,16 @@
 
 namespace Velox {
 
-struct Log {
-    spdlog::logger logger;
-};
+void initLog();
 
-void InitLog();
-
-spdlog::logger* GetLogger();
+spdlog::logger* getLogger();
 
 }
 
-#define LOG_TRACE(...)    Velox::GetLogger()->trace(__VA_ARGS__)
-#define LOG_DEBUG(...)    Velox::GetLogger()->debug(__VA_ARGS__)
-#define LOG_INFO(...)     Velox::GetLogger()->info(__VA_ARGS__)
-#define LOG_WARN(...)     Velox::GetLogger()->warn(__VA_ARGS__)
-#define LOG_ERROR(...)    Velox::GetLogger()->error(__VA_ARGS__)
-#define LOG_CRITICAL(...) Velox::GetLogger()->critical(__VA_ARGS__)
+#define LOG_TRACE(...)    Velox::getLogger()->trace(__VA_ARGS__)
+#define LOG_DEBUG(...)    Velox::getLogger()->debug(__VA_ARGS__)
+#define LOG_INFO(...)     Velox::getLogger()->info(__VA_ARGS__)
+#define LOG_WARN(...)     Velox::getLogger()->warn(__VA_ARGS__)
+#define LOG_ERROR(...)    Velox::getLogger()->error(__VA_ARGS__)
+#define LOG_CRITICAL(...) Velox::getLogger()->critical(__VA_ARGS__)
 

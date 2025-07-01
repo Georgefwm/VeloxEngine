@@ -52,11 +52,11 @@ struct Entity {
     bool drawFromCenter = false;
     vec4 colorOverride = vec4(1.0);
 
-    bool HasFlag(EntityFlags flag) const { return (flags & flag) != 0; }
+    bool hasFlag(EntityFlags flag) const { return (flags & flag) != 0; }
 
     // Only for calling update/draw function members
-    void Update(double deltaTime);
-    void Draw();
+    void update(double getDeltaTime);
+    void draw();
 };
 
 // Ideas:

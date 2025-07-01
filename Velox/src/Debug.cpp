@@ -18,10 +18,10 @@ static float s_frameTimeHistory[FRAME_HISTORY_COUNT];
 static int  s_currentIndex    = FRAME_HISTORY_COUNT;
 static bool s_capturingPaused = false;
 
-void Velox::DrawPerformanceStats()
+void Velox::drawPerformanceStats()
 {
     if (!s_capturingPaused)
-        Velox::UpdateFrameHistory();
+        Velox::updateFrameHistory();
     
     int count = 0;
     int validCount = 0; // Count w/ non-zero values (at the start of recording not all are set).
@@ -83,7 +83,7 @@ void Velox::DrawPerformanceStats()
     ImGui::Begin("Performance Stats", &shouldClosePerformanceStats, flags);
     if (!shouldClosePerformanceStats)
     {
-        Velox::EngineState* engineState = Velox::GetEngineState();
+        Velox::EngineState* engineState = Velox::getEngineState();
         engineState->showPerformanceStats = !engineState->showPerformanceStats;
     }
 
@@ -122,7 +122,7 @@ void Velox::DrawPerformanceStats()
     ImGui::End();
 }
 
-void Velox::DrawMemoryUsageStats() {
+void Velox::drawMemoryUsageStats() {
     ImGuiWindowFlags flags = 0;
     
     ImGuiInputTextFlags inputTextFlags = 0;
@@ -141,7 +141,7 @@ void Velox::DrawMemoryUsageStats() {
     ImGui::Begin("Memory Stats", &shouldCloseMemoryStats, flags);
     if (!shouldCloseMemoryStats)
     {
-        Velox::EngineState* engineState = Velox::GetEngineState();
+        Velox::EngineState* engineState = Velox::getEngineState();
         engineState->showMemoryUsageStats = !engineState->showMemoryUsageStats;
     }
 
@@ -150,7 +150,7 @@ void Velox::DrawMemoryUsageStats() {
     ImGui::Separator();
 
     size_t used, capacity;
-    Velox::GetAssetMemoryUsage(&used, &capacity);
+    Velox::getAssetMemoryUsage(&used, &capacity);
 
     float percentage = (static_cast<float>(used) / static_cast<float>(capacity));
 
@@ -181,17 +181,17 @@ static int s_selectedDisplayMode = -1;
 static const char* s_vsyncModes[] = { "Adaptive", "Off", "On" }; // Correspond to (actual + 1).
 static i32 s_selectedVsync = 1;
 
-void SaveSettings()
+void saveSettings()
 {
-    Velox::SaveUserConfig();
+    Velox::saveUserConfig();
 }
 
-void ApplySettings()
+void applySettings()
 {
     LOG_INFO("I do nothing atm");
 }
 
-void Velox::DrawSettings() {
+void Velox::drawSettings() {
     if (s_updateDisplayModes)
     {
         int displayModeCount;
@@ -201,7 +201,7 @@ void Velox::DrawSettings() {
         if (displayModes == nullptr)
             LOG_ERROR("No display modes found");
 
-        ivec2 currentWindowSize = Velox::GetWindowSize();
+        ivec2 currentWindowSize = Velox::getWindowSize();
 
         s_displayModes.clear();
         s_displayModeLabels.clear();
@@ -221,7 +221,7 @@ void Velox::DrawSettings() {
             s_displayModes.push_back(*displayModes[i]);
 
             size_t maxLabelSize = 14; // (5 chars) + " x " + (5 chars) + '\0'.
-            char* labelPtr  = s_data.Alloc<char>(maxLabelSize);
+            char* labelPtr  = s_data.alloc<char>(maxLabelSize);
             SDL_snprintf(labelPtr, maxLabelSize, "%i x %i",
                 s_displayModes[insertedIndex].w, s_displayModes[insertedIndex].h);
 
@@ -244,7 +244,7 @@ void Velox::DrawSettings() {
         //    printf("%s\n", s_displayModeLabels[i]);
         //}
 
-        s_selectedVsync = Velox::GetVsyncMode() + 1;
+        s_selectedVsync = Velox::getVsyncMode() + 1;
         s_updateDisplayModes = false;
     }
 
@@ -266,7 +266,7 @@ void Velox::DrawSettings() {
     ImGui::Begin("Settings", &shouldCloseSettings, flags);
     if (!shouldCloseSettings)
     {
-        Velox::EngineState* engineState = Velox::GetEngineState();
+        Velox::EngineState* engineState = Velox::getEngineState();
         engineState->showSettings = !engineState->showSettings;
     }
 
@@ -274,7 +274,7 @@ void Velox::DrawSettings() {
 
     if (ImGui::Button("Save"))
     {
-        SaveSettings();
+        saveSettings();
     }
 
     ImGui::SameLine();
@@ -305,7 +305,7 @@ void Velox::DrawSettings() {
                     if (s_selectedDisplayMode == n)
                         continue;
 
-                    Velox::SetResolution(ivec2(s_displayModes[n].w, s_displayModes[n].h));
+                    Velox::setResolution(ivec2(s_displayModes[n].w, s_displayModes[n].h));
                     s_selectedDisplayMode = n;
                 }
 
@@ -325,7 +325,7 @@ void Velox::DrawSettings() {
         if (ImGui::BeginCombo("##vsync combo", s_vsyncModes[s_selectedVsync], flags))
         {
             // Adaptive vsync is always first item, so skip if not supported.
-            int vsyncStartIndex = Velox::IsAdaptiveVsyncSupported() ? 0 : 1;
+            int vsyncStartIndex = Velox::isAdaptiveVsyncSupported() ? 0 : 1;
 
             for (int n = vsyncStartIndex; n < 3; n++)
             {
@@ -336,7 +336,7 @@ void Velox::DrawSettings() {
                     if (s_selectedVsync == n)
                         continue;
 
-                    Velox::SetVsyncMode(n - 1);
+                    Velox::setVsyncMode(n - 1);
                     s_selectedVsync = n;
                 }
 
@@ -356,7 +356,7 @@ void Velox::DrawSettings() {
 
 static Velox::TextDrawStyle s_editorStyle {};
 
-void Velox::TextStyleEditor(Velox::TextDrawStyle* style, bool useCurrentAsBase)
+void Velox::textStyleEditor(Velox::TextDrawStyle* style, bool useCurrentAsBase)
 {
     if (style == nullptr)
         return;
@@ -405,7 +405,7 @@ void Velox::TextStyleEditor(Velox::TextDrawStyle* style, bool useCurrentAsBase)
     style->outlineBlur = s_editorStyle.outlineBlur;
 }
 
-void Velox::UpdateFrameHistory()
+void Velox::updateFrameHistory()
 {
     // GM: Wrap around to start.
     s_currentIndex -= 1;
@@ -414,5 +414,5 @@ void Velox::UpdateFrameHistory()
         s_currentIndex = FRAME_HISTORY_COUNT;
     }
 
-    s_frameTimeHistory[s_currentIndex] = Velox::DeltaTime();
+    s_frameTimeHistory[s_currentIndex] = Velox::getDeltaTime();
 }

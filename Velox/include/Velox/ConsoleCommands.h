@@ -5,19 +5,19 @@
 
 namespace Velox {
 
-void RegisterDefaultCommands();
+void registerDefaultCommands();
 
-void ListCommands(std::string& response, const std::vector<std::string> args);
+void listCommands(std::string& response, const std::vector<std::string> args);
 
-void FpsCommand(std::string& response, const std::vector<std::string> args);
+void fpsCommand(std::string& response, const std::vector<std::string> args);
 
-void MemoryCommand(std::string& response, const std::vector<std::string> args);
+void memoryCommand(std::string& response, const std::vector<std::string> args);
 
-void SettingsCommand(std::string& response, const std::vector<std::string> args);
+void settingsCommand(std::string& response, const std::vector<std::string> args);
 
-void ReloadShaderCommand(std::string& response, const std::vector<std::string> args);
+void reloadShaderCommand(std::string& response, const std::vector<std::string> args);
 
-void QuitCommand(std::string& response, const std::vector<std::string> args);
+void quitCommand(std::string& response, const std::vector<std::string> args);
 
 
 }

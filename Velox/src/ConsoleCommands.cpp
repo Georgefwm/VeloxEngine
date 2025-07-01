@@ -6,32 +6,32 @@
 #include "Velox.h"
 #include <sstream>
 
-void Velox::RegisterDefaultCommands()
+void Velox::registerDefaultCommands()
 {
-    Velox::Console* console = GetConsole();
+    Velox::Console* console = getConsole();
 
     // List all available commands.
-    console->RegisterCommand("list", &Velox::ListCommands);
+    console->registerCommand("list", &Velox::listCommands);
 
     // Toggle performance stats window.
-    console->RegisterCommand("fps", &Velox::FpsCommand);
+    console->registerCommand("fps", &Velox::fpsCommand);
 
     // Toggle memory stats window.
-    console->RegisterCommand("mem", &Velox::MemoryCommand);
+    console->registerCommand("mem", &Velox::memoryCommand);
 
     // Toggle settings window.
-    console->RegisterCommand("settings", &Velox::SettingsCommand);
+    console->registerCommand("settings", &Velox::settingsCommand);
 
     // Reload shader.
-    console->RegisterCommand("reloadshader", &Velox::ReloadShaderCommand);
+    console->registerCommand("reloadshader", &Velox::reloadShaderCommand);
 
     // Request quit.
-    console->RegisterCommand("quit", &Velox::QuitCommand);
+    console->registerCommand("quit", &Velox::quitCommand);
 }
 
-void Velox::ListCommands(std::string& response, const std::vector<std::string> args)
+void Velox::listCommands(std::string& response, const std::vector<std::string> args)
 {
-    Velox::Console* console = Velox::GetConsole();
+    Velox::Console* console = Velox::getConsole();
 
     std::stringstream string;
     string << "Registered commands:\n\n";
@@ -46,33 +46,33 @@ void Velox::ListCommands(std::string& response, const std::vector<std::string> a
     response = string.str();
 }
 
-void Velox::FpsCommand(std::string& response, const std::vector<std::string> args)
+void Velox::fpsCommand(std::string& response, const std::vector<std::string> args)
 {
-    Velox::EngineState* engineState = Velox::GetEngineState();
+    Velox::EngineState* engineState = Velox::getEngineState();
     engineState->showPerformanceStats = !engineState->showPerformanceStats;
 }
 
-void Velox::MemoryCommand(std::string& response, const std::vector<std::string> args)
+void Velox::memoryCommand(std::string& response, const std::vector<std::string> args)
 {
-    Velox::EngineState* engineState = Velox::GetEngineState();
+    Velox::EngineState* engineState = Velox::getEngineState();
     engineState->showMemoryUsageStats = !engineState->showMemoryUsageStats;
 }
 
-void Velox::SettingsCommand(std::string& response, const std::vector<std::string> args)
+void Velox::settingsCommand(std::string& response, const std::vector<std::string> args)
 {
-    Velox::EngineState* engineState = Velox::GetEngineState();
+    Velox::EngineState* engineState = Velox::getEngineState();
     engineState->showSettings = !engineState->showSettings;
 }
 
-void Velox::ReloadShaderCommand(std::string& response, const std::vector<std::string> args)
+void Velox::reloadShaderCommand(std::string& response, const std::vector<std::string> args)
 {
     if (args.size() < 1)
         response += "No shader name given\n";
 
-    Velox::AssetManager* assetManager = Velox::GetAssetManager();
+    Velox::AssetManager* assetManager = Velox::getAssetManager();
     for (auto& shaderName : args)
     {
-        Velox::ShaderProgram* shader = assetManager->ReloadShaderProgram(shaderName.c_str());
+        Velox::ShaderProgram* shader = assetManager->reloadShaderProgram(shaderName.c_str());
         if (shader == nullptr)
         {
             response += fmt::format("Failed to reload shader '{}'\n", shaderName);
@@ -83,8 +83,8 @@ void Velox::ReloadShaderCommand(std::string& response, const std::vector<std::st
     }
 }
 
-void Velox::QuitCommand(std::string& response, const std::vector<std::string> args)
+void Velox::quitCommand(std::string& response, const std::vector<std::string> args)
 {
     response = "Quitting...\n";
-    Velox::Quit();
+    Velox::quit();
 }

@@ -21,9 +21,9 @@ namespace Velox {
         };
     };
 
-    void PushEvent(Event event);
-    bool PollEvents(Event* event);
+    void pushEvent(Event event);
+    bool pollEvents(Event* event);
 
-    bool ShouldEngineInterceptEvent(Event* event);
-    bool InterceptEvent(Event* event);
+    bool shouldEngineInterceptEvent(Event* event);
+    bool interceptEvent(Event* event);
 }

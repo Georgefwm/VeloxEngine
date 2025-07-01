@@ -19,7 +19,7 @@ static Velox::Arena g_assetStorage(1024);
 static Velox::AssetManager g_assetManager {};
 static msdfgen::FreetypeHandle* g_freetype;
 
-Velox::Texture* Velox::AssetManager::LoadTexture(const char* filepath)
+Velox::Texture* Velox::AssetManager::loadTexture(const char* filepath)
 {
     for (auto& pair : textureMap)
     {
@@ -31,7 +31,7 @@ Velox::Texture* Velox::AssetManager::LoadTexture(const char* filepath)
     // Haven't loaded texture before so send load for renderer to deal with.
 
     const size_t pathSize = 1024;
-    char* absolutePath = tempData.Alloc<char>(pathSize);
+    char* absolutePath = tempData.alloc<char>(pathSize);
 
     SDL_strlcpy(absolutePath, SDL_GetBasePath(), pathSize);
     SDL_strlcat(absolutePath, "assets\\textures\\", pathSize);
@@ -75,7 +75,7 @@ Velox::Texture* Velox::AssetManager::LoadTexture(const char* filepath)
 
     SDL_DestroySurface(surface);
 
-    char* ptr = g_assetStorage.Alloc<char>(strlen(filepath) + 1);
+    char* ptr = g_assetStorage.alloc<char>(strlen(filepath) + 1);
     strcpy_s(ptr, strlen(filepath) + 1, filepath);
 
     textureMap[ptr] = { id };
@@ -83,7 +83,7 @@ Velox::Texture* Velox::AssetManager::LoadTexture(const char* filepath)
     return &textureMap[ptr];
 }
 
-Velox::Texture* Velox::AssetManager::GetTexture(const char* filepath)
+Velox::Texture* Velox::AssetManager::getTexture(const char* filepath)
 {
     for (auto& pair : textureMap)
     {
@@ -95,10 +95,10 @@ Velox::Texture* Velox::AssetManager::GetTexture(const char* filepath)
     return nullptr;
 }
 
-char* LoadShaderFile(const char* filepath, size_t* byteSize, Velox::Arena* allocator)
+char* loadShaderFile(const char* filepath, size_t* byteSize, Velox::Arena* allocator)
 {
     const size_t pathSize = 1024;
-    char* absolutePath = allocator->Alloc<char>(pathSize);
+    char* absolutePath = allocator->alloc<char>(pathSize);
 
     SDL_strlcpy(absolutePath, SDL_GetBasePath(), pathSize);
     SDL_strlcat(absolutePath, filepath, pathSize);
@@ -111,7 +111,7 @@ char* LoadShaderFile(const char* filepath, size_t* byteSize, Velox::Arena* alloc
     }
 
     size_t fileSize = (size_t)file.tellg();
-    char* shaderCode = allocator->Alloc<char>(fileSize + 1);
+    char* shaderCode = allocator->alloc<char>(fileSize + 1);
 
     file.seekg(0);
     file.read(shaderCode, fileSize);
@@ -124,13 +124,13 @@ char* LoadShaderFile(const char* filepath, size_t* byteSize, Velox::Arena* alloc
     return shaderCode;
 }
 
-u32 CompileShader(char* shaderCode, int shaderStage, Velox::Arena* allocator)
+u32 compileShader(char* shaderCode, int shaderStage, Velox::Arena* allocator)
 {
     u32 shader = glCreateShader(shaderStage);
     glShaderSource(shader, 1, &shaderCode, NULL);
     glCompileShader(shader);
 
-    char* logData = allocator->Alloc<char>(1024);
+    char* logData = allocator->alloc<char>(1024);
 
     int result;
     glGetShaderiv(shader, GL_COMPILE_STATUS, &result);
@@ -146,7 +146,7 @@ u32 CompileShader(char* shaderCode, int shaderStage, Velox::Arena* allocator)
     return shader;
 }
 
-Velox::ShaderProgram* Velox::AssetManager::LoadShaderProgram(
+Velox::ShaderProgram* Velox::AssetManager::loadShaderProgram(
         const char* vertFilepath, const char* fragFilepath, const char* name)
 {
     for (auto& pair : shaderProgramMap)
@@ -159,8 +159,8 @@ Velox::ShaderProgram* Velox::AssetManager::LoadShaderProgram(
     Velox::Arena tempData(100000);
 
     size_t vertCodeSize, fragCodeSize;
-    char* vertCode = LoadShaderFile(vertFilepath, &vertCodeSize, &tempData);
-    char* fragCode = LoadShaderFile(fragFilepath, &fragCodeSize, &tempData);
+    char* vertCode = loadShaderFile(vertFilepath, &vertCodeSize, &tempData);
+    char* fragCode = loadShaderFile(fragFilepath, &fragCodeSize, &tempData);
 
     if (vertCode == nullptr || fragCode == nullptr)
     {
@@ -168,8 +168,8 @@ Velox::ShaderProgram* Velox::AssetManager::LoadShaderProgram(
         return nullptr;
     }
 
-    u32 vertShader = CompileShader(vertCode, GL_VERTEX_SHADER,   &tempData);
-    u32 fragShader = CompileShader(fragCode, GL_FRAGMENT_SHADER, &tempData);
+    u32 vertShader = compileShader(vertCode, GL_VERTEX_SHADER,   &tempData);
+    u32 fragShader = compileShader(fragCode, GL_FRAGMENT_SHADER, &tempData);
 
     if (vertShader == 0 || fragShader == 0)
     {
@@ -183,7 +183,7 @@ Velox::ShaderProgram* Velox::AssetManager::LoadShaderProgram(
     glLinkProgram(id);
 
     // print linking errors if any
-    char* logData = tempData.Alloc<char>(2048);
+    char* logData = tempData.alloc<char>(2048);
 
     int result;
     glGetProgramiv(id, GL_LINK_STATUS, &result);
@@ -201,7 +201,7 @@ Velox::ShaderProgram* Velox::AssetManager::LoadShaderProgram(
     glObjectLabel(GL_PROGRAM, id, -1, name);
 
     // Register shader
-    char* ptr = g_assetStorage.Alloc<char>(strlen(name) + 1);
+    char* ptr = g_assetStorage.alloc<char>(strlen(name) + 1);
     strcpy_s(ptr, strlen(name) + 1, name);
 
     shaderProgramMap[ptr] = Velox::ShaderProgram {
@@ -213,7 +213,7 @@ Velox::ShaderProgram* Velox::AssetManager::LoadShaderProgram(
     return &shaderProgramMap[ptr];
 }
 
-Velox::ShaderProgram* Velox::AssetManager::GetShaderProgram(const char* name)
+Velox::ShaderProgram* Velox::AssetManager::getShaderProgram(const char* name)
 {
     for (auto& pair : shaderProgramMap)
     {
@@ -225,9 +225,9 @@ Velox::ShaderProgram* Velox::AssetManager::GetShaderProgram(const char* name)
     return nullptr;
 }
 
-Velox::ShaderProgram* Velox::AssetManager::ReloadShaderProgram(const char* name)
+Velox::ShaderProgram* Velox::AssetManager::reloadShaderProgram(const char* name)
 {
-    Velox::ShaderProgram* current = g_assetManager.GetShaderProgram(name);
+    Velox::ShaderProgram* current = g_assetManager.getShaderProgram(name);
     if (current == nullptr)
     {
         LOG_WARN("Nothing to reload, Shader '{}' is not registered", name);
@@ -236,10 +236,10 @@ Velox::ShaderProgram* Velox::AssetManager::ReloadShaderProgram(const char* name)
 
     Velox::Arena tempData(100000);
 
-    // return g_assetManager.LoadShaderProgram(current->vertFilepath.c_str(), current->fragFilepath.c_str(), name);
+    // return g_assetManager.loadShaderProgram(current->vertFilepath.c_str(), current->fragFilepath.c_str(), name);
     size_t vertCodeSize, fragCodeSize;
-    char* vertCode = LoadShaderFile(current->vertFilepath.c_str(), &vertCodeSize, &tempData);
-    char* fragCode = LoadShaderFile(current->fragFilepath.c_str(), &fragCodeSize, &tempData);
+    char* vertCode = loadShaderFile(current->vertFilepath.c_str(), &vertCodeSize, &tempData);
+    char* fragCode = loadShaderFile(current->fragFilepath.c_str(), &fragCodeSize, &tempData);
 
     if (vertCode == nullptr || fragCode == nullptr)
     {
@@ -247,8 +247,8 @@ Velox::ShaderProgram* Velox::AssetManager::ReloadShaderProgram(const char* name)
         return current;
     }
 
-    u32 vertShader = CompileShader(vertCode, GL_VERTEX_SHADER,   &tempData);
-    u32 fragShader = CompileShader(fragCode, GL_FRAGMENT_SHADER, &tempData);
+    u32 vertShader = compileShader(vertCode, GL_VERTEX_SHADER,   &tempData);
+    u32 fragShader = compileShader(fragCode, GL_FRAGMENT_SHADER, &tempData);
 
     if (vertShader == 0 || fragShader == 0)
     {
@@ -265,7 +265,7 @@ Velox::ShaderProgram* Velox::AssetManager::ReloadShaderProgram(const char* name)
     glLinkProgram(id);
 
     // print linking errors if any
-    char* logData = tempData.Alloc<char>(2048);
+    char* logData = tempData.alloc<char>(2048);
 
     int result;
     glGetProgramiv(id, GL_LINK_STATUS, &result);
@@ -283,7 +283,7 @@ Velox::ShaderProgram* Velox::AssetManager::ReloadShaderProgram(const char* name)
     glObjectLabel(GL_PROGRAM, id, -1, name);
 
     // Register shader
-    char* ptr = g_assetStorage.Alloc<char>(strlen(name) + 1);
+    char* ptr = g_assetStorage.alloc<char>(strlen(name) + 1);
     strcpy_s(ptr, strlen(name) + 1, name);
 
     current->id = id;
@@ -291,7 +291,7 @@ Velox::ShaderProgram* Velox::AssetManager::ReloadShaderProgram(const char* name)
     return current;
 }
 
-Velox::Font* Velox::AssetManager::LoadFont(const char* filepath)
+Velox::Font* Velox::AssetManager::loadFont(const char* filepath)
 {
     for (auto& pair : fontMap)
     {
@@ -302,13 +302,13 @@ Velox::Font* Velox::AssetManager::LoadFont(const char* filepath)
     Velox::Arena tempData(2048);
 
     const size_t pathSize = 1024;
-    char* absolutePath = tempData.Alloc<char>(pathSize);
+    char* absolutePath = tempData.alloc<char>(pathSize);
 
     SDL_strlcpy(absolutePath, SDL_GetBasePath(), pathSize);
     SDL_strlcat(absolutePath, "assets\\fonts\\", pathSize);
     SDL_strlcat(absolutePath, filepath, pathSize);
 
-    char* ptr = g_assetStorage.Alloc<char>(strlen(filepath) + 1);
+    char* ptr = g_assetStorage.alloc<char>(strlen(filepath) + 1);
     strcpy_s(ptr, strlen(filepath) + 1, filepath);
 
     fontMap[ptr] = {};
@@ -436,7 +436,7 @@ Velox::Font* Velox::AssetManager::LoadFont(const char* filepath)
     return &fontMap[ptr];
 }
 
-Velox::Font* Velox::AssetManager::GetFontRef(const char* filepath)
+Velox::Font* Velox::AssetManager::getFontRef(const char* filepath)
 {
     for (auto& pair : fontMap)
     {
@@ -448,7 +448,7 @@ Velox::Font* Velox::AssetManager::GetFontRef(const char* filepath)
     return nullptr;
 }
 
-void Velox::AssetManager::DeInit()
+void Velox::AssetManager::deInit()
 {
     for (auto pair : textureMap)
         glDeleteTextures(1, &pair.second.id);
@@ -457,12 +457,12 @@ void Velox::AssetManager::DeInit()
         glDeleteProgram(pair.second.id);
 }
 
-Velox::AssetManager* Velox::GetAssetManager()
+Velox::AssetManager* Velox::getAssetManager()
 {
     return &g_assetManager;
 }
 
-void Velox::InitAssets()
+void Velox::initAssets()
 {
     g_freetype = msdfgen::initializeFreetype();
     if (g_freetype == nullptr)
@@ -472,13 +472,13 @@ void Velox::InitAssets()
     }
 }
 
-void Velox::DeInitAssets()
+void Velox::deInitAssets()
 {
-    g_assetManager.DeInit();
+    g_assetManager.deInit();
     msdfgen::deinitializeFreetype(g_freetype);
 }
 
-void Velox::GetAssetMemoryUsage(size_t* used, size_t* capacity)
+void Velox::getAssetMemoryUsage(size_t* used, size_t* capacity)
 {
     if (used)     *used     = g_assetStorage.offset;
     if (capacity) *capacity = g_assetStorage.size;

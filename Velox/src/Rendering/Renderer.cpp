@@ -78,20 +78,20 @@ Velox::Texture* g_whiteTexture;
 
 u32 g_lineWidth = 2;
 
-void CheckGLError()
+void checkGLError()
 {
     GLenum err;
     while ((err = glGetError()) != GL_NO_ERROR)
         LOG_ERROR("OpenGL Error: err", err);
 }
 
-void Velox::ShaderProgram::Use() { glUseProgram(id); }
-void Velox::Texture::Use() { glBindTexture(GL_TEXTURE_2D, id); }
+void Velox::ShaderProgram::use() { glUseProgram(id); }
+void Velox::Texture::use() { glBindTexture(GL_TEXTURE_2D, id); }
 
-ivec2 Velox::GetWindowSize() { return s_windowSize; }
-i32 Velox::GetVsyncMode()    { return s_vsyncMode;  }
+ivec2 Velox::getWindowSize() { return s_windowSize; }
+i32 Velox::getVsyncMode()    { return s_vsyncMode;  }
 
-f32 Velox::GetDisplayScale()
+f32 Velox::getDisplayScale()
 {
     if (g_window == nullptr)
         return SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
@@ -100,7 +100,7 @@ f32 Velox::GetDisplayScale()
 }
 
 // Currently doesn't account for fullscreen stuff.
-void Velox::SetResolution(ivec2 newResolution)
+void Velox::setResolution(ivec2 newResolution)
 {
     s_windowSize = newResolution;
 
@@ -118,12 +118,12 @@ void Velox::SetResolution(ivec2 newResolution)
     if (g_glContext == nullptr)
         return;
 
-    // Update OpenGL things.
+    // update OpenGL things.
     glViewport(0, 0, s_windowSize.x, s_windowSize.y);
     g_projection =  glm::ortho(0.0f, (float)s_windowSize.x, 0.0f, (float)s_windowSize.y, -1.0f, 1.0f);
 }
 
-void Velox::SetVsyncMode(int newMode)
+void Velox::setVsyncMode(int newMode)
 {
     if (!s_adaptiveVsyncSupported && newMode == -1)
     {
@@ -140,18 +140,18 @@ void Velox::SetVsyncMode(int newMode)
         SDL_GL_SetSwapInterval(s_vsyncMode);
 }
 
-bool Velox::IsAdaptiveVsyncSupported() { return s_adaptiveVsyncSupported; }
+bool Velox::isAdaptiveVsyncSupported() { return s_adaptiveVsyncSupported; }
 
-void Velox::InitRenderer()
+void Velox::initRenderer()
 {
     // Support checks
     s_adaptiveVsyncSupported = SDL_GL_ExtensionSupported("WGL_EXT_swap_control_tear"); // Windows
     // s_adaptiveVsyncSupported = SDL_GL_ExtensionSupported("GLX_EXT_swap_control"); // Linux
 
     // Apply config
-    s_config = Velox::GetConfig();
-    Velox::SetResolution(ivec2(s_config->windowWidth, s_config->windowHeight));
-    Velox::SetVsyncMode(s_config->vsyncMode);
+    s_config = Velox::getConfig();
+    Velox::setResolution(ivec2(s_config->windowWidth, s_config->windowHeight));
+    Velox::setVsyncMode(s_config->vsyncMode);
 
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD))
     {
@@ -165,7 +165,7 @@ void Velox::InitRenderer()
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
     
-    f32 displayScale = Velox::GetDisplayScale();
+    f32 displayScale = Velox::getDisplayScale();
 
     SDL_WindowFlags windowFlags = 
         SDL_WINDOW_OPENGL |
@@ -188,7 +188,7 @@ void Velox::InitRenderer()
 
     SDL_GL_MakeCurrent(g_window, g_glContext);
 
-    SetVsyncMode(s_vsyncMode);
+    setVsyncMode(s_vsyncMode);
 
     SDL_SetWindowPosition(g_window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
     SDL_ShowWindow(g_window);
@@ -208,9 +208,9 @@ void Velox::InitRenderer()
     glCullFace(GL_BACK);
     glFrontFace(GL_CW); // Vertices are defind clockwise. This is standard in mordern model formats.
 
-    g_texturedQuadPipeline.Init(1);
-    g_linePipeline.Init(2);
-    g_fontPipeline.Init(3);
+    g_texturedQuadPipeline.init(1);
+    g_linePipeline.init(2);
+    g_fontPipeline.init(3);
 
     // Uniform buffer
     glGenBuffers(1, &g_uniformBufferObject);
@@ -225,58 +225,58 @@ void Velox::InitRenderer()
     glObjectLabel(GL_BUFFER, g_uniformBufferObject, -1, "Uniform Buffer");
 
     // Load default assets
-    Velox::AssetManager* assetManager = Velox::GetAssetManager();
+    Velox::AssetManager* assetManager = Velox::getAssetManager();
 
-    g_defaultShaderProgram = assetManager->LoadShaderProgram(
+    g_defaultShaderProgram = assetManager->loadShaderProgram(
         "shaders\\textured_quad.vert.glsl",
         "shaders\\textured_quad.frag.glsl",
         DEFAULT_SHADER_NAME);
 
-    g_fontShaderProgram = assetManager->LoadShaderProgram(
+    g_fontShaderProgram = assetManager->loadShaderProgram(
         "shaders\\sdf_quad.vert.glsl",
         "shaders\\sdf_quad.frag.glsl",
         "sdf_quad");
 
-    g_colorShaderProgram = assetManager->LoadShaderProgram(
+    g_colorShaderProgram = assetManager->loadShaderProgram(
         "shaders\\colored.vert.glsl",
         "shaders\\colored.frag.glsl",
         "color");
 
-    g_errorTexture = assetManager->LoadTexture("missing_texture.png");
-    g_whiteTexture = assetManager->LoadTexture("white.png");
+    g_errorTexture = assetManager->loadTexture("missing_texture.png");
+    g_whiteTexture = assetManager->loadTexture("white.png");
 
     g_projection =  glm::ortho(0.0f, (float)s_windowSize.x, 0.0f, (float)s_windowSize.y, -1.0f, 1.0f);
     g_view = glm::mat4(1.0f);
     // g_view = glm::translate(g_view, glm::vec3(0.0f, 0.0f, -3.0f)); 
     //
-    CheckGLError();
+    checkGLError();
 }
 
-bool Velox::ForwardSDLEventToRenderer(SDL_Event* event)
+bool Velox::forwardSDLEventToRenderer(SDL_Event* event)
 {
     return false;
 }
 
-void Velox::DrawFrame()
+void Velox::drawFrame()
 {
 
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-void Velox::SubmitFrameData()
+void Velox::submitFrameData()
 {
     // GM: For now we just insert engine stuff here.
     // Mosly just drawing engine UI elements.
-    Velox::DoFrameEndUpdates();
+    Velox::doFrameEndUpdates();
 
     // Generate ImGui stuff.
     ImGui::Render();
 
     // Copy our vertex data to GPU.
-    Velox::DoCopyPass();
+    Velox::doCopyPass();
 
     // Draw out stuff.
-    Velox::DoRenderPass();
+    Velox::doRenderPass();
 
     SDL_GL_SwapWindow(g_window);
 
@@ -285,18 +285,18 @@ void Velox::SubmitFrameData()
     ImGui_ImplSDL3_NewFrame();
     ImGui::NewFrame();
 
-    g_texturedQuadPipeline.ClearFrameData();
-    g_linePipeline.ClearFrameData();
-    g_fontPipeline.ClearFrameData();
+    g_texturedQuadPipeline.clearFrameData();
+    g_linePipeline.clearFrameData();
+    g_fontPipeline.clearFrameData();
 }
 
-void Velox::DoCopyPass()
+void Velox::doCopyPass()
 {
     glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "Copy Pass");
 
-    g_texturedQuadPipeline.CopyData();
-    g_linePipeline.CopyData();
-    g_fontPipeline.CopyData();
+    g_texturedQuadPipeline.copyData();
+    g_linePipeline.copyData();
+    g_fontPipeline.copyData();
 
     // Uniform
     UniformBufferObject ubo {};
@@ -311,7 +311,7 @@ void Velox::DoCopyPass()
     glPopDebugGroup();
 }
 
-void Velox::DoRenderPass()
+void Velox::doRenderPass()
 {
     glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "Velox render Pass");
 
@@ -327,13 +327,13 @@ void Velox::DoRenderPass()
     Velox::DrawCommand& firstCommand = g_drawCommands[0];
 
     Velox::Pipeline* currentPipeline = firstCommand.pipeline;
-    currentPipeline->Use(g_uniformBufferObject);
+    currentPipeline->use(g_uniformBufferObject);
 
     u32 currentShaderID  = firstCommand.shader->id;
-    firstCommand.shader->Use();
+    firstCommand.shader->use();
 
     u32 currentTextureID = firstCommand.texture->id;
-    firstCommand.texture->Use();
+    firstCommand.texture->use();
 
     u32 batchOffset = 0;
     u32 batchIndexCount = 0;
@@ -349,24 +349,24 @@ void Velox::DoRenderPass()
             command.shader->id   != currentShaderID     ||
             command.texture->id  != currentTextureID)
         {
-            if (currentShaderID  <= 0) g_defaultShaderProgram->Use();
-            if (currentTextureID <= 0) g_errorTexture->Use();
+            if (currentShaderID  <= 0) g_defaultShaderProgram->use();
+            if (currentTextureID <= 0) g_errorTexture->use();
 
             // Submit batch of draws.
             glDrawElements(currentPipeline->GLDrawType, batchIndexCount, GL_UNSIGNED_INT, (void*)(uintptr_t)batchOffset);
 
-            // Update pipeline progress.
+            // update pipeline progress.
             // pipelineOffsets[currentPipeline->id] += batchIndexCount;
 
             // Reset with new batch.
             currentPipeline = command.pipeline;
-            currentPipeline->Use(g_uniformBufferObject);
+            currentPipeline->use(g_uniformBufferObject);
 
             currentShaderID = command.shader->id;
-            command.shader->Use();
+            command.shader->use();
 
             currentTextureID = command.texture->id;
-            command.texture->Use();
+            command.texture->use();
 
             batchOffset = command.indexOffset * sizeof(u32);
             batchIndexCount = 0;
@@ -379,8 +379,8 @@ void Velox::DoRenderPass()
     // Render last batch if any left.
     if (batchIndexCount > 0)
     {
-        if (currentShaderID  <= 0)  g_defaultShaderProgram->Use();
-        if (currentTextureID <= 0) g_errorTexture->Use();
+        if (currentShaderID  <= 0)  g_defaultShaderProgram->use();
+        if (currentTextureID <= 0) g_errorTexture->use();
 
         glDrawElements(currentPipeline->GLDrawType, batchIndexCount, GL_UNSIGNED_INT, (void*)(uintptr_t)batchOffset);
     }
@@ -397,11 +397,11 @@ void Velox::DoRenderPass()
     glPopDebugGroup();
 }
 
-void Velox::DeInitRenderer()
+void Velox::deInitRenderer()
 {
-    g_texturedQuadPipeline.DeInit();
-    g_linePipeline.DeInit();
-    g_fontPipeline.DeInit();
+    g_texturedQuadPipeline.deInit();
+    g_linePipeline.deInit();
+    g_fontPipeline.deInit();
 
     glDeleteBuffers(1, &g_uniformBufferObject);
 
@@ -412,7 +412,7 @@ void Velox::DeInitRenderer()
     SDL_Quit();
 }
 
-void Velox::DrawQuad(const mat4& transform, const mat4& uvTransform, const vec4& color,
+void Velox::drawQuad(const mat4& transform, const mat4& uvTransform, const vec4& color,
         Velox::Texture* texture, Velox::ShaderProgram* shader)
 {
     const u32 startVertexOffset = g_texturedQuadPipeline.vertexCount;
@@ -456,7 +456,7 @@ void Velox::DrawQuad(const mat4& transform, const mat4& uvTransform, const vec4&
     g_drawCommands.push_back(command);
 }
 
-void Velox::DrawQuad(const vec3& position, const vec2& size, const vec4& color,
+void Velox::drawQuad(const vec3& position, const vec2& size, const vec4& color,
         Velox::Texture* texture, Velox::ShaderProgram* shader)
 {
     const mat4 transform = 
@@ -465,10 +465,10 @@ void Velox::DrawQuad(const vec3& position, const vec2& size, const vec4& color,
 
     const mat4 uvTransform = mat4(1.0f);
 
-    Velox::DrawQuad(transform, uvTransform, color, texture != nullptr ? texture : g_whiteTexture, shader);
+    Velox::drawQuad(transform, uvTransform, color, texture != nullptr ? texture : g_whiteTexture, shader);
 }
 
-void Velox::DrawRotatedQuad(const vec3& position, const vec2& size, const vec4& color, 
+void Velox::drawRotatedQuad(const vec3& position, const vec2& size, const vec4& color, 
         const f32& rotation, Velox::Texture* texture, Velox::ShaderProgram* shader)
 {
     const vec3 pivotOffset = vec3(-0.5f * size.x, -0.5f * size.y, 0.0f);
@@ -482,10 +482,10 @@ void Velox::DrawRotatedQuad(const vec3& position, const vec2& size, const vec4& 
 
     const mat4 uvTransform = mat4(1.0f);
 
-    Velox::DrawQuad(transform, uvTransform, color, texture, shader);
+    Velox::drawQuad(transform, uvTransform, color, texture, shader);
 }
 
-void Velox::DrawQuadUV(const Velox::Rectangle& outRect, const Velox::Rectangle& inRect, 
+void Velox::drawQuadUV(const Velox::Rectangle& outRect, const Velox::Rectangle& inRect, 
         const vec4& color, Velox::Texture* texture, Velox::ShaderProgram* shader)
 {
 
@@ -497,10 +497,10 @@ void Velox::DrawQuadUV(const Velox::Rectangle& outRect, const Velox::Rectangle& 
         glm::translate(glm::mat4(1.0f), vec3(inRect.x, inRect.y, 0.0f)) *
         glm::scale(    glm::mat4(1.0f), vec3(inRect.w, inRect.h, 1.0f));
 
-    Velox::DrawQuad(quadTransform, uvTransform, color, texture, shader);
+    Velox::drawQuad(quadTransform, uvTransform, color, texture, shader);
 }
 
-void Velox::DrawLine(const vec3& p0, const vec3& p1, const vec4& color)
+void Velox::drawLine(const vec3& p0, const vec3& p1, const vec4& color)
 {
     const u32 startVertexOffset = g_linePipeline.vertexCount;
     const u32 startIndexOffset  = g_linePipeline.indexCount;
@@ -537,27 +537,27 @@ void Velox::DrawLine(const vec3& p0, const vec3& p1, const vec4& color)
     g_drawCommands.push_back(command);
 }
 
-void Velox::DrawRect(const Velox::Rectangle& rect, const vec4& color)
+void Velox::drawRect(const Velox::Rectangle& rect, const vec4& color)
 {
     glm::vec3 p0 = glm::vec3(rect.x,          rect.y,          0.0f);
     glm::vec3 p1 = glm::vec3(rect.x,          rect.y + rect.h, 0.0f);
     glm::vec3 p2 = glm::vec3(rect.x + rect.w, rect.y + rect.h, 0.0f);
     glm::vec3 p3 = glm::vec3(rect.x + rect.w, rect.y,          0.0f);
 
-    Velox::DrawLine(p0, p1, color);
-    Velox::DrawLine(p1, p2, color);
-    Velox::DrawLine(p2, p3, color);
-    Velox::DrawLine(p3, p0, color);
+    Velox::drawLine(p0, p1, color);
+    Velox::drawLine(p1, p2, color);
+    Velox::drawLine(p2, p3, color);
+    Velox::drawLine(p3, p0, color);
 }
 
-void Velox::DrawRect(const vec3& position, const vec2& size, const vec4& color)
+void Velox::drawRect(const vec3& position, const vec2& size, const vec4& color)
 {
-    DrawRect(Velox::Rectangle { position.x, position.y, size.x, size.y }, color);
+    drawRect(Velox::Rectangle { position.x, position.y, size.x, size.y }, color);
 }
 
 // GM: For reference of how fonts are rendered on screen see:
 // https://freetype.org/freetype2/docs/tutorial/step2.html#section-1
-Velox::TextContinueInfo Velox::DrawText(const char* text, const vec3& position,
+Velox::TextContinueInfo Velox::drawText(const char* text, const vec3& position,
         Velox::TextContinueInfo* textContinueInfo)
 {
     Velox::Font* usingFont = Velox::GetUsingFont();
@@ -574,7 +574,7 @@ Velox::TextContinueInfo Velox::DrawText(const char* text, const vec3& position,
     size_t charCount = SDL_strlen(text);
 
     // Info conintue info is given then resume advance positions.
-    // Probably not going to work well if fonts are switched between DrawText calls.
+    // Probably not going to work well if fonts are switched between drawText calls.
     if (textContinueInfo != nullptr && charCount > 0)
     {
         x = textContinueInfo->advanceX;
@@ -692,7 +692,7 @@ Velox::TextContinueInfo Velox::DrawText(const char* text, const vec3& position,
 
         g_drawCommands.push_back(command);
 
-        // Update advance.
+        // update advance.
 
         if (i < charCount - 1) // Last iteration.
         {
@@ -712,16 +712,15 @@ Velox::TextContinueInfo Velox::DrawText(const char* text, const vec3& position,
 }
 
 
-Velox::TextContinueInfo Velox::DrawColoredText(const char* text, const vec3& position,
+Velox::TextContinueInfo Velox::drawColoredText(const char* text, const vec3& position,
         const vec4& color, Velox::TextContinueInfo* textContinueInfo)
 {
     Velox::TextDrawStyle* style = Velox::GetUsingTextStyle();
     style->color = color;
 
-    Velox::PushTextStyle(*style);
-    Velox::TextContinueInfo continueInfo = Velox::DrawText(text, position, textContinueInfo);
-    Velox::PopTextStyle();
+    Velox::pushTextStyle(*style);
+    Velox::TextContinueInfo continueInfo = Velox::drawText(text, position, textContinueInfo);
+    Velox::popTextStyle();
 
     return continueInfo;
 }
-

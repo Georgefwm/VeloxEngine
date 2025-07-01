@@ -36,9 +36,9 @@ static i64 s_averagerResidual = 0;
 static i64 s_previousFrameTime;
 static i64 s_frameAccumulator;
 
-f64 Velox::DeltaTime() { return s_fixedDeltaTime; }
+f64 Velox::getDeltaTime() { return s_fixedDeltaTime; }
 
-void Velox::CalculateDeltaTime()
+void Velox::calculateDeltaTime()
 {
     s_currentFrameTime  = SDL_GetPerformanceCounter();
     s_currentDeltaTime  = s_currentFrameTime - s_previousFrameTime;
@@ -54,7 +54,7 @@ void Velox::CalculateDeltaTime()
             s_currentDeltaTime = snap;
     }
 
-    s_timeAverager.Push(s_currentDeltaTime);
+    s_timeAverager.push(s_currentDeltaTime);
 
     i64 averagerSum = 0;
     for (int i = 0; i < s_timeAverager.Size(); i++)
@@ -75,13 +75,13 @@ void Velox::CalculateDeltaTime()
     {
         s_frameAccumulator = s_desiredFrameTime * 2;
         s_currentDeltaTime = s_desiredFrameTime;
-        s_timeAverager.Assign(s_desiredFrameTime);
+        s_timeAverager.assign(s_desiredFrameTime);
 
         s_resync = false;
     }
 }
 
-void Velox::UpdateGame(std::function<void(double&)> updateCallback)
+void Velox::updateGame(std::function<void(double&)> updateCallback)
 {
     while (s_frameAccumulator >= s_desiredFrameTime * s_updateMultiplicity)
     {
@@ -93,7 +93,7 @@ void Velox::UpdateGame(std::function<void(double&)> updateCallback)
     }
 }
 
-void Velox::InitTimer()
+void Velox::initTimer()
 {
     // For now just set update rate to screen refresh rate (force vsync on).
     // Seem like relatively soon, SDL3 will implement frame pacing extension or allow for DXGI
@@ -129,9 +129,10 @@ void Velox::InitTimer()
     for(int i = 0; i < s_snapFrequencies.size(); i++)
         s_snapFrequencies[i] = (s_clocksPerSecond / s_snapHz) * (i + 1);
     
-    s_timeAverager.Assign(s_desiredFrameTime);
+    s_timeAverager.assign(s_desiredFrameTime);
     s_averagerResidual = 0;
 
     s_previousFrameTime = SDL_GetPerformanceCounter();
     s_frameAccumulator = 0;
 }
+

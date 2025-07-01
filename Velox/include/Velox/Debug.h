@@ -4,14 +4,14 @@ namespace Velox {
 
 struct TextDrawStyle;
 
-void DrawPerformanceStats();
+void drawPerformanceStats();
 
-void DrawMemoryUsageStats();
+void drawMemoryUsageStats();
 
-void DrawSettings();
+void drawSettings();
 
-void TextStyleEditor(Velox::TextDrawStyle* style, bool useCurrentAsBase = false);
+void textStyleEditor(Velox::TextDrawStyle* style, bool useCurrentAsBase = false);
 
-void UpdateFrameHistory();
+void updateFrameHistory();
 
 }

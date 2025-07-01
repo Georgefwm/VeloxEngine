@@ -13,14 +13,14 @@
 
 static Velox::Console g_console {};
 
-Velox::Console* Velox::GetConsole() { return &g_console; }
+Velox::Console* Velox::getConsole() { return &g_console; }
 
-void Velox::InitConsole()
+void Velox::initConsole()
 {
-    Velox::RegisterDefaultCommands();
+    Velox::registerDefaultCommands();
 }
 
-void Velox::Console::RegisterCommand(const std::string& name, 
+void Velox::Console::registerCommand(const std::string& name, 
         std::function<void(std::string&, const std::vector<std::string>&)> func)
 {
     // Check for command name collisions.
@@ -39,7 +39,7 @@ void Velox::Console::RegisterCommand(const std::string& name,
     commands[name] = std::move(func);
 }
 
-bool Velox::Console::ExecuteCommand(const std::string& inputLine)
+bool Velox::Console::executeCommand(const std::string& inputLine)
 {
     std::stringstream stream(inputLine);
     std::string commandName;
@@ -69,7 +69,7 @@ bool Velox::Console::ExecuteCommand(const std::string& inputLine)
     return true;
 }
 
-void Velox::PrintToConsole(const std::string& string)
+void Velox::printToConsole(const std::string& string)
 {
     Velox::ConsoleRecord record {
         .command = "",
@@ -80,22 +80,22 @@ void Velox::PrintToConsole(const std::string& string)
 }
 
 // TODO: Tab autocomplete on available commands.
-std::vector<std::string> GetSuggestions(const std::string& prefix) 
+std::vector<std::string> getSuggestions(const std::string& prefix) 
 {
     return { "" };
 }
 
-void Velox::ToggleConsole()
+void Velox::toggleConsole()
 {
     g_console.shouldBeOpen = !g_console.shouldBeOpen;
 }
 
-void Velox::DrawConsole()
+void Velox::drawConsole()
 {
     if (!g_console.shouldBeOpen && g_console.currentHeight <= 0.0)
         return;
 
-    float deltaHeight = g_console.openSpeed * (float)Velox::DeltaTime();
+    float deltaHeight = g_console.openSpeed * (float)Velox::getDeltaTime();
 
     // Should console be opening or closing.
     deltaHeight *= g_console.shouldBeOpen * 2 - 1;
@@ -113,7 +113,7 @@ void Velox::DrawConsole()
 
     // Don't change size of window, just position; To avoid resizing elements.
     ImGui::SetNextWindowPos(ImVec2(0, 0 - g_console.maxHeight + g_console.currentHeight), ImGuiCond_Always);
-    ImGui::SetNextWindowSize(ImVec2(Velox::GetWindowSize().x, g_console.maxHeight),   ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2(Velox::getWindowSize().x, g_console.maxHeight),   ImGuiCond_Always);
 
     int varSpacing = 100;
 
@@ -163,11 +163,11 @@ void Velox::DrawConsole()
     }
 
     if (ImGui::InputTextWithHint("##CmdInputLine", "Use \"list\" to view all commands",
-        g_console.commandInput, INPUT_BUFFER_SIZE, inputTextFlags, Velox::ConsoleKeyFilterCallback, NULL))
+        g_console.commandInput, INPUT_BUFFER_SIZE, inputTextFlags, Velox::consoleKeyFilterCallback, NULL))
     {
         std::string command { g_console.commandInput };
 
-        g_console.ExecuteCommand(command);
+        g_console.executeCommand(command);
 
         // Clear input buffer.
         g_console.commandInput[0] = '\0';
@@ -188,7 +188,7 @@ void Velox::DrawConsole()
     ImGui::End();
 }
 
-int static Velox::ConsoleKeyFilterCallback(ImGuiInputTextCallbackData* data)
+int static Velox::consoleKeyFilterCallback(ImGuiInputTextCallbackData* data)
 {
     switch (data->EventChar)
     {

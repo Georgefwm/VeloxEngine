@@ -12,7 +12,7 @@
 #include "imgui_impl_opengl3.h"
 
 
-void Velox::InitUI()
+void Velox::initUI()
 {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -28,7 +28,7 @@ void Velox::InitUI()
     ImGui_ImplOpenGL3_Init();
 
     float baseFontSize = 24.0f;
-    float displayScale = Velox::GetDisplayScale();
+    float displayScale = Velox::getDisplayScale();
 
     ImGuiStyle& style = ImGui::GetStyle();
     style.ScaleAllSizes(displayScale);
@@ -41,7 +41,7 @@ void Velox::InitUI()
     Velox::Arena tempData(2048);
 
     const size_t pathSize = 1024;
-    char* absolutePath = tempData.Alloc<char>(pathSize);
+    char* absolutePath = tempData.alloc<char>(pathSize);
 
     SDL_strlcpy(absolutePath, SDL_GetBasePath(), pathSize);
     SDL_strlcat(absolutePath, "assets\\fonts\\", pathSize);
@@ -56,17 +56,17 @@ void Velox::InitUI()
     ImGui::NewFrame();
 }
 
-void Velox::ForwardSDLEventToUI(Velox::Event* event)
+void Velox::forwardSDLEventToUI(Velox::Event* event)
 {
     ImGui_ImplSDL3_ProcessEvent(&event->sdlEvent);
 }
 
-ImDrawData* Velox::GetUIDrawData()
+ImDrawData* Velox::getUIDrawData()
 {
     return ImGui::GetDrawData();
 }
 
-void Velox::DeInitUI()
+void Velox::deInitUI()
 {
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplSDL3_Shutdown();

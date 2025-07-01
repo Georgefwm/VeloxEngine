@@ -39,7 +39,7 @@ struct Pool {
         free(buffer);
     }
 
-    T* Alloc()
+    T* alloc()
     {
         if (!freeList)
             return nullptr;
@@ -49,7 +49,7 @@ struct Pool {
         return static_cast<T*>(result);
     }
 
-    void Free(T* object)
+    void free(T* object)
     {
         if (!object)
             return;
@@ -59,6 +59,5 @@ struct Pool {
         freeList = node;
     }
 };
-
 
 }

@@ -11,13 +11,13 @@
 
 static std::queue<Velox::Event> g_eventQueue;
 
-void Velox::PushEvent(Velox::Event event)
+void Velox::pushEvent(Velox::Event event)
 {
     g_eventQueue.push(event);
 }
 
 // GM: Bit janky rn, currently we just intercept events we want to use.
-bool Velox::PollEvents(Velox::Event* event)
+bool Velox::pollEvents(Velox::Event* event)
 {
     Event* t_event;
 
@@ -25,9 +25,9 @@ bool Velox::PollEvents(Velox::Event* event)
     {
         t_event = &g_eventQueue.front();
 
-        if (ShouldEngineInterceptEvent(t_event))
+        if (shouldEngineInterceptEvent(t_event))
         {
-            if (InterceptEvent(t_event))
+            if (interceptEvent(t_event))
             {
                 event = t_event;
                 g_eventQueue.pop();
@@ -51,9 +51,9 @@ bool Velox::PollEvents(Velox::Event* event)
         Velox::Event newEvent = { Velox::SDLEvent, sdlEvent };
         t_event = &newEvent;
 
-        if (ShouldEngineInterceptEvent(t_event))
+        if (shouldEngineInterceptEvent(t_event))
         {
-            if (InterceptEvent(t_event))
+            if (interceptEvent(t_event))
             {
                 event = t_event;
                 return true;
@@ -69,7 +69,7 @@ bool Velox::PollEvents(Velox::Event* event)
     return false;
 }
 
-bool Velox::ShouldEngineInterceptEvent(Velox::Event* event)
+bool Velox::shouldEngineInterceptEvent(Velox::Event* event)
 {
     if (event->type == Velox::EventType::AssetLoadRequest)
         return true;
@@ -81,14 +81,14 @@ bool Velox::ShouldEngineInterceptEvent(Velox::Event* event)
 }
 
 // Returns true if event should propogate to user.
-bool Velox::InterceptEvent(Velox::Event* event)
+bool Velox::interceptEvent(Velox::Event* event)
 {
     if (event->type == Velox::EventType::SDLEvent)
     {
         if (event->sdlEvent.type == SDL_EVENT_QUIT)
         {
             // TODO: Let the developer handle the quit logic.
-            Velox::Quit();
+            Velox::quit();
             return false;
         }
 
@@ -97,7 +97,7 @@ bool Velox::InterceptEvent(Velox::Event* event)
             if (event->sdlEvent.key.scancode == SDL_SCANCODE_GRAVE) 
             {
                 // Set this as a button that never gets through to the user (engine reserved).
-                Velox::ToggleConsole();
+                Velox::toggleConsole();
                 return false;
             }
         }
@@ -106,11 +106,11 @@ bool Velox::InterceptEvent(Velox::Event* event)
         // The renderer only needs to know about window events.
         if (event->sdlEvent.type >= Uint32(0x200) && event->sdlEvent.type < Uint32(0x300))
         {
-            Velox::ForwardSDLEventToRenderer(&event->sdlEvent);
+            Velox::forwardSDLEventToRenderer(&event->sdlEvent);
             return true;
         }
 
-        Velox::ForwardSDLEventToUI(event);
+        Velox::forwardSDLEventToUI(event);
 
         return true;
     }

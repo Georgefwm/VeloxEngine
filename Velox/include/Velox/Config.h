@@ -8,10 +8,10 @@ struct Config {
     int vsyncMode = 1;
 };
 
-Config* GetConfig();
+Config* getConfig();
 
-void SaveUserConfig();
+void saveUserConfig();
 
-void InitConfig(bool* userConfigExists);
+void initConfig(bool* userConfigExists);
 
 }

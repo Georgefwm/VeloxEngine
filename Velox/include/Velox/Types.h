@@ -42,3 +42,4 @@ constexpr vec4 COLOR_PURPLE      = { 0.60f, 0.40f, 0.90f, 1.0f }; // Lavender
 constexpr vec4 COLOR_CYAN        = { 0.00f, 0.78f, 0.89f, 1.0f };
 constexpr vec4 COLOR_MAGENTA     = { 1.00f, 0.00f, 0.75f, 1.0f };
 
+#define MS_PER_SECOND 1000

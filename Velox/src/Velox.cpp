@@ -20,7 +20,7 @@ bool g_quitRequested = false;
 
 static Velox::EngineState engineState {};
 
-SDL_Time TimeStamp(std::string label, SDL_Time& startTime)
+SDL_Time timeStamp(std::string label, SDL_Time& startTime)
 {
     SDL_Time time;
     SDL_GetCurrentTime(&time);
@@ -31,9 +31,9 @@ SDL_Time TimeStamp(std::string label, SDL_Time& startTime)
     return time;   
 }
 
-void Velox::Init()
+void Velox::init()
 {
-    Velox::InitLog();
+    Velox::initLog();
     LOG_TRACE("Initialising engine...");
 
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS))
@@ -48,39 +48,39 @@ void Velox::Init()
 #define SPLIT_TIMES 0
 
     bool userConfigExists;
-    Velox::InitConfig(&userConfigExists);
+    Velox::initConfig(&userConfigExists);
 #if SPLIT_TIMES
-    TimeStamp("Config", initStartTime);
+    timeStamp("Config", initStartTime);
 #endif
 
-    Velox::InitAssets();
+    Velox::initAssets();
 #if SPLIT_TIMES
-    TimeStamp("Assets", initStartTime);
+    timeStamp("Assets", initStartTime);
 #endif
 
-    Velox::InitRenderer();
+    Velox::initRenderer();
 #if SPLIT_TIMES
-    TimeStamp("Renderer", initStartTime);
+    timeStamp("Renderer", initStartTime);
 #endif
 
-    Velox::InitText();
+    Velox::initText();
 #if SPLIT_TIMES
-    TimeStamp("Text", initStartTime);
+    timeStamp("Text", initStartTime);
 #endif
 
-    Velox::InitUI();
+    Velox::initUI();
 #if SPLIT_TIMES
-    TimeStamp("UI", initStartTime);
+    timeStamp("UI", initStartTime);
 #endif
 
-    Velox::InitConsole();
+    Velox::initConsole();
 #if SPLIT_TIMES
-    TimeStamp("Console", initStartTime);
+    timeStamp("Console", initStartTime);
 #endif
 
-    Velox::InitTimer();
+    Velox::initTimer();
 #if SPLIT_TIMES
-    TimeStamp("Timer", initStartTime);
+    timeStamp("Timer", initStartTime);
 #endif
 
     SDL_Time initEndTime;
@@ -89,45 +89,45 @@ void Velox::Init()
     std::string initTimeString = fmt::format("Engine initialised, took {}ms",
             std::to_string(SDL_NS_TO_MS(initEndTime - initStartTime)));
 
-    Velox::PrintToConsole(initTimeString);
+    Velox::printToConsole(initTimeString);
     LOG_TRACE(initTimeString);
 }
 
-Velox::EngineState* Velox::GetEngineState()
+Velox::EngineState* Velox::getEngineState()
 {
     return &engineState;
 }
 
-void Velox::DoFrameEndUpdates()
+void Velox::doFrameEndUpdates()
 {
-    Velox::DrawConsole();
+    Velox::drawConsole();
 
     if (engineState.showPerformanceStats)
-        Velox::DrawPerformanceStats();
+        Velox::drawPerformanceStats();
 
     if (engineState.showMemoryUsageStats)
-        Velox::DrawMemoryUsageStats();
+        Velox::drawMemoryUsageStats();
 
     if (engineState.showSettings)
-        Velox::DrawSettings();
+        Velox::drawSettings();
 }
 
-void Velox::Quit()
+void Velox::quit()
 {
     g_quitRequested = true;
 }
 
-bool Velox::QuitRequested()
+bool Velox::quitRequested()
 {
     return g_quitRequested;
 }
 
-void Velox::DeInit()
+void Velox::deInit()
 {
-    Velox::DeInitAssets(); // Must be cleaned up before GLContext is destroyed (in DeInitRenderer()). (I think...)
+    Velox::deInitAssets(); // Must be cleaned up before GLContext is destroyed (in deInitRenderer()). (I think...)
 
-    Velox::DeInitRenderer();
-    Velox::DeInitUI();
+    Velox::deInitRenderer();
+    Velox::deInitUI();
 
     SDL_Quit();    
 }

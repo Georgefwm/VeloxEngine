@@ -7,21 +7,21 @@ struct TextDrawStyle;
 struct TextContinueInfo;
 struct Rectangle;
 
-void PushFont(const char* fontName);
-void PopFont();
+void pushFont(const char* fontName);
+void popFont();
 Velox::Font* GetUsingFont();
 
-void PushTextStyle(const Velox::TextDrawStyle& style);
-void PopTextStyle();
+void pushTextStyle(const Velox::TextDrawStyle& style);
+void popTextStyle();
 Velox::TextDrawStyle* GetUsingTextStyle();
 
 // Get the continues info for a given string.
-void GetStringContinueInfo(const char* text, Velox::TextContinueInfo* resultInfo,
+void getStringContinueInfo(const char* text, Velox::TextContinueInfo* resultInfo,
         Velox::TextContinueInfo* startInfo = nullptr);
 
-void GetStringBounds(const char* text, Velox::Rectangle* bounds,
+void getStringBounds(const char* text, Velox::Rectangle* bounds,
         Velox::TextContinueInfo* startInfo = nullptr);
 
-void InitText();
+void initText();
 
 }

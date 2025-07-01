@@ -13,7 +13,7 @@ Velox::Arena::~Arena()
     free(buffer);
 }
 
-void* Velox::Arena::AllocBytes(size_t bytes, size_t alignment = alignof(max_align_t))
+void* Velox::Arena::allocBytes(size_t bytes, size_t alignment = alignof(max_align_t))
 {
     size_t current = reinterpret_cast<size_t>(buffer + offset);
     size_t aligned = (current + alignment - 1) & ~(alignment - 1);
@@ -37,12 +37,12 @@ void* Velox::Arena::AllocBytes(size_t bytes, size_t alignment = alignof(max_alig
     return ptr;
 }
 
-void Velox::Arena::Reset()
+void Velox::Arena::reset()
 {
     offset = 0;
 }
 
-void Velox::Arena::PrintUsage()
+void Velox::Arena::printUsage()
 {
     printf("Arena using %zu / %zu bytes\n", offset, size);
 }

@@ -6,9 +6,9 @@
 #include <SDL3/SDL.h>
 
 
-vec3 Velox::ToShaderCoords(vec3 vector, bool flipY = false)
+vec3 Velox::toShaderCoords(vec3 vector, bool flipY = false)
 {
-    ivec2 windowSize = Velox::GetWindowSize();
+    ivec2 windowSize = Velox::getWindowSize();
 
     // Convert from pixel space to [0, 1]
     vec2 normalisedXY = {

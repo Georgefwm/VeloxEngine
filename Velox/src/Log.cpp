@@ -8,7 +8,7 @@
 
 static spdlog::logger logger("pre-init");
 
-void Velox::InitLog()
+void Velox::initLog()
 {
     std::string logFileOutput = fmt::format("{}logs/logs.txt", SDL_GetBasePath());
 
@@ -24,7 +24,7 @@ void Velox::InitLog()
     logger.set_level(spdlog::level::trace);
 }
 
-spdlog::logger* Velox::GetLogger()
+spdlog::logger* Velox::getLogger()
 {
     return &logger;
 }

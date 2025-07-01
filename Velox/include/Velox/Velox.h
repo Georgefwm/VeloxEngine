@@ -9,15 +9,15 @@ struct EngineState {
 };
 
 // GM: Sets up all framework systems.
-void Init();
+void init();
 
-EngineState* GetEngineState();
+EngineState* getEngineState();
 
-void DoFrameEndUpdates();
+void doFrameEndUpdates();
 
-void Quit();
-bool QuitRequested();
+void quit();
+bool quitRequested();
 
-void DeInit();
+void deInit();
 
 }

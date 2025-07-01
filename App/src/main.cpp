@@ -21,17 +21,17 @@ Velox::Font* g_font;
 Velox::EntityHandle e1;
 float direction = 1.0;
 
-void UpdateStar(Velox::Entity& e, double deltaTime)
+void updateStar(Velox::Entity& e, double getDeltaTime)
 {
-    e.position.x += (300 * direction) * deltaTime;
-    e.rotation += (40 * direction) * deltaTime;
+    e.position.x += (300 * direction) * getDeltaTime;
+    e.rotation += (40 * direction) * getDeltaTime;
 
-    ivec2 windowSize = Velox::GetWindowSize();
+    ivec2 windowSize = Velox::getWindowSize();
     if (e.position.x > windowSize.x * 0.95) direction = -1.0;
     if (e.position.x < windowSize.x * 0.05) direction =  1.0;
 }
 
-void DrawStar(Velox::Entity& e)
+void drawStar(Velox::Entity& e)
 {
     vec3 usePosition = e.position;
 
@@ -42,82 +42,82 @@ void DrawStar(Velox::Entity& e)
     }
 
     if (e.texture != nullptr)
-        Velox::DrawRotatedQuad(usePosition, e.size, e.colorOverride, e.rotation, e.texture);
+        Velox::drawRotatedQuad(usePosition, e.size, e.colorOverride, e.rotation, e.texture);
     else
-        Velox::DrawRotatedQuad(usePosition, e.size, e.colorOverride, e.rotation, 0);
+        Velox::drawRotatedQuad(usePosition, e.size, e.colorOverride, e.rotation, 0);
 }
 
-void HandleEvent(Velox::Event* event)
+void handleEvent(Velox::Event* event)
 {
 
 }
 
-void DoUpdates(double& deltaTime)
+void doUpdates(double& getDeltaTime)
 {
     for (auto e : g_entityManager->iter())
     {
         Velox::EntityHandle handle = e.first;
         Velox::Entity* entity = e.second;
 
-        entity->Update(deltaTime);
+        entity->update(getDeltaTime);
     }
 
     Velox::Entity* e = g_entityManager->getMut(e1);
 }
 
-void DoRenderingStuff()
+void doRenderingStuff()
 {
-    Velox::DrawQuad(vec3(100.0f, 100.0f, 0.0f), vec2(200.0f, 200.0f), vec4(1.0f));
+    Velox::drawQuad(vec3(100.0f, 100.0f, 0.0f), vec2(200.0f, 200.0f), vec4(1.0f));
 
-    Velox::DrawRect(vec3(90.0f, 90.0f, 0.0f), vec2(220.0f, 220.0f), vec4(1.0f));
+    Velox::drawRect(vec3(90.0f, 90.0f, 0.0f), vec2(220.0f, 220.0f), vec4(1.0f));
 
-    Velox::DrawQuad(vec3(100.0f, 400.0f, 0.0f), vec2(200.0f, 200.0f), vec4(1.0f),
-            Velox::GetAssetManager()->GetTexture("missing_texture.png"));
+    Velox::drawQuad(vec3(100.0f, 400.0f, 0.0f), vec2(200.0f, 200.0f), vec4(1.0f),
+            Velox::getAssetManager()->getTexture("missing_texture.png"));
 
-    Velox::DrawQuad(vec3(400.0f, 100.0f, 0.0f), vec2(500.0f, 500.0f), vec4(1.0f), g_font->texture);
+    Velox::drawQuad(vec3(400.0f, 100.0f, 0.0f), vec2(500.0f, 500.0f), vec4(1.0f), g_font->texture);
 
     Velox::Entity* e = g_entityManager->getMut(e1);
-    e->Draw();
+    e->draw();
 
-    Velox::DrawQuad(vec3(950.0f, 100.0f, 0.0f), vec2(1200.0f, 500.0f), vec4(1.0f));
+    Velox::drawQuad(vec3(950.0f, 100.0f, 0.0f), vec2(1200.0f, 500.0f), vec4(1.0f));
 
     Velox::TextDrawStyle textInfo {};
     textInfo.textSize = 130;
-    Velox::PushTextStyle(textInfo);
+    Velox::pushTextStyle(textInfo);
 
     Velox::TextDrawStyle editorStyle {};
-    Velox::TextStyleEditor(&editorStyle, true);
+    Velox::textStyleEditor(&editorStyle, true);
 
-    Velox::PushTextStyle(editorStyle);
+    Velox::pushTextStyle(editorStyle);
 
-    Velox::PushFont("martius.ttf");
-    Velox::DrawText("<- MSDF Texture", vec3(1000.0f, 500.0f, 0.0f));
-    Velox::PopFont();
-    Velox::DrawText("text in another font", vec3(1000.0f, 400.0f, 0.0f));
+    Velox::pushFont("martius.ttf");
+    Velox::drawText("<- MSDF Texture", vec3(1000.0f, 500.0f, 0.0f));
+    Velox::popFont();
+    Velox::drawText("text in another font", vec3(1000.0f, 400.0f, 0.0f));
 
     vec3 continueTextPosition = vec3(1000.0f, 300.0f, 0.0f);
-    Velox::TextContinueInfo contInfo = Velox::DrawText("con", continueTextPosition);
-    contInfo = Velox::DrawColoredText("tin", continueTextPosition, COLOR_RED, &contInfo);
-    contInfo = Velox::DrawColoredText("ued ", continueTextPosition, COLOR_GREEN, &contInfo);
-    contInfo = Velox::DrawColoredText("text and\non ", continueTextPosition, COLOR_BLUE, &contInfo);
-    contInfo = Velox::DrawColoredText("new line", continueTextPosition, COLOR_GRAY_LIGHT, &contInfo);
+    Velox::TextContinueInfo contInfo = Velox::drawText("con", continueTextPosition);
+    contInfo = Velox::drawColoredText("tin", continueTextPosition, COLOR_RED, &contInfo);
+    contInfo = Velox::drawColoredText("ued ", continueTextPosition, COLOR_GREEN, &contInfo);
+    contInfo = Velox::drawColoredText("text and\non ", continueTextPosition, COLOR_BLUE, &contInfo);
+    contInfo = Velox::drawColoredText("new line", continueTextPosition, COLOR_GRAY_LIGHT, &contInfo);
 
     vec3 testPos(2200.0f, 300.0f, 0.0f);
     const char* testText = "boundtest";
-    Velox::DrawText(testText, testPos);
+    Velox::drawText(testText, testPos);
 
     Velox::Rectangle bounds;
-    Velox::GetStringBounds(testText, &bounds);
+    Velox::getStringBounds(testText, &bounds);
 
     bounds.x += testPos.x;
     bounds.y += testPos.y;
 
-    Velox::DrawRect(bounds, COLOR_GREEN);
+    Velox::drawRect(bounds, COLOR_GREEN);
 
-    Velox::PopTextStyle();
-    Velox::PopTextStyle();
+    Velox::popTextStyle();
+    Velox::popTextStyle();
 
-    Velox::DrawLine(vec3(100.0f, 615.0f, 0.0f), vec3(900.0f, 615.0f, 0.0f), COLOR_RED);
+    Velox::drawLine(vec3(100.0f, 615.0f, 0.0f), vec3(900.0f, 615.0f, 0.0f), COLOR_RED);
 
     float startHeight = 620.0f;
     editorStyle.textSize = 20.0f;
@@ -125,9 +125,9 @@ void DoRenderingStuff()
     {
         startHeight += editorStyle.textSize;
         editorStyle.textSize = editorStyle.textSize * 1.5f;
-        Velox::PushTextStyle(editorStyle);
-        Velox::DrawText("SAMPLE TEXT", vec3(100.0f, startHeight, 0.0f));
-        Velox::PopTextStyle();
+        Velox::pushTextStyle(editorStyle);
+        Velox::drawText("SAMPLE TEXT", vec3(100.0f, startHeight, 0.0f));
+        Velox::popTextStyle();
     }
 
     ImGui::ShowDemoWindow();
@@ -135,7 +135,7 @@ void DoRenderingStuff()
 
 void run()
 {
-    Velox::Init();
+    Velox::init();
 
     g_entityManager = Velox::GetEntityManager();
     e1 = g_entityManager->createEntity();
@@ -143,39 +143,39 @@ void run()
     
     e->position = vec3(100, 300, 0);
     e->size = vec2(100, 100);
-    e->texture = Velox::GetAssetManager()->LoadTexture("star.png");
+    e->texture = Velox::getAssetManager()->loadTexture("star.png");
     e->flags |= Velox::EntityFlags::Visible;
 
-    // Set Update/draw functions like this.
-    e->updateFunction = UpdateStar;
-    e->drawFunction = DrawStar;
+    // Set update/draw functions like this.
+    e->updateFunction = updateStar;
+    e->drawFunction = drawStar;
 
-    g_font = Velox::GetAssetManager()->LoadFont("martius.ttf");
+    g_font = Velox::getAssetManager()->loadFont("martius.ttf");
 
     g_fontShaderId = 0;
 
-    while (!Velox::QuitRequested())
+    while (!Velox::quitRequested())
     {
 
         Velox::Event event;
-        while (Velox::PollEvents(&event))
+        while (Velox::pollEvents(&event))
         {
-            HandleEvent(&event);
+            handleEvent(&event);
             // Do something with events.
         }
 
-        Velox::UpdateGame(DoUpdates);
+        Velox::updateGame(doUpdates);
 
-        DoRenderingStuff();
+        doRenderingStuff();
 
-        Velox::SubmitFrameData();
+        Velox::submitFrameData();
 
         // Calculate after frame present.
-        Velox::CalculateDeltaTime();
+        Velox::calculateDeltaTime();
     }
 
     // Cleanup.
-    Velox::DeInit();
+    Velox::deInit();
 }
 
 int main(int argc, char** argv)

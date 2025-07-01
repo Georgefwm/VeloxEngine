@@ -33,25 +33,25 @@ struct AssetManager {
     std::unordered_map<const char*, Velox::ShaderProgram> shaderProgramMap = {};
     std::unordered_map<const char*, Velox::Font> fontMap = {};
 
-    Velox::Texture* LoadTexture(const char* filepath);
-    Velox::Texture* GetTexture(const char* filepath);
+    Velox::Texture* loadTexture(const char* filepath);
+    Velox::Texture* getTexture(const char* filepath);
 
-    Velox::ShaderProgram* LoadShaderProgram(const char* vertFilepath, const char* fragFilepath, const char* name);
-    Velox::ShaderProgram* GetShaderProgram(const char* name);
-    Velox::ShaderProgram* ReloadShaderProgram(const char* name);
+    Velox::ShaderProgram* loadShaderProgram(const char* vertFilepath, const char* fragFilepath, const char* name);
+    Velox::ShaderProgram* getShaderProgram(const char* name);
+    Velox::ShaderProgram* reloadShaderProgram(const char* name);
 
-    Velox::Font* LoadFont(const char* filepath);
-    Velox::Font* GetFontRef(const char* filepath);
+    Velox::Font* loadFont(const char* filepath);
+    Velox::Font* getFontRef(const char* filepath);
 
-    void DeInit();
+    void deInit();
 };
 
-AssetManager* GetAssetManager();
+AssetManager* getAssetManager();
 
-void InitAssets();
+void initAssets();
 
-void DeInitAssets();
+void deInitAssets();
 
-void GetAssetMemoryUsage(size_t* used, size_t* capacity);
+void getAssetMemoryUsage(size_t* used, size_t* capacity);
 
 }

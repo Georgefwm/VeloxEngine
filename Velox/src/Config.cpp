@@ -17,9 +17,9 @@ toml::table s_userTable;
 
 Velox::Config s_config;
 
-Velox::Config* Velox::GetConfig() { return &s_config; }
+Velox::Config* Velox::getConfig() { return &s_config; }
 
-bool TomlToConfig(toml::table* table, Velox::Config* config)
+bool tomlToConfig(toml::table* table, Velox::Config* config)
 {
     if (table == nullptr)
     {
@@ -34,7 +34,7 @@ bool TomlToConfig(toml::table* table, Velox::Config* config)
     return true;
 }
 
-bool ConfigToToml(Velox::Config* config, toml::table* table)
+bool configToToml(Velox::Config* config, toml::table* table)
 {
     if (table == nullptr)
     {
@@ -56,7 +56,7 @@ bool ConfigToToml(Velox::Config* config, toml::table* table)
 }
 
 // Overwrites file, remember to include *all* information every write.
-bool WriteToFile(const char* filepath, toml::table* table)
+bool writeToFile(const char* filepath, toml::table* table)
 {
     if (table == nullptr)
     {
@@ -81,14 +81,14 @@ bool WriteToFile(const char* filepath, toml::table* table)
     return true;
 }
 
-void Velox::SaveUserConfig()
+void Velox::saveUserConfig()
 {
     toml::table newUserTable {};
-    ConfigToToml(&s_config, &newUserTable);
-    WriteToFile(s_userConfigPath, &newUserTable);
+    configToToml(&s_config, &newUserTable);
+    writeToFile(s_userConfigPath, &newUserTable);
 }
 
-void CreateDefaultConfig()
+void createDefaultConfig()
 {
     // Detect native resolution.
     SDL_DisplayID displayID = SDL_GetPrimaryDisplay();
@@ -106,17 +106,15 @@ void CreateDefaultConfig()
     };
 
     // Write to file.
-    WriteToFile(s_defaultConfigPath, &s_defaultTable);
+    writeToFile(s_defaultConfigPath, &s_defaultTable);
 }
 
-
-
-void Velox::InitConfig(bool* userConfigExists)
+void Velox::initConfig(bool* userConfigExists)
 {
     const size_t pathSize = 1024;
 
-    s_defaultConfigPath = s_data.Alloc<char>(pathSize);
-    s_userConfigPath    = s_data.Alloc<char>(pathSize);
+    s_defaultConfigPath = s_data.alloc<char>(pathSize);
+    s_userConfigPath    = s_data.alloc<char>(pathSize);
 
     const char* basePath = SDL_GetBasePath();
 
@@ -137,7 +135,7 @@ void Velox::InitConfig(bool* userConfigExists)
         if (defaultExists)
             s_defaultTable = toml::parse_file(s_defaultConfigPath);
         else
-            CreateDefaultConfig();
+            createDefaultConfig();
 
         if (userExists)
             s_userTable = toml::parse_file(s_userConfigPath);
@@ -150,10 +148,9 @@ void Velox::InitConfig(bool* userConfigExists)
     }
 
     if (userExists)
-        TomlToConfig(&s_userTable, &s_config);        
+        tomlToConfig(&s_userTable, &s_config);        
     else
-        TomlToConfig(&s_defaultTable, &s_config);        
+        tomlToConfig(&s_defaultTable, &s_config);        
 
 }
-
 

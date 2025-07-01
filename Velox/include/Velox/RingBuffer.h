@@ -20,7 +20,7 @@ struct RingBuffer {
         return buffer[index];
     }
 
-    void Assign(const T& item, bool resetHead = false)
+    void assign(const T& item, bool resetHead = false)
     {
         buffer = std::vector<T>(buffer.size(), item);
 
@@ -28,13 +28,13 @@ struct RingBuffer {
             head = 0;
     }
 
-    void Push(const T& item)
+    void push(const T& item)
     {
         buffer[head] = item;
         head = head + 1 % buffer.size() - 1;
     }
 
-    void Pop()
+    void pop()
     {
         head = head - 1 < 0 ? buffer.size() : head - 1;
     }

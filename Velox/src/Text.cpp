@@ -11,16 +11,16 @@ static std::stack<Velox::Font*> s_fontStack {};
 static Velox::TextDrawStyle s_defaultTextStyle {};
 static std::stack<Velox::TextDrawStyle> s_textStyleStack {};
 
-void Velox::PushFont(const char* fontName)
+void Velox::pushFont(const char* fontName)
 {
-    Velox::Font* requestedFont = Velox::GetAssetManager()->GetFontRef(fontName);
+    Velox::Font* requestedFont = Velox::getAssetManager()->getFontRef(fontName);
     if (requestedFont == nullptr)
         return;
 
     s_fontStack.push(requestedFont);
 }
 
-void Velox::PopFont()
+void Velox::popFont()
 {
     if (s_fontStack.size() == 0)
         return;
@@ -37,12 +37,12 @@ Velox::Font* Velox::GetUsingFont()
 }
 
 // GM: Would be nice to push/pop indiviudal styles, quick n dirty for now :)
-void Velox::PushTextStyle(const Velox::TextDrawStyle& style)
+void Velox::pushTextStyle(const Velox::TextDrawStyle& style)
 {
     s_textStyleStack.push(style);
 }
 
-void Velox::PopTextStyle()
+void Velox::popTextStyle()
 {
     if (s_textStyleStack.size() == 0)
         return;
@@ -57,7 +57,7 @@ Velox::TextDrawStyle* Velox::GetUsingTextStyle()
     return &s_textStyleStack.top();
 }
 
-void Velox::GetStringContinueInfo(const char* text, Velox::TextContinueInfo* resultInfo, Velox::TextContinueInfo* startInfo)
+void Velox::getStringContinueInfo(const char* text, Velox::TextContinueInfo* resultInfo, Velox::TextContinueInfo* startInfo)
 {
     Velox::Font* usingFont = Velox::GetUsingFont();
     Velox::TextDrawStyle* usingStyle = Velox::GetUsingTextStyle();
@@ -73,7 +73,7 @@ void Velox::GetStringContinueInfo(const char* text, Velox::TextContinueInfo* res
     size_t charCount = SDL_strlen(text);
 
     // Info conintue info is given then resume advance positions.
-    // Probably not going to work well if fonts are switched between DrawText calls.
+    // Probably not going to work well if fonts are switched between drawText calls.
     if (startInfo != nullptr && charCount > 0)
     {
         x = startInfo->advanceX;
@@ -110,7 +110,7 @@ void Velox::GetStringContinueInfo(const char* text, Velox::TextContinueInfo* res
             continue;
         }
 
-        // Update advance.
+        // update advance.
 
         if (i < charCount - 1) // Last iteration.
         {
@@ -126,7 +126,7 @@ void Velox::GetStringContinueInfo(const char* text, Velox::TextContinueInfo* res
     resultInfo->advanceY = y;
 }
 
-void Velox::GetStringBounds(const char* text, Velox::Rectangle* bounds, Velox::TextContinueInfo* textContinueInfo)
+void Velox::getStringBounds(const char* text, Velox::Rectangle* bounds, Velox::TextContinueInfo* textContinueInfo)
 {
     if (bounds == nullptr)
         return;
@@ -147,7 +147,7 @@ void Velox::GetStringBounds(const char* text, Velox::Rectangle* bounds, Velox::T
     size_t charCount = SDL_strlen(text);
 
     // Info conintue info is given then resume advance positions.
-    // Probably not going to work well if fonts are switched between DrawText calls.
+    // Probably not going to work well if fonts are switched between drawText calls.
     if (textContinueInfo != nullptr && charCount > 0)
     {
         x = textContinueInfo->advanceX;
@@ -204,7 +204,7 @@ void Velox::GetStringBounds(const char* text, Velox::Rectangle* bounds, Velox::T
         if (quadMax.x > bounds->w) bounds->w = quadMax.x;
         if (quadMax.y > bounds->h) bounds->h = quadMax.y;
 
-        // Update advance.
+        // update advance.
 
         if (i < charCount - 1) // Last iteration.
         {
@@ -217,10 +217,10 @@ void Velox::GetStringBounds(const char* text, Velox::Rectangle* bounds, Velox::T
     }
 }
 
-void Velox::InitText()
+void Velox::initText()
 {
-    Velox::AssetManager* assetManager = Velox::GetAssetManager();
+    Velox::AssetManager* assetManager = Velox::getAssetManager();
 
-    g_defaultFont = assetManager->LoadFont("spicy_kebab.ttf");
+    g_defaultFont = assetManager->loadFont("spicy_kebab.ttf");
 }
 

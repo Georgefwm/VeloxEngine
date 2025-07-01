@@ -10,17 +10,17 @@ struct Arena {
     explicit Arena(size_t bytes);
     ~Arena();
 
-    void* AllocBytes(size_t bytes, size_t alignment);
+    void* allocBytes(size_t bytes, size_t alignment);
 
     template<typename T>
-    T* Alloc(size_t count)
+    T* alloc(size_t count)
     {
-        void* memory = AllocBytes(sizeof(T) * count, alignof(T));
+        void* memory = allocBytes(sizeof(T) * count, alignof(T));
         return static_cast<T*>(memory);
     }
 
-    void Reset();
-    void PrintUsage();
+    void reset();
+    void printUsage();
 };
 
 }

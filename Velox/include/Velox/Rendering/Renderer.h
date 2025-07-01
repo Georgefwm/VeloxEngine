@@ -70,12 +70,12 @@ struct TextContinueInfo {
 
 struct Texture {
     u32  id;
-    void Use();
+    void use();
 };
 
 struct ShaderProgram {
     u32  id;
-    void Use();
+    void use();
     std::string vertFilepath;
     std::string fragFilepath;
 };
@@ -92,50 +92,50 @@ struct DrawCommand {
 SDL_Window*    GetWindow();
 SDL_GLContext* GetGLContext();
 
-ivec2 GetWindowSize();
-i32 GetVsyncMode();
+ivec2 getWindowSize();
+i32 getVsyncMode();
 
-f32 GetDisplayScale();
+f32 getDisplayScale();
 
-void SetResolution(ivec2 newResolution);
-void SetVsyncMode(int newMode);
-bool IsAdaptiveVsyncSupported();
+void setResolution(ivec2 newResolution);
+void setVsyncMode(int newMode);
+bool isAdaptiveVsyncSupported();
 
-void InitRenderer();
+void initRenderer();
 
-bool ForwardSDLEventToRenderer(SDL_Event* event);
+bool forwardSDLEventToRenderer(SDL_Event* event);
 
-void DrawFrame();
+void drawFrame();
 
-void SubmitFrameData();
+void submitFrameData();
 
-void DoCopyPass();
+void doCopyPass();
 
-void DoRenderPass();
+void doRenderPass();
 
-void DeInitRenderer();
+void deInitRenderer();
 
-void DrawQuad(const mat4& transform, const mat4& uvTransform, const vec4& color,
+void drawQuad(const mat4& transform, const mat4& uvTransform, const vec4& color,
         Velox::Texture* texture = nullptr, Velox::ShaderProgram* shader = nullptr);
 
-void DrawQuad(const vec3& position, const vec2& size, const vec4& color,
+void drawQuad(const vec3& position, const vec2& size, const vec4& color,
         Velox::Texture* texture = nullptr, Velox::ShaderProgram* shader = nullptr);
 
-void DrawRotatedQuad(const vec3& position, const vec2& size, const vec4& color, 
+void drawRotatedQuad(const vec3& position, const vec2& size, const vec4& color, 
         const f32& rotation, Velox::Texture* texture = nullptr, Velox::ShaderProgram* shader = nullptr);
 
 // inRect defines uv positions in uv space (0.0f, 1.0f).
-void DrawQuadUV(const Velox::Rectangle& outRect, const Velox::Rectangle& inRect, 
+void drawQuadUV(const Velox::Rectangle& outRect, const Velox::Rectangle& inRect, 
         const vec4& color, Velox::Texture* texture = nullptr, Velox::ShaderProgram* shader = nullptr);
 
-void DrawLine(const vec3& p0, const vec3& p1, const vec4& color);
+void drawLine(const vec3& p0, const vec3& p1, const vec4& color);
 
-void DrawRect(const Velox::Rectangle& rect, const vec4& color);
-void DrawRect(const vec3& position, const vec2& size, const vec4& color);
+void drawRect(const Velox::Rectangle& rect, const vec4& color);
+void drawRect(const vec3& position, const vec2& size, const vec4& color);
 
-TextContinueInfo DrawText(const char* text, const vec3& position, TextContinueInfo* textContinueInfo = nullptr);
+TextContinueInfo drawText(const char* text, const vec3& position, TextContinueInfo* textContinueInfo = nullptr);
 
-Velox::TextContinueInfo DrawColoredText(const char* text, const vec3& position,
+Velox::TextContinueInfo drawColoredText(const char* text, const vec3& position,
         const vec4& color, Velox::TextContinueInfo* textContinueInfo = nullptr);
 
 }

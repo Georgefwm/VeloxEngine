@@ -38,26 +38,26 @@ struct Console {
     // void FuncName(std::string* response, const std::vector<std::string> args);
     //
     // Usage example:
-    // Velox::GetConsole()->RegisterCommand("mycommand", &FuncName);
+    // Velox::getConsole()->registerCommand("mycommand", &FuncName);
     //
-    void RegisterCommand(const std::string& name,
+    void registerCommand(const std::string& name,
             std::function<void(std::string&, const std::vector<std::string>&)> func);
 
-    bool ExecuteCommand(const std::string& inputLine);
+    bool executeCommand(const std::string& inputLine);
 
-    std::vector<std::string> GetSuggestions(const std::string& prefix) const;
+    std::vector<std::string> getSuggestions(const std::string& prefix) const;
 };
 
-Console* GetConsole();
+Console* getConsole();
 
-void PrintToConsole(const std::string& string);
+void printToConsole(const std::string& string);
 
-void InitConsole();
+void initConsole();
 
-void ToggleConsole();
+void toggleConsole();
 
-void DrawConsole();
+void drawConsole();
 
-int ConsoleKeyFilterCallback(ImGuiInputTextCallbackData* data);
+int consoleKeyFilterCallback(ImGuiInputTextCallbackData* data);
 
 }

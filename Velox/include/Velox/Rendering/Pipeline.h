@@ -21,7 +21,7 @@ struct Pipeline {
     u32 vbo;
     u32 ibo;
 
-    void Use(u32 ubo)
+    void use(u32 ubo)
     {
         glBindVertexArray(vao);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -29,13 +29,13 @@ struct Pipeline {
         glBindBufferBase(GL_UNIFORM_BUFFER, 0, ubo);
     }
 
-    void ClearFrameData()
+    void clearFrameData()
     {
         vertexCount = 0;
         indexCount = 0;
     }
 
-    void DeInit()
+    void deInit()
     {
         glDeleteBuffers(1, &vbo);
         glDeleteBuffers(1, &vao);
@@ -46,7 +46,7 @@ struct Pipeline {
 struct LinePipeline : Pipeline {
     Velox::LineVertex vertices[MAX_VERTICES];
 
-    void Init(u32 id)
+    void init(u32 id)
     {
         this->id = id;
 
@@ -79,7 +79,7 @@ struct LinePipeline : Pipeline {
         glBindVertexArray(0);
     }
 
-    void CopyData()
+    void copyData()
     {
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), &vertices);
@@ -92,7 +92,7 @@ struct LinePipeline : Pipeline {
 struct TexturedQuadPipeline : Pipeline {
     Velox::TextureVertex vertices[MAX_VERTICES];
 
-    void Init(u32 id)
+    void init(u32 id)
     {
         this->id = id;
 
@@ -126,7 +126,7 @@ struct TexturedQuadPipeline : Pipeline {
         glBindVertexArray(0);
     }
 
-    void CopyData()
+    void copyData()
     {
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), &vertices);
@@ -139,7 +139,7 @@ struct TexturedQuadPipeline : Pipeline {
 struct FontPipeline : Pipeline {
     Velox::FontVertex vertices[MAX_VERTICES];
 
-    void Init(u32 id)
+    void init(u32 id)
     {
         this->id = id;
 
@@ -200,7 +200,7 @@ struct FontPipeline : Pipeline {
         glBindVertexArray(0);
     }
 
-    void CopyData()
+    void copyData()
     {
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), &vertices);
@@ -209,7 +209,6 @@ struct FontPipeline : Pipeline {
         glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, sizeof(indices), &indices);
     }
 };
-
 
 }
 
