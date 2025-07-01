@@ -23,7 +23,7 @@ bool TomlToConfig(toml::table* table, Velox::Config* config)
 {
     if (table == nullptr)
     {
-        printf("ERROR: Config table is null\n");
+        LOG_ERROR("Table is null");
         return false;
     }
 
@@ -38,7 +38,7 @@ bool ConfigToToml(Velox::Config* config, toml::table* table)
 {
     if (table == nullptr)
     {
-        printf("ERROR: Config table is null\n");
+        LOG_ERROR("Table is null");
         return false;
     }
 
@@ -60,7 +60,7 @@ bool WriteToFile(const char* filepath, toml::table* table)
 {
     if (table == nullptr)
     {
-        printf("ERROR: Failed to write to file, table is nullptr\n");
+        LOG_ERROR("Failed to write to file, table is nullptr");
         return false;
     }
 
@@ -71,7 +71,7 @@ bool WriteToFile(const char* filepath, toml::table* table)
 
     if (!file.is_open())
     {
-        printf("Failed to write new default config file: %s\n", filepath);
+        LOG_WARN("Failed to write new default config file: {}", filepath);
         return false;
     }
 
@@ -145,7 +145,7 @@ void Velox::InitConfig(bool* userConfigExists)
     }
     catch (const toml::parse_error& err)
     {
-        printf("Failed to parse toml: %s\n", err.description().data());
+        LOG_WARN("Failed to parse toml: {}", err.description().data()); 
         return;
     }
 

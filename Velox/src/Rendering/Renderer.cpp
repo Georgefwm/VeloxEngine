@@ -82,7 +82,7 @@ void CheckGLError()
 {
     GLenum err;
     while ((err = glGetError()) != GL_NO_ERROR)
-        printf("OpenGL error: 0x%x\n", err);
+        LOG_ERROR("OpenGL Error: err", err);
 }
 
 void Velox::ShaderProgram::Use() { glUseProgram(id); }
@@ -127,7 +127,7 @@ void Velox::SetVsyncMode(int newMode)
 {
     if (!s_adaptiveVsyncSupported && newMode == -1)
     {
-        printf("Adaptive vsync is not supported on this machine, falling back to: On\n");
+        LOG_WARN("Adaptive vsync is not supported on this machine, falling back to 'On'");
         s_vsyncMode = 1;
     }
     else
@@ -155,8 +155,8 @@ void Velox::InitRenderer()
 
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD))
     {
-        printf("Error: SDL_Init(): %s\n", SDL_GetError());
-        throw std::runtime_error("Failed to init SDL");
+        LOG_CRITICAL("Failed to initialise SDL: {}", SDL_GetError());
+        throw std::runtime_error("");
     }
 
     const char* glsl_version = "#version 460";
@@ -175,16 +175,17 @@ void Velox::InitRenderer()
     g_window = SDL_CreateWindow("GLProject", s_windowSize.x, s_windowSize.y, windowFlags);
     if (g_window == nullptr)
     {
-        printf("Error: SDL_CreateWindow(): %s\n", SDL_GetError());
-        throw std::runtime_error("Failed to create SDL window");
+        LOG_CRITICAL("Failed to create window: {}", SDL_GetError());
+        throw std::runtime_error("");
     }
 
     g_glContext = SDL_GL_CreateContext(g_window);
     if (g_window == nullptr)
     {
-        printf("Error: SDL_GL_CreateContext(): %s\n", SDL_GetError());
-        throw std::runtime_error("Failed to create GL context");
+        LOG_CRITICAL("Failed to create GL context: {}", SDL_GetError());
+        throw std::runtime_error("");
     }
+
     SDL_GL_MakeCurrent(g_window, g_glContext);
 
     SetVsyncMode(s_vsyncMode);
@@ -193,10 +194,8 @@ void Velox::InitRenderer()
     SDL_ShowWindow(g_window);
 
     int version = gladLoadGL((GLADloadfunc) SDL_GL_GetProcAddress);
-    printf("GL %d.%d\n", GLAD_VERSION_MAJOR(version), GLAD_VERSION_MINOR(version));
-
-    const char* versionStr = (const char*)glGetString(GL_VERSION);
-    printf("OpenGL Version: %s\n", versionStr);
+    LOG_TRACE("Using GL Version {}", (const char*)glGetString(GL_VERSION));
+    LOG_TRACE("GLAD loaded fns for version {}.{}", GLAD_VERSION_MAJOR(version), GLAD_VERSION_MINOR(version));
 
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glViewport(0, 0, s_windowSize.x, s_windowSize.y);
@@ -421,7 +420,7 @@ void Velox::DrawQuad(const mat4& transform, const mat4& uvTransform, const vec4&
 
     if (startIndexOffset + 6 > MAX_INDICES)
     {
-        printf("WARNING: TexturedQuadPipeline is full\n");
+        LOG_WARN("TexturedQuadPipeline is full, ignoring");
         return;
     }
 
@@ -508,7 +507,7 @@ void Velox::DrawLine(const vec3& p0, const vec3& p1, const vec4& color)
 
     if (startIndexOffset + 6 > MAX_INDICES)
     {
-        printf("WARNING: TexturedQuadPipeline is full\n");
+        LOG_WARN("TexturedQuadPipeline is full, ignoring");
         return;
     }
 
@@ -594,9 +593,16 @@ Velox::TextContinueInfo Velox::DrawText(const char* text, const vec3& position,
         const msdf_atlas::GlyphGeometry* glyph = fontGeometry.getGlyph(character);
         
         if (glyph == nullptr)
+        {
+            LOG_WARN("Couldn't find glyph for '{}', falling back to '?'", character);
             glyph = fontGeometry.getGlyph('?'); // fallback char
+        }
+        
         if (glyph == nullptr)
-            printf("WARNING: Font is fucked m8\n");
+        {
+            LOG_ERROR("Couldn't find fallback glyph");
+            continue;
+        }
 
         if (character == '\n')
         {

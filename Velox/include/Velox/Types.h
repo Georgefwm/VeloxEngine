@@ -12,8 +12,6 @@ typedef glm::vec3 vec3;
 typedef glm::vec4 vec4;
 typedef glm::mat4 mat4;
 
-typedef bool     b8;
-typedef char     c8;
 typedef int8_t   i8;
 typedef uint8_t  u8;
 typedef int16_t  i16;

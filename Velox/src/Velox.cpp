@@ -26,17 +26,20 @@ SDL_Time TimeStamp(std::string label, SDL_Time& startTime)
     SDL_GetCurrentTime(&time);
 
     time = SDL_NS_TO_MS(time - startTime);
-    fmt::println(fmt::format("{}: {}ms", label, std::to_string(time)));
+    LOG_INFO("{}: {}ms", label, std::to_string(time));
 
     return time;   
 }
 
 void Velox::Init()
 {
+    Velox::InitLog();
+    LOG_TRACE("Initialising engine...");
+
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS))
     {
-        printf("Error: SDL_Init(): %s\n", SDL_GetError());
-        return;
+        LOG_CRITICAL("Failed to initialise SDL: {}", SDL_GetError());
+        throw std::runtime_error("");
     }
 
     SDL_Time initStartTime;
@@ -87,6 +90,7 @@ void Velox::Init()
             std::to_string(SDL_NS_TO_MS(initEndTime - initStartTime)));
 
     Velox::PrintToConsole(initTimeString);
+    LOG_TRACE(initTimeString);
 }
 
 Velox::EngineState* Velox::GetEngineState()

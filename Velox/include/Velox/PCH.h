@@ -22,3 +22,8 @@
 #include <Types.h>
 
 #define MS_PER_SECOND 1000
+
+// logging
+#include <spdlog/spdlog.h>
+#include <Log.h>
+

@@ -188,7 +188,7 @@ void SaveSettings()
 
 void ApplySettings()
 {
-    printf("I do nothing atm\n");
+    LOG_INFO("I do nothing atm");
 }
 
 void Velox::DrawSettings() {
@@ -199,7 +199,7 @@ void Velox::DrawSettings() {
             SDL_GetFullscreenDisplayModes(SDL_GetDisplayForWindow(Velox::GetWindow()), &displayModeCount);
 
         if (displayModes == nullptr)
-            printf("ERROR: No display modes? %s\n", SDL_GetError());
+            LOG_ERROR("No display modes found");
 
         ivec2 currentWindowSize = Velox::GetWindowSize();
 

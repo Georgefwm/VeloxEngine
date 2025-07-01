@@ -40,9 +40,8 @@ Velox::Texture* Velox::AssetManager::LoadTexture(const char* filepath)
     SDL_Surface* surface = IMG_Load(absolutePath);
     if (surface == nullptr)
     {
-        printf("Error: Failed to load image from path: %s\n", absolutePath);
-        printf("Error: %s\n", SDL_GetError());
-        throw std::runtime_error("Failed to load image from disk");
+        LOG_ERROR("Failed to load image '{}': {}", filepath, SDL_GetError());
+        return nullptr;
     }
 
     if (surface->format != SDL_PIXELFORMAT_ABGR8888)
@@ -52,11 +51,9 @@ Velox::Texture* Velox::AssetManager::LoadTexture(const char* filepath)
 
         if (convertedSurface == nullptr)
         {
-            printf("Error: Loaded image has wrong pixel format and couldn't convert. \
-                    Expected \"SDL_PIXELFORMAT_ABGR888*\", \
-                found: \"%s\"\n", SDL_GetPixelFormatName(surface->format));
-
-            throw std::runtime_error("Loaded image has wrong pixel format.");
+            LOG_ERROR("Image '{}' has wrong pixel format and couldn't convert to ABGR8888",
+                    SDL_GetPixelFormatName(surface->format));
+            return nullptr;
         }
 
         SDL_DestroySurface(surface);
@@ -94,7 +91,7 @@ Velox::Texture* Velox::AssetManager::GetTexture(const char* filepath)
             return &pair.second;
     }
 
-    printf("WARNING: Texture \'%s\' is not loaded\n", filepath);
+    LOG_WARN("Texture '{}' is not loaded", filepath);
     return nullptr;
 }
 
@@ -109,8 +106,8 @@ char* LoadShaderFile(const char* filepath, size_t* byteSize, Velox::Arena* alloc
     std::ifstream file(absolutePath, std::ios::ate | std::ios::binary);
     if (!file.is_open())
     {
-        printf("No file found at \'%s\'\n", absolutePath);
-        throw std::runtime_error("failed to open file");
+        LOG_ERROR("File not found: '{}'", absolutePath);
+        return nullptr;
     }
 
     size_t fileSize = (size_t)file.tellg();
@@ -140,7 +137,8 @@ u32 CompileShader(char* shaderCode, int shaderStage, Velox::Arena* allocator)
     if(!result)
     {
         glGetShaderInfoLog(shader, 512, NULL, logData);
-        printf("Shader failed to compile: %s\n", logData);
+        LOG_ERROR("Failed to compile shader: {}", logData);
+
         glDeleteShader(shader); // don't keep a bad shader
         return 0;
     };
@@ -164,11 +162,20 @@ Velox::ShaderProgram* Velox::AssetManager::LoadShaderProgram(
     char* vertCode = LoadShaderFile(vertFilepath, &vertCodeSize, &tempData);
     char* fragCode = LoadShaderFile(fragFilepath, &fragCodeSize, &tempData);
 
+    if (vertCode == nullptr || fragCode == nullptr)
+    {
+        LOG_WARN("Aborting shader load: '{}'", name);
+        return nullptr;
+    }
+
     u32 vertShader = CompileShader(vertCode, GL_VERTEX_SHADER,   &tempData);
     u32 fragShader = CompileShader(fragCode, GL_FRAGMENT_SHADER, &tempData);
 
     if (vertShader == 0 || fragShader == 0)
-        throw std::runtime_error("Failed to compile shader");
+    {
+        LOG_WARN("Aborting shader load: '{}'", name);
+        return nullptr;
+    }
 
     u32 id = glCreateProgram();
     glAttachShader(id, vertShader);
@@ -183,7 +190,8 @@ Velox::ShaderProgram* Velox::AssetManager::LoadShaderProgram(
     if(!result)
     {
         glGetProgramInfoLog(id, 512, NULL, logData);
-        printf("Shader failed to create shader module: %s\n", logData);
+        LOG_ERROR("Failed to create shader module: {}", logData);
+        return nullptr;
     }
       
     // delete the shaders as they're linked into our program now and no longer necessary
@@ -213,7 +221,7 @@ Velox::ShaderProgram* Velox::AssetManager::GetShaderProgram(const char* name)
             return &pair.second;
     }
 
-    printf("WARNING: Shader program \'%s\' is not loaded\n", name);
+    LOG_WARN("Shader program '{}' is not loaded", name);
     return nullptr;
 }
 
@@ -222,11 +230,9 @@ Velox::ShaderProgram* Velox::AssetManager::ReloadShaderProgram(const char* name)
     Velox::ShaderProgram* current = g_assetManager.GetShaderProgram(name);
     if (current == nullptr)
     {
-        fmt::println("Nothing to reload, Shader is not registered");
+        LOG_WARN("Nothing to reload, Shader '{}' is not registered", name);
         return nullptr;
     }
-
-    glDeleteProgram(current->id);
 
     Velox::Arena tempData(100000);
 
@@ -235,11 +241,23 @@ Velox::ShaderProgram* Velox::AssetManager::ReloadShaderProgram(const char* name)
     char* vertCode = LoadShaderFile(current->vertFilepath.c_str(), &vertCodeSize, &tempData);
     char* fragCode = LoadShaderFile(current->fragFilepath.c_str(), &fragCodeSize, &tempData);
 
+    if (vertCode == nullptr || fragCode == nullptr)
+    {
+        LOG_WARN("Aborting shader load: '{}'", name);
+        return current;
+    }
+
     u32 vertShader = CompileShader(vertCode, GL_VERTEX_SHADER,   &tempData);
     u32 fragShader = CompileShader(fragCode, GL_FRAGMENT_SHADER, &tempData);
 
     if (vertShader == 0 || fragShader == 0)
-        throw std::runtime_error("Failed to compile shader");
+    {
+        LOG_WARN("Aborting shader reload for '{}'", name);
+        return current;
+    }
+
+    // Delete now that we know that we can replace with a working shader.
+    glDeleteProgram(current->id);
 
     u32 id = glCreateProgram();
     glAttachShader(id, vertShader);
@@ -254,7 +272,8 @@ Velox::ShaderProgram* Velox::AssetManager::ReloadShaderProgram(const char* name)
     if(!result)
     {
         glGetProgramInfoLog(id, 512, NULL, logData);
-        printf("Shader failed to create shader module: %s\n", logData);
+        LOG_ERROR("Failed to create shader module: {}", logData);
+        return nullptr;
     }
       
     // delete the shaders as they're linked into our program now and no longer necessary
@@ -299,7 +318,10 @@ Velox::Font* Velox::AssetManager::LoadFont(const char* filepath)
 
     msdfgen::FontHandle* ftFontHandle = msdfgen::loadFont(g_freetype, absolutePath);
     if (ftFontHandle == nullptr)
-        throw std::runtime_error("Failed to load font");
+    {
+        LOG_ERROR("Failed to load font '{}'", filepath);
+        return nullptr;
+    }
 
     // Storage for glyph geometry and their coordinates in the atlas
     font.glyphs = std::vector<msdf_atlas::GlyphGeometry>();
@@ -367,9 +389,8 @@ Velox::Font* Velox::AssetManager::LoadFont(const char* filepath)
         SDL_CreateSurfaceFrom(bitmap.width, bitmap.height, SDL_PIXELFORMAT_RGBA8888, (void*)bitmap.pixels, bitmap.width * 4);
     if (surface == nullptr)
     {
-        printf("Error: Failed to generate font atlas surface\n");
-        printf("Error: %s\n", SDL_GetError());
-        throw std::runtime_error("Failed to generate surface from font atlas");
+        LOG_ERROR("Failed to generate font atlas surface");
+        return nullptr;
     }
 #endif
 
@@ -423,7 +444,7 @@ Velox::Font* Velox::AssetManager::GetFontRef(const char* filepath)
             return &pair.second;
     }
 
-    printf("WARNING: Font \'%s\' is not loaded\n", filepath);
+    LOG_WARN("Font '{}' is not loaded", filepath);
     return nullptr;
 }
 
@@ -445,7 +466,10 @@ void Velox::InitAssets()
 {
     g_freetype = msdfgen::initializeFreetype();
     if (g_freetype == nullptr)
-        throw std::runtime_error("Failed to initialise freetype");
+    {
+        LOG_CRITICAL("Failed to initialise Freetype");
+        throw std::runtime_error("");
+    }
 }
 
 void Velox::DeInitAssets()

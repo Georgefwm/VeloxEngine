@@ -32,7 +32,7 @@ void Velox::Console::RegisterCommand(const std::string& name,
 
     if (collisionFound)
     {
-        printf("Command \"%s\" is already registered, skipping\n", name.c_str());
+        LOG_WARN("Command '{}' is already registered, ignoring", name);
         return;
     }
 

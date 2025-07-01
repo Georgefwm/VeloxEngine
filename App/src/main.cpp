@@ -93,7 +93,6 @@ void DoRenderingStuff()
 
     Velox::DrawLine(vec3(100.0f, 615.0f, 0.0f), vec3(900.0f, 615.0f, 0.0f), COLOR_RED);
 
-
     float startHeight = 620.0f;
     editorStyle.textSize = 20.0f;
     for (int i = 0; i < 10; i++)
@@ -122,9 +121,6 @@ void run()
     e->flags |= Velox::EntityFlags::Visible;
 
     g_font = Velox::GetAssetManager()->LoadFont("martius.ttf");
-
-    if (g_font == nullptr)
-        printf("font is null\n");
 
     g_fontShaderId = 0;
 

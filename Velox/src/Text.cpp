@@ -15,10 +15,7 @@ void Velox::PushFont(const char* fontName)
 {
     Velox::Font* requestedFont = Velox::GetAssetManager()->GetFontRef(fontName);
     if (requestedFont == nullptr)
-    {
-        printf("Font requested has not been loaded, please load it first\n");
         return;
-    }
 
     s_fontStack.push(requestedFont);
 }
@@ -95,9 +92,16 @@ void Velox::GetStringContinueInfo(const char* text, Velox::TextContinueInfo* res
         const msdf_atlas::GlyphGeometry* glyph = fontGeometry.getGlyph(character);
         
         if (glyph == nullptr)
+        {
+            LOG_WARN("Couldn't find glyph for '{}', falling back to '?'", character);
             glyph = fontGeometry.getGlyph('?'); // fallback char
+        }
+        
         if (glyph == nullptr)
-            printf("WARNING: Font is fucked m8\n");
+        {
+            LOG_ERROR("Couldn't find fallback glyph");
+            continue;
+        }
 
         if (character == '\n')
         {
@@ -162,9 +166,16 @@ void Velox::GetStringBounds(const char* text, Velox::Rectangle* bounds, Velox::T
         const msdf_atlas::GlyphGeometry* glyph = fontGeometry.getGlyph(character);
         
         if (glyph == nullptr)
+        {
+            LOG_WARN("Couldn't find glyph for '{}', falling back to '?'", character);
             glyph = fontGeometry.getGlyph('?'); // fallback char
+        }
+        
         if (glyph == nullptr)
-            printf("WARNING: Font is fucked m8\n");
+        {
+            LOG_ERROR("Couldn't find fallback glyph");
+            continue;
+        }
 
         if (character == '\n')
         {
