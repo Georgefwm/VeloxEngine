@@ -91,6 +91,13 @@ void Velox::GetStringContinueInfo(const char* text, Velox::TextContinueInfo* res
 
         const msdf_atlas::GlyphGeometry* glyph = fontGeometry.getGlyph(character);
         
+        if (character == '\n')
+        {
+            x = 0;
+            y -= fontScale * metrics.lineHeight + usingStyle->lineSpacing;
+            continue;
+        }
+
         if (glyph == nullptr)
         {
             LOG_WARN("Couldn't find glyph for '{}', falling back to '?'", character);
@@ -100,13 +107,6 @@ void Velox::GetStringContinueInfo(const char* text, Velox::TextContinueInfo* res
         if (glyph == nullptr)
         {
             LOG_ERROR("Couldn't find fallback glyph");
-            continue;
-        }
-
-        if (character == '\n')
-        {
-            x = 0;
-            y -= fontScale * metrics.lineHeight + usingStyle->lineSpacing;
             continue;
         }
 
@@ -165,6 +165,13 @@ void Velox::GetStringBounds(const char* text, Velox::Rectangle* bounds, Velox::T
 
         const msdf_atlas::GlyphGeometry* glyph = fontGeometry.getGlyph(character);
         
+        if (character == '\n')
+        {
+            x = 0;
+            y -= fontScale * metrics.lineHeight + usingStyle->lineSpacing;
+            continue;
+        }
+
         if (glyph == nullptr)
         {
             LOG_WARN("Couldn't find glyph for '{}', falling back to '?'", character);
@@ -174,13 +181,6 @@ void Velox::GetStringBounds(const char* text, Velox::Rectangle* bounds, Velox::T
         if (glyph == nullptr)
         {
             LOG_ERROR("Couldn't find fallback glyph");
-            continue;
-        }
-
-        if (character == '\n')
-        {
-            x = 0;
-            y -= fontScale * metrics.lineHeight * usingStyle->lineSpacing;
             continue;
         }
 

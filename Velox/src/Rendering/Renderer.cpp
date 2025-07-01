@@ -592,6 +592,13 @@ Velox::TextContinueInfo Velox::DrawText(const char* text, const vec3& position,
 
         const msdf_atlas::GlyphGeometry* glyph = fontGeometry.getGlyph(character);
         
+        if (character == '\n')
+        {
+            x = 0;
+            y -= fontScale * metrics.lineHeight * usingStyle->lineSpacing;
+            continue;
+        }
+
         if (glyph == nullptr)
         {
             LOG_WARN("Couldn't find glyph for '{}', falling back to '?'", character);
@@ -601,13 +608,6 @@ Velox::TextContinueInfo Velox::DrawText(const char* text, const vec3& position,
         if (glyph == nullptr)
         {
             LOG_ERROR("Couldn't find fallback glyph");
-            continue;
-        }
-
-        if (character == '\n')
-        {
-            x = 0;
-            y -= fontScale * metrics.lineHeight * usingStyle->lineSpacing;
             continue;
         }
 
