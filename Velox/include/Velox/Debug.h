@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Velox.h"
+
 namespace Velox {
 
 struct TextDrawStyle;
@@ -10,7 +12,7 @@ void drawMemoryUsageStats();
 
 void drawSettings();
 
-void textStyleEditor(Velox::TextDrawStyle* style, bool useCurrentAsBase = false);
+VELOX_API void textStyleEditor(Velox::TextDrawStyle* style, bool useCurrentAsBase = false);
 
 void updateFrameHistory();
 

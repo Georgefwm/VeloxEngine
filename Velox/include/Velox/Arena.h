@@ -1,8 +1,10 @@
 #pragma once
 
+#include "Velox.h"
+
 namespace Velox {
 
-struct Arena {
+struct VELOX_API Arena {
     size_t size;
     size_t offset;
     char*  buffer;

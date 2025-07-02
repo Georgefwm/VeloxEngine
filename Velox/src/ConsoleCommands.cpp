@@ -3,7 +3,7 @@
 
 #include "Asset.h"
 #include "Console.h"
-#include "Velox.h"
+#include "Core.h"
 #include <sstream>
 
 void Velox::registerDefaultCommands()

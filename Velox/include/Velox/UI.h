@@ -1,6 +1,9 @@
 #pragma once
 
+#include "Velox.h"
+
 namespace Velox { struct Event; }
+
 struct ImDrawData;
 
 namespace Velox {

@@ -1,9 +1,11 @@
 #pragma once
 
+#include "Velox.h"
+
 namespace Velox {
 
 template<typename T>
-struct Pool {
+struct VELOX_API Pool {
     struct FreeNode {
         FreeNode* next;
     };

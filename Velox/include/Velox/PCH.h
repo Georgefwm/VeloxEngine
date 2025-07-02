@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Velox.h"
+
 // std libs
 #include <vector>
 #include <unordered_map>

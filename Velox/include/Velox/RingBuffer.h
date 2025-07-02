@@ -1,9 +1,11 @@
 #pragma once
 
+#include "Velox.h"
+
 namespace Velox {
 
 template<typename T>
-struct RingBuffer {
+struct VELOX_API RingBuffer {
     std::vector<T> buffer;
     size_t head = 0;
 

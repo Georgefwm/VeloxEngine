@@ -1,15 +1,17 @@
 #pragma once
 
+#include "Velox.h"
+
 #include <functional>
 
 namespace Velox {
 
-f64 getDeltaTime();
+VELOX_API f64 getDeltaTime();
 
-void calculateDeltaTime();
+VELOX_API void calculateDeltaTime();
 
 // Takes a function like "void update(double& dt)"
-void updateGame(std::function<void(double&)> updateCallback);
+VELOX_API void updateGame(std::function<void(double&)> updateCallback);
 
 void initTimer();
 

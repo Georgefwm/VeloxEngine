@@ -14,7 +14,11 @@ file(GLOB_RECURSE VELOX_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/include/Velox/*/*/*.h
 )
 
-add_library(Velox STATIC ${VELOX_SOURCES} ${VELOX_HEADERS})
+if(BUILD_SHARED_LIBS)
+    add_library(Velox SHARED ${VELOX_SOURCES} ${VELOX_HEADERS})
+else()
+    add_library(Velox STATIC ${VELOX_SOURCES} ${VELOX_HEADERS})
+endif()
 
 target_include_directories(
     Velox
@@ -48,4 +52,9 @@ target_link_libraries(Velox PUBLIC
 )
 
 target_link_libraries(Velox PRIVATE OpenGL::GL)
+
+if (BUILD_SHARED_LIBS)
+    message("Building velox as shared lib")
+    target_compile_definitions(Velox PRIVATE VELOX_DLL VELOX_BUILD_DLL)
+endif()
 

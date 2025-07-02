@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Velox.h"
+
 #include "Rendering/Renderer.h"
 #include <unordered_map>
 
@@ -19,7 +21,7 @@ enum AssetState {
 //     size_t sizeBytes = 0;
 // };
 
-struct Font {
+struct VELOX_API Font {
     char* name;
     std::vector<msdf_atlas::GlyphGeometry> glyphs;
     msdf_atlas::FontGeometry fontGeometry;
@@ -27,7 +29,7 @@ struct Font {
     Velox::Texture* texture;
 };
 
-struct AssetManager {
+struct VELOX_API AssetManager {
     // Textures are stored in the renderer
     std::unordered_map<const char*, Velox::Texture> textureMap = {};
     std::unordered_map<const char*, Velox::ShaderProgram> shaderProgramMap = {};
@@ -46,12 +48,12 @@ struct AssetManager {
     void deInit();
 };
 
-AssetManager* getAssetManager();
+VELOX_API AssetManager* getAssetManager();
 
 void initAssets();
 
 void deInitAssets();
 
-void getAssetMemoryUsage(size_t* used, size_t* capacity);
+VELOX_API void getAssetMemoryUsage(size_t* used, size_t* capacity);
 
 }

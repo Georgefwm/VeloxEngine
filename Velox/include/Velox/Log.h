@@ -1,12 +1,12 @@
 #pragma once
 
-#include <spdlog/spdlog.h>
+#include "Velox.h"
 
 namespace Velox {
 
 void initLog();
 
-spdlog::logger* getLogger();
+VELOX_API spdlog::logger* getLogger();
 
 }
 

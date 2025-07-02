@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Velox.h"
+
 #include <functional>
 #include <string>
 #include <unordered_map>
@@ -48,13 +50,13 @@ struct Console {
     std::vector<std::string> getSuggestions(const std::string& prefix) const;
 };
 
-Console* getConsole();
+VELOX_API Console* getConsole();
 
-void printToConsole(const std::string& string);
+VELOX_API void printToConsole(const std::string& string);
 
 void initConsole();
 
-void toggleConsole();
+VELOX_API void toggleConsole();
 
 void drawConsole();
 

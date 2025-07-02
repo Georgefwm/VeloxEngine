@@ -1,16 +1,18 @@
 #pragma once
 
+#include "Velox.h"
+
 namespace Velox {
 
-struct Config {
+struct VELOX_API Config {
     int windowWidth = 1920;
     int windowHeight = 1080;
     int vsyncMode = 1;
 };
 
-Config* getConfig();
+VELOX_API Config* getConfig();
 
-void saveUserConfig();
+VELOX_API void saveUserConfig();
 
 void initConfig(bool* userConfigExists);
 

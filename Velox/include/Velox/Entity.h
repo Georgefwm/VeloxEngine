@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Velox.h"
+
 #include <utility>  // pair
 
 constexpr size_t MAX_ENTITIES = 1024;
@@ -15,7 +17,7 @@ enum EntityFlags : uint32_t {
     Static  = 1 << 1,
 };
 
-struct EntityHandle {
+struct VELOX_API EntityHandle {
     uint32_t index;
     uint32_t generation;
 
@@ -26,7 +28,7 @@ struct EntityHandle {
 };
 
 void InitEntitySystem();
-Velox::EntityManager* GetEntityManager();
+VELOX_API Velox::EntityManager* GetEntityManager();
 
 // GM: Not entirely sure how to expose this to the user without adding bunch of complexity.
 // The general idea is that I want to have this be sub-classed to only one level deep so
@@ -34,7 +36,7 @@ Velox::EntityManager* GetEntityManager();
 //
 // Maybe for now we just use a 'megastruct' where all data is just contained in the Entity struct.
 // We can figure out extenting this in the API later.
-struct Entity {
+struct VELOX_API Entity {
     // Core
     uint32_t flags = None;
 
@@ -63,7 +65,7 @@ struct Entity {
 // Could store entites in arrays that are sorted is dfs or bfs ordering for fast tree traversal. 
 //  - e.g. Insert child entities after parents(in memory) for dfs, not sure what this is called. Flat tree?
 // Multiple arrays for different ordering, i.e. draw order, tree order, etc.
-struct EntityManager {
+struct VELOX_API EntityManager {
     // GM: Will probably need to use custom allocator for this when entity data gets big enough.
     Entity entities[MAX_ENTITIES];
     uint32_t generations[MAX_ENTITIES];
@@ -90,8 +92,8 @@ struct EntityManager {
     EntityIterable iter();
 };
 
-struct EntityManager::EntityIterable {
-    struct Iterator {
+struct VELOX_API EntityManager::EntityIterable {
+    struct VELOX_API Iterator {
         EntityManager* manager;
         uint32_t index;
 
@@ -111,7 +113,6 @@ struct EntityManager::EntityIterable {
     Iterator begin();
     Iterator end();
 };
-
 
 }
 

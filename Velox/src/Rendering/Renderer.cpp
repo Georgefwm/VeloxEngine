@@ -5,7 +5,7 @@
 #include "Config.h"
 #include "Rendering/Pipeline.h"
 #include "Text.h"
-#include "Velox.h"
+#include "Core.h"
 
 #include <glad/gl.h> // Must be included before SDL
 #include <SDL3/SDL_filesystem.h>

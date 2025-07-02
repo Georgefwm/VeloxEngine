@@ -1,12 +1,11 @@
+#include "Core.h"
 #include "Asset.h"
 #include "Debug.h"
 #include "Event.h"
-
 #include "Rendering/Renderer.h"
 #include "Text.h"
 #include "Timing.h"
 #include "Types.h"
-#include "Velox.h"
 #include "Entity.h"
 
 #include <imgui.h>
@@ -91,6 +90,7 @@ void doRenderingStuff()
     Velox::pushTextStyle(editorStyle);
 
     Velox::pushFont("martius.ttf");
+    
     Velox::drawText("<- MSDF Texture", vec3(1000.0f, 500.0f, 0.0f));
     Velox::popFont();
     Velox::drawText("text in another font", vec3(1000.0f, 400.0f, 0.0f));

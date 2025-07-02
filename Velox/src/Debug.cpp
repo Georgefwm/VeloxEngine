@@ -9,7 +9,7 @@
 #include "Text.h"
 #include "Timing.h"
 #include "Util.h"
-#include "Velox.h"
+#include "Core.h"
 #include "imgui.h"
 
 constexpr size_t FRAME_HISTORY_COUNT = 1000;

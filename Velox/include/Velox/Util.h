@@ -1,13 +1,14 @@
 #pragma once
 
-#include <Types.h>
+#include "Velox.h"
+
 #include <imgui.h>
 
 namespace Velox {
 
 // Converts pixel coords to normalised shader coords (-1...1).
 // Currently ignores z value because we aren't using it yet.
-vec3 toShaderCoords(vec3 vector, bool flipY);
+VELOX_API vec3 toShaderCoords(vec3 vector, bool flipY);
 
 inline ImVec4 toImVec4(const glm::vec4& vec) { return ImVec4(vec.x, vec.y, vec.z, vec.w); }
 // No ImVec3
