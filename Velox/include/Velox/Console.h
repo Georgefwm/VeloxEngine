@@ -19,9 +19,9 @@ struct ConsoleRecord {
 };
 
 struct Console {
-    float maxHeight            = 400.0;
-    float currentHeight        = 0.0;
-    float openSpeed            = 3000.0;
+    float maxHeightPercent     = 0.4f;
+    float currentHeight        = 0.0f;
+    float openSpeed            = 5000.0f;
     bool  shouldBeOpen         = false;
     bool  shouldScrollToBottom = false; // Currently goes to top.
 

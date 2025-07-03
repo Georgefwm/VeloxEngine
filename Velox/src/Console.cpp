@@ -96,12 +96,13 @@ void Velox::drawConsole()
         return;
 
     float deltaHeight = g_console.openSpeed * (float)Velox::getDeltaTime();
-
     // Should console be opening or closing.
     deltaHeight *= g_console.shouldBeOpen * 2 - 1;
 
+    float maxHeightPixels = g_console.maxHeightPercent * Velox::getWindowSize().y;
+
     // Clamp to stop moving further than we want.
-    g_console.currentHeight = glm::clamp(g_console.currentHeight + deltaHeight, 0.0f, g_console.maxHeight);
+    g_console.currentHeight = glm::clamp(g_console.currentHeight + deltaHeight, 0.0f, maxHeightPixels);
 
     ImGuiWindowFlags flags = 0;
     flags |= ImGuiWindowFlags_NoNav;
@@ -112,8 +113,8 @@ void Velox::drawConsole()
     inputTextFlags |= ImGuiInputTextFlags_CallbackCharFilter; 
 
     // Don't change size of window, just position; To avoid resizing elements.
-    ImGui::SetNextWindowPos(ImVec2(0, 0 - g_console.maxHeight + g_console.currentHeight), ImGuiCond_Always);
-    ImGui::SetNextWindowSize(ImVec2(Velox::getWindowSize().x, g_console.maxHeight),   ImGuiCond_Always);
+    ImGui::SetNextWindowPos(ImVec2(0, 0 - maxHeightPixels + g_console.currentHeight), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2(Velox::getWindowSize().x, maxHeightPixels),   ImGuiCond_Always);
 
     int varSpacing = 100;
 
