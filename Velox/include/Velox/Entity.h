@@ -47,10 +47,12 @@ struct VELOX_API Entity {
     EntityHandle parent = {};
 
     // Transform
+    // Usually you want to write these.
     vec3  position = vec3(0.0f);
     float rotation = 0;
     vec2  scale    = vec4(10.0f);
 
+    // Usually you only want to read these.
     vec3  absolutePosition = vec3(0.0f);
     float absoluteRotation = 0;
     vec2  absoluteScale    = vec4(10.0f);

@@ -355,45 +355,60 @@ void Velox::drawSettings() {
     ImGui::End();
 }
 
-void addEntityInfo(const Velox::EntityNode& node)
+void addEntityInfo(const Velox::EntityNode& node, bool topLevel = false)
 {
     Velox::EntityManager* entityManager = Velox::getEntityManager();
 
-    //ImGui::SetNextItemOpen(!node.children.empty());
+    bool hasChildren = !node.children.empty();
 
-    if (ImGui::TreeNode(fmt::format("Entity - {}", node.id.index).c_str()))
+    if (ImGui::TreeNode(fmt::format("Entity - ID: {}", node.id.index).c_str()))
     {
         Velox::Entity* entity = entityManager->getMut(node.id);
 
-        if (ImGui::TreeNode("Relative Position"))
+        // Show absolute for top level entities (no parent) and relative for children.
+        if (topLevel)
         {
-            ImGui::Text("%s", fmt::format("x: {}", entity->position.x).c_str());
-            ImGui::Text("%s", fmt::format("y: {}", entity->position.y).c_str());
-            ImGui::Text("%s", fmt::format("z: {}", entity->position.z).c_str());
-            
-            ImGui::TreePop();
+            if (ImGui::TreeNode("Relative Transform"))
+            {
+                ImGui::InputFloat3("Position", (float*)&entity->position);
+                ImGui::InputFloat("Rotation", (float*)&entity->rotation);
+                ImGui::InputFloat2("Scale", (float*)&entity->scale);
+                ImGui::TreePop();
+            }
+        }
+        else
+        {
+            if (ImGui::TreeNode("Absolute Position"))
+            {
+                ImGui::InputFloat3("Position", (float*)&entity->position);
+                ImGui::InputFloat("Rotation", (float*)&entity->rotation);
+                ImGui::InputFloat2("Scale", (float*)&entity->scale);
+                ImGui::TreePop();
+            }
         }
 
-        if (ImGui::TreeNode("Absolute Position"))
+        if (ImGui::TreeNode("Rendering"))
         {
-            ImGui::Text("%s", fmt::format("x: {}", entity->absolutePosition.x).c_str());
-            ImGui::Text("%s", fmt::format("y: {}", entity->absolutePosition.y).c_str());
-            ImGui::Text("%s", fmt::format("z: {}", entity->absolutePosition.z).c_str());
-            
+            bool visibleState = entity->hasFlag(Velox::EntityFlags::Visible);
+            if (ImGui::Checkbox("Visible", &visibleState))
+                entity->setFlag(Velox::EntityFlags::Visible, visibleState);
+
+            ImGui::Checkbox("Center Draw", &entity->drawFromCenter);
+
+            ImGui::ColorEdit4("Tint", (float*)&entity->colorOverride);
             ImGui::TreePop();
         }
 
         ImGui::Separator();
-
-        ImGui::Text("Children");
-        for (const Velox::EntityNode& child : node.children)
+        if (hasChildren)
         {
-            addEntityInfo(child);
+            ImGui::Text("Children");
+            for (const Velox::EntityNode& child : node.children)
+                addEntityInfo(child);
         }
 
         ImGui::TreePop();
-    }
-    
+    }    
 }
 
 void Velox::drawEntityHierarchyInfo()
@@ -424,7 +439,7 @@ void Velox::drawEntityHierarchyInfo()
     ImGui::Separator();
 
     for (Velox::EntityNode& node : entityManager->treeView.root.children)
-        addEntityInfo(node);
+        addEntityInfo(node, true);
     
     
     ImGui::End();
