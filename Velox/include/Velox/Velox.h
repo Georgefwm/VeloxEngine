@@ -1,5 +1,8 @@
 #pragma once
 
+// For vector rotation.
+#define GLM_ENABLE_EXPERIMENTAL 
+
 // Use this line for building as shared lib.
 // The plan is to use static build for release and shared for debug builds.
 // -GM

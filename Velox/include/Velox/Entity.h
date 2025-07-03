@@ -18,52 +18,85 @@ enum EntityFlags : uint32_t {
 };
 
 struct VELOX_API EntityHandle {
-    uint32_t index;
-    uint32_t generation;
+    uint32_t index = 0;
+    uint32_t generation = 0;
+
+    bool isValid() const { return generation != 0; }
 
     bool operator==(const EntityHandle& other) const
     {
-        return index == other.index && generation == other.generation;
+        if (index      != other.index)      return false;
+        if (generation != other.generation) return false;
+
+        return true;
     }
 };
 
-void InitEntitySystem();
-VELOX_API Velox::EntityManager* GetEntityManager();
+void initEntitySystem();
+VELOX_API Velox::EntityManager* getEntityManager();
 
-// GM: Not entirely sure how to expose this to the user without adding bunch of complexity.
-// The general idea is that I want to have this be sub-classed to only one level deep so
-// that we can take advantage of dynamic dispatch without having silly big inheritance trees.
-//
-// Maybe for now we just use a 'megastruct' where all data is just contained in the Entity struct.
-// We can figure out extenting this in the API later.
 struct VELOX_API Entity {
     // Core
-    uint32_t flags = None;
+    EntityHandle id;
+    u32 flags = None;
 
     // Functions
     std::function<void(Velox::Entity&, double&)> updateFunction = nullptr;
     std::function<void(Velox::Entity&)> drawFunction = nullptr;
 
-    // Spacial
-    vec3  position = vec3(0.0, 0.0, 0.0);
+    EntityHandle parent = {};
+
+    // Transform
+    vec3  position = vec3(0.0f);
     float rotation = 0;
+    vec2  scale    = vec4(10.0f);
+
+    vec3  absolutePosition = vec3(0.0f);
+    float absoluteRotation = 0;
+    vec2  absoluteScale    = vec4(10.0f);
 
     // Rendering
-    vec2 size = vec4(10.0);
     Velox::Texture* texture = nullptr;
     bool drawFromCenter = false;
-    vec4 colorOverride = vec4(1.0);
+    vec4 colorOverride = vec4(1.0f);
 
-    bool hasFlag(EntityFlags flag) const { return (flags & flag) != 0; }
+    bool hasFlag(EntityFlags flag) const
+    {   
+        return (flags & (1 << flag)) != 0;
+    }
+
+    void setFlag(EntityFlags flag, int state)
+    {
+        flags = (flags & ~(1 << flag)) | (static_cast<u32>(state) << flag);
+    }
 
     // Only for calling update/draw function members
-    void update(double getDeltaTime);
+    void update(double& getDeltaTime);
+    void update(double& getDeltaTime, Entity* parentRef);
     void draw();
+};
+
+struct VELOX_API EntityNode {
+    Velox::EntityHandle id {};
+    std::vector<EntityNode> children;
+
+    bool isLeaf();
+    bool addNode(const Velox::EntityNode& node, const Velox::EntityNode& desiredParent);
+    void update(double& deltaTime, Velox::Entity* parent = nullptr, bool isRoot = false);
+};
+
+struct VELOX_API EntityTreeView {
+    EntityNode root {};
+
+    bool addNode(const EntityHandle& node, const EntityHandle& desiredParent = {});
+    // void removeNode(EntityHandle& handle);
+    void updateEntities(double& deltaTime);
 };
 
 // Ideas:
 // Could store entites in arrays that are sorted is dfs or bfs ordering for fast tree traversal. 
 //  - e.g. Insert child entities after parents(in memory) for dfs, not sure what this is called. Flat tree?
+//  - Would have to shuffle indices every insertion/deletion, probably quite fast for less dynamic scenes.
 // Multiple arrays for different ordering, i.e. draw order, tree order, etc.
 struct VELOX_API EntityManager {
     // GM: Will probably need to use custom allocator for this when entity data gets big enough.
@@ -71,20 +104,29 @@ struct VELOX_API EntityManager {
     uint32_t generations[MAX_ENTITIES];
     uint32_t freeIndices[MAX_ENTITIES];
     size_t freeIndicesCount = MAX_ENTITIES;
+    Velox::EntityTreeView treeView;
 
     EntityManager();
 
     EntityHandle makeHandle(uint32_t index) const;
 
-    EntityHandle createEntity();
+    EntityHandle createEntity(const EntityHandle& parent = {});
+    Entity* getCreateEntity(const EntityHandle& parent = {});
 
     Entity& get(EntityHandle handle);
-
-    Entity* getMut(Velox::EntityHandle handle);
+    Entity* getMut(EntityHandle handle);
 
     void destroyEntity(EntityHandle handle);
 
-    bool isAlive(EntityHandle handle) const;
+    void updateEntities(double& deltaTime);
+    void drawEntities();
+
+    void generateTreeView();
+
+    void getTreeViewHandlesAsVector(std::vector<EntityHandle>* handles);
+    void getTreeViewEntitiesAsVector(std::vector<Entity*>* handles);
+
+    bool isAlive(const EntityHandle& handle) const;
 
     bool isIndexFree(uint32_t index) const;
 
