@@ -5,6 +5,7 @@
 #include "Config.h"
 #include "Console.h"
 #include "Debug.h"
+#include "Entity.h"
 #include "Text.h"
 #include "Timing.h"
 #include "UI.h"
@@ -83,6 +84,11 @@ void Velox::init()
     timeStamp("Timer", initStartTime);
 #endif
 
+    Velox::initEntitySystem();
+#if SPLIT_TIMES
+    timeStamp("Entity System", initStartTime);
+#endif
+
     SDL_Time initEndTime;
     SDL_GetCurrentTime(&initEndTime);
 
@@ -110,6 +116,9 @@ void Velox::doFrameEndUpdates()
 
     if (engineState.showSettings)
         Velox::drawSettings();
+
+    if (engineState.showEntityInfo)
+        Velox::drawEntityHierarchyInfo();
 }
 
 void Velox::quit()

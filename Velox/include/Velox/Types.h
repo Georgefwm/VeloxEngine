@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <fmt/base.h>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
@@ -43,3 +44,12 @@ constexpr vec4 COLOR_CYAN        = { 0.00f, 0.78f, 0.89f, 1.0f };
 constexpr vec4 COLOR_MAGENTA     = { 1.00f, 0.00f, 0.75f, 1.0f };
 
 #define MS_PER_SECOND 1000
+
+template <>
+struct fmt::formatter<vec3> : formatter<string_view> {
+    auto format(vec3 v, format_context& ctx) const
+        -> format_context::iterator
+        {
+            return format_to(ctx.out(), "{} x: {}, y: {}, z: {} {}", '{', v.x, v.y, v.x, '}');
+        }
+};

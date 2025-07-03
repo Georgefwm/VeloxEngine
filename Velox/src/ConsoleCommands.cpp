@@ -25,6 +25,9 @@ void Velox::registerDefaultCommands()
     // Reload shader.
     console->registerCommand("reloadshader", &Velox::reloadShaderCommand);
 
+    // Toggle entity info.
+    console->registerCommand("entity", &Velox::entityCommand);
+
     // Request quit.
     console->registerCommand("quit", &Velox::quitCommand);
 }
@@ -81,6 +84,13 @@ void Velox::reloadShaderCommand(std::string& response, const std::vector<std::st
 
         response += fmt::format("Reloaded shader '{}'\n", shaderName); 
     }
+}
+
+void Velox::entityCommand(std::string& response, const std::vector<std::string> args)
+{
+
+    Velox::EngineState* engineState = Velox::getEngineState();
+    engineState->showEntityInfo = !engineState->showEntityInfo;
 }
 
 void Velox::quitCommand(std::string& response, const std::vector<std::string> args)

@@ -10,6 +10,7 @@ struct VELOX_API EngineState {
     bool showPerformanceStats = false;
     bool showMemoryUsageStats = false;
     bool showSettings         = false;
+    bool showEntityInfo       = false;
 };
 
 // GM: Sets up all framework systems.

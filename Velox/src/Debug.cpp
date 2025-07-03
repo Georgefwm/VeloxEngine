@@ -5,6 +5,7 @@
 #include "Arena.h"
 #include "Asset.h"
 #include "Config.h"
+#include "Entity.h"
 #include "Rendering/Renderer.h"
 #include "Text.h"
 #include "Timing.h"
@@ -351,6 +352,81 @@ void Velox::drawSettings() {
 
     }
 
+    ImGui::End();
+}
+
+void addEntityInfo(const Velox::EntityNode& node)
+{
+    Velox::EntityManager* entityManager = Velox::getEntityManager();
+
+    //ImGui::SetNextItemOpen(!node.children.empty());
+
+    if (ImGui::TreeNode(fmt::format("Entity - {}", node.id.index).c_str()))
+    {
+        Velox::Entity* entity = entityManager->getMut(node.id);
+
+        if (ImGui::TreeNode("Relative Position"))
+        {
+            ImGui::Text("%s", fmt::format("x: {}", entity->position.x).c_str());
+            ImGui::Text("%s", fmt::format("y: {}", entity->position.y).c_str());
+            ImGui::Text("%s", fmt::format("z: {}", entity->position.z).c_str());
+            
+            ImGui::TreePop();
+        }
+
+        if (ImGui::TreeNode("Absolute Position"))
+        {
+            ImGui::Text("%s", fmt::format("x: {}", entity->absolutePosition.x).c_str());
+            ImGui::Text("%s", fmt::format("y: {}", entity->absolutePosition.y).c_str());
+            ImGui::Text("%s", fmt::format("z: {}", entity->absolutePosition.z).c_str());
+            
+            ImGui::TreePop();
+        }
+
+        ImGui::Separator();
+
+        ImGui::Text("Children");
+        for (const Velox::EntityNode& child : node.children)
+        {
+            addEntityInfo(child);
+        }
+
+        ImGui::TreePop();
+    }
+    
+}
+
+void Velox::drawEntityHierarchyInfo()
+{
+    Velox::EntityManager* entityManager = Velox::getEntityManager();
+
+    ImGuiWindowFlags flags = 0;
+    
+    ImGuiInputTextFlags inputTextFlags = 0;
+    inputTextFlags |= ImGuiInputTextFlags_EnterReturnsTrue;
+    inputTextFlags |= ImGuiInputTextFlags_CallbackCharFilter; 
+
+    ImVec2 windowSize = { 500, 500 };
+
+    // Don't change size of window, just position; To avoid resizing elements.
+    ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(windowSize,  ImGuiCond_FirstUseEver);
+
+    int valueSpacing = 300;
+
+    ImGui::Begin("Entities", NULL, flags);
+
+    if (ImGui::Button("Button"))
+    {
+        LOG_INFO("I do nothing :)");
+    }
+
+    ImGui::Separator();
+
+    for (Velox::EntityNode& node : entityManager->treeView.root.children)
+        addEntityInfo(node);
+    
+    
     ImGui::End();
 }
 
