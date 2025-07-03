@@ -72,8 +72,13 @@ struct VELOX_API Entity {
         flags = (flags & ~(1 << flag)) | (static_cast<u32>(state) << flag);
     }
 
-    // Only for calling update/draw function members
+    // Quality of life/reminder that entity tree view needs to be updated to act on
+    // parent/child relationships. See comment on EntityManager::generateTreeView().
+    void setParent(const EntityHandle& handle);
+
+    // Only for calling update/draw function members.
     void update(double& getDeltaTime);
+    // Speeds up hierarchical iteration slightly (probably).
     void update(double& getDeltaTime, Entity* parentRef);
     void draw();
 };
@@ -123,6 +128,10 @@ struct VELOX_API EntityManager {
     void updateEntities(double& deltaTime);
     void drawEntities();
 
+    // Currently this needs to be called after adding a parent to an entity when added in any way 
+    // other than on first creation with the optional parent parameter on createEntity().
+    // This is pretty dusty, but hierachy is suprisingly tricky to get right (without blowing up
+    // code complextity). addParent() utility method should be used as a reminder.
     void generateTreeView();
 
     void getTreeViewHandlesAsVector(std::vector<EntityHandle>* handles);

@@ -16,8 +16,21 @@ Velox::EntityManager* Velox::getEntityManager()
     return &s_entityManager;
 }
 
+void Velox::Entity::setParent(const EntityHandle& handle)
+{
+    if (!handle.isValid())
+        return;
+
+    parent = handle;
+
+    // Only reason this function exists.
+    s_entityManager.generateTreeView();
+}
+
 void Velox::Entity::update(double& getDeltaTime)
 {
+    // Could maybe add flag for enabling/disabling update. Dunno yet.
+
     if (updateFunction == nullptr)
         return;
     
