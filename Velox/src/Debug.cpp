@@ -395,7 +395,7 @@ void addEntityInfo(const Velox::EntityNode& node, bool topLevel = false)
 
             ImGui::Checkbox("Center Draw", &entity->drawFromCenter);
 
-            ImGui::ColorEdit4("Tint", (float*)&entity->colorOverride);
+            ImGui::ColorEdit4("Tint", (float*)&entity->colorTint);
             ImGui::TreePop();
         }
 

@@ -60,7 +60,7 @@ struct VELOX_API Entity {
     // Rendering
     Velox::Texture* texture = nullptr;
     bool drawFromCenter = false;
-    vec4 colorOverride = vec4(1.0f);
+    vec4 colorTint = vec4(1.0f); // colors aren't clamped so can use for flashe effects for example.
 
     bool hasFlag(EntityFlags flag) const
     {   

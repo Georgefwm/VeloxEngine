@@ -42,9 +42,9 @@ void drawStar(Velox::Entity& e)
     }
 
     if (e.texture != nullptr)
-        Velox::drawRotatedQuad(usePosition, e.absoluteScale, e.colorOverride, e.absoluteRotation, e.texture);
+        Velox::drawRotatedQuad(usePosition, e.absoluteScale, e.colorTint, e.absoluteRotation, e.texture);
     else
-        Velox::drawRotatedQuad(usePosition, e.absoluteScale, e.colorOverride, e.absoluteRotation, 0);
+        Velox::drawRotatedQuad(usePosition, e.absoluteScale, e.colorTint, e.absoluteRotation, 0);
 }
 
 void doUpdates(double& deltaTime)
