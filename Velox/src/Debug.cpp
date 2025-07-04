@@ -389,6 +389,10 @@ void addEntityInfo(const Velox::EntityNode& node, bool topLevel = false)
 
         if (ImGui::TreeNode("Rendering"))
         {
+            bool updateState = entity->hasFlag(Velox::EntityFlags::Updates);
+            if (ImGui::Checkbox("Updates", &updateState))
+                entity->setFlag(Velox::EntityFlags::Updates, updateState);
+
             bool visibleState = entity->hasFlag(Velox::EntityFlags::Visible);
             if (ImGui::Checkbox("Visible", &visibleState))
                 entity->setFlag(Velox::EntityFlags::Visible, visibleState);

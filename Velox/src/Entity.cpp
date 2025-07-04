@@ -55,6 +55,9 @@ void Velox::Entity::update(double& getDeltaTime, Velox::Entity* parentRef)
         absoluteScale    = scale;
     }
 
+    if (!hasFlag(Velox::EntityFlags::Updates))
+        return;
+
     if (updateFunction == nullptr)
         return;
     

@@ -13,8 +13,9 @@ struct EntityManager;
 
 enum EntityFlags : uint32_t {
     None    = 0,
-    Visible = 1 << 0,
-    Static  = 1 << 1,
+    Updates = 1 << 0,
+    Visible = 1 << 1,
+    Static  = 1 << 2,
 };
 
 struct VELOX_API EntityHandle {
@@ -38,7 +39,7 @@ VELOX_API Velox::EntityManager* getEntityManager();
 struct VELOX_API Entity {
     // Core
     EntityHandle id;
-    u32 flags = None;
+    u32 flags = Velox::EntityFlags::Updates;
 
     // Functions
     std::function<void(Velox::Entity&, double&)> updateFunction = nullptr;
@@ -64,12 +65,13 @@ struct VELOX_API Entity {
 
     bool hasFlag(EntityFlags flag) const
     {   
-        return (flags & (1 << flag)) != 0;
+        return (flags & flag) != 0;
     }
 
     void setFlag(EntityFlags flag, int state)
     {
-        flags = (flags & ~(1 << flag)) | (static_cast<u32>(state) << flag);
+        if (state) flags |=  flag;
+        else       flags &= ~flag;
     }
 
     // Quality of life/reminder that entity tree view needs to be updated to act on
