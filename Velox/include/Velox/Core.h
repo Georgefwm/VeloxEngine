@@ -2,7 +2,7 @@
 
 #include "Velox.h"
 
-#include <imgui.h>
+SDL_EVENT_FWD_DECL
 
 namespace Velox {
 
@@ -15,6 +15,8 @@ struct VELOX_API EngineState {
 
 // GM: Sets up all framework systems.
 VELOX_API void init();
+
+bool coreEventCallback(SDL_Event& event);
 
 VELOX_API EngineState* getEngineState();
 

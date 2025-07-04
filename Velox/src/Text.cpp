@@ -2,6 +2,7 @@
 #include <PCH.h>
 
 #include "Asset.h"
+#include <SDL3/SDL_stdinc.h>
 #include <stack>
 #include <msdf-atlas-gen/msdf-atlas-gen.h>
 

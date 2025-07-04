@@ -22,7 +22,7 @@ void Velox::initUI()
     ImGui::StyleColorsDark();
 
     SDL_Window* window = Velox::GetWindow();
-    SDL_GLContext* glContext = Velox::GetGLContext();
+    void* glContext = Velox::GetGLContext();
 
     ImGui_ImplSDL3_InitForOpenGL(window, glContext);
     ImGui_ImplOpenGL3_Init();
@@ -54,11 +54,21 @@ void Velox::initUI()
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplSDL3_NewFrame();
     ImGui::NewFrame();
+
+    Velox::SubscribeInfo subInfo {
+        .name = "UI (+ imgui)",
+        // Leaving this blank for now, will see how it behaves.
+        //.eventRangeStart = u32(0x200), // SDL input event range.
+        //.eventRangeEnd   = u32(0x300),
+        .callback = Velox::uiEventCallback,
+    };
+
+    Velox::getEventPublisher()->subscribe(subInfo);
 }
 
-void Velox::forwardSDLEventToUI(Velox::Event* event)
+bool Velox::uiEventCallback(SDL_Event& event)
 {
-    ImGui_ImplSDL3_ProcessEvent(&event->sdlEvent);
+    return ImGui_ImplSDL3_ProcessEvent(&event);
 }
 
 ImDrawData* Velox::getUIDrawData()

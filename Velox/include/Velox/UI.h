@@ -5,12 +5,13 @@
 namespace Velox { struct Event; }
 
 struct ImDrawData;
+SDL_EVENT_FWD_DECL
 
 namespace Velox {
 
 void initUI();
 
-void forwardSDLEventToUI(Velox::Event* event);
+bool uiEventCallback(SDL_Event& event);
 
 // Must be called after Velox::EndFrame()!
 ImDrawData* getUIDrawData();

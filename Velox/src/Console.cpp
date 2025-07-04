@@ -2,6 +2,7 @@
 #include <PCH.h>
 
 #include "ConsoleCommands.h"
+#include "Event.h"
 #include "Timing.h"
 #include "Rendering/Renderer.h"
 
@@ -18,6 +19,16 @@ Velox::Console* Velox::getConsole() { return &g_console; }
 void Velox::initConsole()
 {
     Velox::registerDefaultCommands();
+
+    Velox::SubscribeInfo subInfo {
+        .name = "Console",
+        .eventRangeStart = SDL_EVENT_KEY_DOWN,
+        .eventRangeEnd   = SDL_EVENT_KEY_DOWN,
+        .callback = Velox::consoleEventCallback,
+        .priority = -1,
+    };
+
+    Velox::getEventPublisher()->subscribe(subInfo);
 }
 
 void Velox::Console::registerCommand(const std::string& name, 
@@ -187,6 +198,20 @@ void Velox::drawConsole()
 
     ImGui::PopItemWidth();
     ImGui::End();
+}
+
+bool Velox::consoleEventCallback(SDL_Event& event)
+{
+    if (event.type != SDL_EVENT_KEY_DOWN)
+        return false;
+
+    if (event.key.scancode != SDL_SCANCODE_GRAVE)
+        return false;
+
+    Velox::toggleConsole();
+
+    // Consume this input.
+    return true;
 }
 
 int static Velox::consoleKeyFilterCallback(ImGuiInputTextCallbackData* data)

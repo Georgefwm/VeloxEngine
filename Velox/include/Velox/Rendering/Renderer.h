@@ -2,9 +2,8 @@
 
 #include "Velox.h"
 
-#include <SDL3/SDL_events.h>
-
 struct SDL_Window;
+SDL_EVENT_FWD_DECL
 
 namespace Velox {
 
@@ -91,8 +90,8 @@ struct DrawCommand {
     u32 numIndices  = 0;
 };
 
-VELOX_API SDL_Window*    GetWindow();
-VELOX_API SDL_GLContext* GetGLContext();
+VELOX_API SDL_Window* GetWindow();
+VELOX_API void* GetGLContext();
 
 VELOX_API ivec2 getWindowSize();
 VELOX_API i32 getVsyncMode();
@@ -105,7 +104,7 @@ VELOX_API bool isAdaptiveVsyncSupported();
 
 void initRenderer();
 
-bool forwardSDLEventToRenderer(SDL_Event* event);
+bool rendererEventCallback(SDL_Event& event);
 
 void drawFrame();
 

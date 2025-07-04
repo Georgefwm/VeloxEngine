@@ -47,11 +47,6 @@ void drawStar(Velox::Entity& e)
         Velox::drawRotatedQuad(usePosition, e.absoluteScale, e.colorOverride, e.absoluteRotation, 0);
 }
 
-void handleEvent(Velox::Event* event)
-{
-
-}
-
 void doUpdates(double& deltaTime)
 {
     g_entityManager->treeView.updateEntities(deltaTime);
@@ -159,13 +154,7 @@ void run()
 
     while (!Velox::quitRequested())
     {
-
-        Velox::Event event;
-        while (Velox::pollEvents(&event))
-        {
-            handleEvent(&event);
-            // Do something with events.
-        }
+        Velox::getEventPublisher()->processEvents();
 
         Velox::updateGame(doUpdates);
 

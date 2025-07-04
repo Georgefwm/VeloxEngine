@@ -3,19 +3,24 @@
 
 #include "Asset.h"
 #include "Config.h"
+#include "Event.h"
 #include "Rendering/Pipeline.h"
 #include "Text.h"
 #include "Core.h"
 
 #include <glad/gl.h> // Must be included before SDL
+
 #include <SDL3/SDL_filesystem.h>
 #include <SDL3/SDL_surface.h>
-#include <SDL3/SDL_pixels.h>
 #include <SDL3/SDL_video.h>
+#include <SDL3/SDL_events.h>
+#include <SDL3/SDL_pixels.h>
 #include <SDL3/SDL_opengl.h>
 #include <SDL3_image/SDL_image.h>
+
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
+
 #include <imgui.h>
 #include <imgui_impl_sdl3.h>
 #include <imgui_impl_opengl3.h>
@@ -52,8 +57,8 @@ static int s_vsyncMode;
 SDL_Window* g_window;
 SDL_GLContext g_glContext;
 
-SDL_Window*    Velox::GetWindow()    { return  g_window;    }
-SDL_GLContext* Velox::GetGLContext() { return &g_glContext; }
+SDL_Window* Velox::GetWindow()    { return  g_window;    }
+void*       Velox::GetGLContext() { return &g_glContext; }
 
 bool g_frameBufferResized = false;
 
@@ -248,11 +253,20 @@ void Velox::initRenderer()
     g_projection =  glm::ortho(0.0f, (float)s_windowSize.x, 0.0f, (float)s_windowSize.y, -1.0f, 1.0f);
     g_view = glm::mat4(1.0f);
     // g_view = glm::translate(g_view, glm::vec3(0.0f, 0.0f, -3.0f)); 
-    //
+    
+    Velox::SubscribeInfo subInfo {
+        .name = "Renderer",
+        .eventRangeStart = SDL_EVENT_DISPLAY_FIRST,
+        .eventRangeEnd   = SDL_EVENT_WINDOW_LAST,  // Window events are just after display events.
+        .callback = Velox::rendererEventCallback,
+    };
+
+    Velox::getEventPublisher()->subscribe(subInfo);
+
     checkGLError();
 }
 
-bool Velox::forwardSDLEventToRenderer(SDL_Event* event)
+bool Velox::rendererEventCallback(SDL_Event& event)
 {
     return false;
 }

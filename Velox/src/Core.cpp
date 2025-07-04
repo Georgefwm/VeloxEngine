@@ -6,6 +6,7 @@
 #include "Console.h"
 #include "Debug.h"
 #include "Entity.h"
+#include "Event.h"
 #include "Text.h"
 #include "Timing.h"
 #include "UI.h"
@@ -48,6 +49,12 @@ void Velox::init()
 
 #define SPLIT_TIMES 0
 
+
+    Velox::initEvents();
+#if SPLIT_TIMES
+    timeStamp("Events", initStartTime);
+#endif
+
     bool userConfigExists;
     Velox::initConfig(&userConfigExists);
 #if SPLIT_TIMES
@@ -89,6 +96,17 @@ void Velox::init()
     timeStamp("Entity System", initStartTime);
 #endif
 
+    Velox::SubscribeInfo subInfo {
+        .name = "Core",
+        .eventRangeStart = SDL_EVENT_QUIT,
+        .eventRangeEnd   = SDL_EVENT_QUIT,
+        .callback = Velox::coreEventCallback,
+        .priority = 1,
+    };
+
+    Velox::getEventPublisher()->subscribe(subInfo);
+
+
     SDL_Time initEndTime;
     SDL_GetCurrentTime(&initEndTime);
 
@@ -97,6 +115,13 @@ void Velox::init()
 
     Velox::printToConsole(initTimeString);
     LOG_TRACE(initTimeString);
+}
+
+bool Velox::coreEventCallback(SDL_Event& event)
+{
+    // TODO: Let the developer handle the quit logic.
+    Velox::quit();
+    return false;
 }
 
 Velox::EngineState* Velox::getEngineState()

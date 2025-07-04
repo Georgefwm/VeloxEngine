@@ -8,6 +8,7 @@
 #include <vector>
 
 struct ImGuiInputTextCallbackData; 
+SDL_EVENT_FWD_DECL
 
 constexpr size_t INPUT_BUFFER_SIZE = 256; 
 
@@ -59,6 +60,8 @@ void initConsole();
 VELOX_API void toggleConsole();
 
 void drawConsole();
+
+bool consoleEventCallback(SDL_Event& event);
 
 int consoleKeyFilterCallback(ImGuiInputTextCallbackData* data);
 

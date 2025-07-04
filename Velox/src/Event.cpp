@@ -3,117 +3,64 @@
 
 #include "Console.h"
 #include "Rendering/Renderer.h"
-#include "SDL3/SDL_events.h"
-#include "UI.h"
 #include "Core.h"
 
-#include <queue>
 
-static std::queue<Velox::Event> g_eventQueue;
+static Velox::EventPublisher s_publisher {};
 
-void Velox::pushEvent(Velox::Event event)
+void Velox::EventPublisher::processEvents()
 {
-    g_eventQueue.push(event);
-}
-
-// GM: Bit janky rn, currently we just intercept events we want to use.
-bool Velox::pollEvents(Velox::Event* event)
-{
-    Event* t_event;
-
-    while (!g_eventQueue.empty())
+    SDL_Event event;
+    while (SDL_PollEvent(&event))
     {
-        t_event = &g_eventQueue.front();
+        for (Velox::SubscribeInfo& sub : subscribers)
+        {
+            if (sub.eventRangeStart > event.type || sub.eventRangeEnd < event.type)
+                continue;
 
-        if (shouldEngineInterceptEvent(t_event))
-        {
-            if (interceptEvent(t_event))
-            {
-                event = t_event;
-                g_eventQueue.pop();
-                return true;
-            }
-        }
-        else
-        {
-            event = t_event;
-            g_eventQueue.pop();
-            return true;
+            bool consumed = sub.callback(event);
+
+            if (consumed)
+                break;
         }
     }
+}
 
-    // GM: Ideally we would just extract information from SDL_Events that are interesting and 
-    // create purely native velox event, but that seems like a lot of grunt work. We also need
-    // to sus out where our math types are going to come from (lib or handmade).
-    SDL_Event sdlEvent;
-    while (SDL_PollEvent(&sdlEvent))
+void Velox::EventPublisher::subscribe(const SubscribeInfo& info)
+{
+    if (subscribers.empty())
     {
-        Velox::Event newEvent = { Velox::SDLEvent, sdlEvent };
-        t_event = &newEvent;
-
-        if (shouldEngineInterceptEvent(t_event))
-        {
-            if (interceptEvent(t_event))
-            {
-                event = t_event;
-                return true;
-            }
-        }
-        else 
-        {
-            event = t_event;
-            return true;
-        }
+        subscribers.push_back(info);
+        LOG_TRACE("EventPublisher: '{}' subcribed with priority {}", info.name, info.priority);
+        return;
     }
 
-    return false;
-}
-
-bool Velox::shouldEngineInterceptEvent(Velox::Event* event)
-{
-    if (event->type == Velox::EventType::AssetLoadRequest)
-        return true;
-
-    if (event->type == Velox::EventType::SDLEvent)
-        return true;
-
-    return false;
-}
-
-// Returns true if event should propogate to user.
-bool Velox::interceptEvent(Velox::Event* event)
-{
-    if (event->type == Velox::EventType::SDLEvent)
+    auto insertPos = subscribers.begin();
+    for (i32 i = 0; i < subscribers.size(); i++)
     {
-        if (event->sdlEvent.type == SDL_EVENT_QUIT)
-        {
-            // TODO: Let the developer handle the quit logic.
-            Velox::quit();
-            return false;
-        }
-
-        if (event->sdlEvent.type == SDL_EVENT_KEY_DOWN)
-        {
-            if (event->sdlEvent.key.scancode == SDL_SCANCODE_GRAVE) 
-            {
-                // Set this as a button that never gets through to the user (engine reserved).
-                Velox::toggleConsole();
-                return false;
-            }
-        }
+        if (info.priority < subscribers[i].priority)
+            break;
         
-        // SDL window events fall between this range.
-        // The renderer only needs to know about window events.
-        if (event->sdlEvent.type >= Uint32(0x200) && event->sdlEvent.type < Uint32(0x300))
-        {
-            Velox::forwardSDLEventToRenderer(&event->sdlEvent);
-            return true;
-        }
-
-        Velox::forwardSDLEventToUI(event);
-
-        return true;
+        insertPos += 1;
     }
 
-    return true;
+    LOG_TRACE("EventPublisher: '{}' subcribed with priority {}", info.name, info.priority);
+    subscribers.insert(insertPos, info);
 }
+
+void Velox::EventPublisher::printSubscribers()
+{
+    LOG_INFO("Current Subs:");
+    for (SubscribeInfo& sub : subscribers)
+    {
+        LOG_INFO("SUB - priority: {}, name: {}", sub.priority, sub.name);
+    }
+}
+
+void Velox::initEvents()
+{
+
+}
+
+Velox::EventPublisher* Velox::getEventPublisher() { return &s_publisher; }
+

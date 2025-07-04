@@ -11,21 +11,22 @@ enum EventType {
     AssetLoadRequest,
 };
 
-struct AssetLoadRequest {
-    const char* filepath;
+struct SubscribeInfo {
+    const char* name;
+    u32 eventRangeStart = SDL_EVENT_FIRST;
+    u32 eventRangeEnd   = SDL_EVENT_LAST;
+    std::function<bool(SDL_Event&)> callback;  // bool recieveEvent(SDL_Event event);
+    i32 priority = 10;  // default 10 (semi-low priority).
 };
 
-struct Event {
-    EventType type;
-    union {
-        SDL_Event sdlEvent;
-        struct AssetLoadRequest loadEvent;
-    };
+struct EventPublisher {
+    std::vector<SubscribeInfo> subscribers;
+    void processEvents();
+    void subscribe(const SubscribeInfo& info);
+    void printSubscribers();
 };
 
-VELOX_API void pushEvent(Event event);
-VELOX_API bool pollEvents(Event* event);
+void initEvents();
+EventPublisher* getEventPublisher();
 
-bool shouldEngineInterceptEvent(Event* event);
-bool interceptEvent(Event* event);
 }
