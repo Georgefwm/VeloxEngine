@@ -14,4 +14,6 @@ inline ImVec4 toImVec4(const glm::vec4& vec) { return ImVec4(vec.x, vec.y, vec.z
 // No ImVec3
 inline ImVec2 toImVec2(const glm::vec2& vec) { return ImVec2(vec.x, vec.y); }
 
+bool isOverlapping(const Velox::Rectangle& rectA, const Velox::Rectangle& rectB);
+
 }

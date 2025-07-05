@@ -28,6 +28,9 @@ void Velox::registerDefaultCommands()
     // Toggle entity info.
     console->registerCommand("entity", &Velox::entityCommand);
 
+    // Debug deraw colliders.
+    console->registerCommand("collision", &Velox::colliderCommand);
+
     // Request quit.
     console->registerCommand("quit", &Velox::quitCommand);
 }
@@ -91,6 +94,12 @@ void Velox::entityCommand(std::string& response, const std::vector<std::string> 
 
     Velox::EngineState* engineState = Velox::getEngineState();
     engineState->showEntityInfo = !engineState->showEntityInfo;
+}
+
+void Velox::colliderCommand(std::string& response, const std::vector<std::string> args)
+{
+    Velox::EngineState* engineState = Velox::getEngineState();
+    engineState->drawColliders= !engineState->drawColliders;
 }
 
 void Velox::quitCommand(std::string& response, const std::vector<std::string> args)

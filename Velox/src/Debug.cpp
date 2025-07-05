@@ -355,6 +355,34 @@ void Velox::drawSettings() {
     ImGui::End();
 }
 
+void Velox::drawEntityColliders()
+{
+    Velox::EntityManager* entityManager = Velox::getEntityManager();
+
+    for (auto pair : entityManager->iter())
+    {
+        Velox::Entity* entity = pair.second;
+
+        if (!entity->hasFlag(Velox::EntityFlags::Collides))
+            continue;
+
+        Velox::Rectangle rect = entity->collider;
+
+        if (entity->collideFromCenter)
+        {
+            rect.x += entity->absolutePosition.x - (entity->scale.x / 2.0f);
+            rect.y += entity->absolutePosition.y - (entity->scale.y / 2.0f);
+        }
+        else
+        {
+            rect.x += entity->absolutePosition.x;
+            rect.y += entity->absolutePosition.y;
+        }
+
+        Velox::drawRect(rect, COLOR_YELLOW);
+    }
+}
+
 void addEntityInfo(const Velox::EntityNode& node, bool topLevel = false)
 {
     Velox::EntityManager* entityManager = Velox::getEntityManager();
@@ -364,6 +392,16 @@ void addEntityInfo(const Velox::EntityNode& node, bool topLevel = false)
     if (ImGui::TreeNode(fmt::format("Entity - ID: {}", node.id.index).c_str()))
     {
         Velox::Entity* entity = entityManager->getMut(node.id);
+
+
+        if (ImGui::TreeNode("Core"))
+        {
+            bool updateState = entity->hasFlag(Velox::EntityFlags::Updates);
+            if (ImGui::Checkbox("Updates", &updateState))
+                entity->setFlag(Velox::EntityFlags::Updates, updateState);
+
+            ImGui::TreePop();
+        }
 
         // Show absolute for top level entities (no parent) and relative for children.
         if (topLevel)
@@ -387,12 +425,19 @@ void addEntityInfo(const Velox::EntityNode& node, bool topLevel = false)
             }
         }
 
+        if (ImGui::TreeNode("Collision"))
+        {
+            bool collisionState = entity->hasFlag(Velox::EntityFlags::Collides);
+            if (ImGui::Checkbox("Collides", &collisionState))
+                entity->setFlag(Velox::EntityFlags::Collides, collisionState);
+
+            ImGui::Checkbox("Center Collision", &entity->collideFromCenter);
+
+            ImGui::TreePop();
+        }
+
         if (ImGui::TreeNode("Rendering"))
         {
-            bool updateState = entity->hasFlag(Velox::EntityFlags::Updates);
-            if (ImGui::Checkbox("Updates", &updateState))
-                entity->setFlag(Velox::EntityFlags::Updates, updateState);
-
             bool visibleState = entity->hasFlag(Velox::EntityFlags::Visible);
             if (ImGui::Checkbox("Visible", &visibleState))
                 entity->setFlag(Velox::EntityFlags::Visible, visibleState);

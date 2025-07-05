@@ -12,10 +12,11 @@ struct Texture;
 struct EntityManager;
 
 enum EntityFlags : uint32_t {
-    None    = 0,
-    Updates = 1 << 0,
-    Visible = 1 << 1,
-    Static  = 1 << 2,
+    None     = 0,
+    Updates  = 1 << 0,
+    Visible  = 1 << 1,
+    Static   = 1 << 2,
+    Collides = 1 << 3
 };
 
 struct VELOX_API EntityHandle {
@@ -58,6 +59,10 @@ struct VELOX_API Entity {
     vec3  absolutePosition = vec3(0.0f);
     float absoluteRotation = 0;
     vec2  absoluteScale    = vec4(10.0f);
+
+    // Collision
+    bool collideFromCenter = false;
+    Velox::Rectangle collider = { 0.0f, 0.0f, scale.x, scale.y };
 
     // Rendering
     Velox::Texture* texture = nullptr;

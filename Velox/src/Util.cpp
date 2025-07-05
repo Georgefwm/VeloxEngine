@@ -26,4 +26,21 @@ vec3 Velox::toShaderCoords(vec3 vector, bool flipY = false)
     return glm::vec3(normalisedXY, vector.z);
 }
 
+bool Velox::isOverlapping(const Velox::Rectangle& rectA, const Velox::Rectangle& rectB)
+{
+    float leftA   = rectA.x;
+    float rightA  = rectA.x + rectA.w;
+    float topA    = rectA.y;
+    float bottomA = rectA.y + rectA.h;
+
+    float leftB   = rectB.x;
+    float rightB  = rectB.x + rectB.w;
+    float topB    = rectB.y;
+    float bottomB = rectB.y + rectB.h;
+
+    bool overlapX = leftA < rightB  && rightA  > leftB;
+    bool overlapY = topA  < bottomB && bottomA > topB;
+
+    return overlapX && overlapY;
+}
 

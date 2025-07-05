@@ -144,6 +144,9 @@ void Velox::doFrameEndUpdates()
 
     if (engineState.showEntityInfo)
         Velox::drawEntityHierarchyInfo();
+
+    if (engineState.drawColliders)
+        Velox::drawEntityColliders();
 }
 
 void Velox::quit()

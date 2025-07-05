@@ -12,6 +12,8 @@ void drawMemoryUsageStats();
 
 void drawSettings();
 
+void drawEntityColliders();
+
 void drawEntityHierarchyInfo();
 
 VELOX_API void textStyleEditor(Velox::TextDrawStyle* style, bool useCurrentAsBase = false);

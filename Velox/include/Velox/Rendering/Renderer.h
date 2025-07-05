@@ -9,13 +9,6 @@ namespace Velox {
 
 struct Arena;
 
-struct Rectangle {
-    float x;
-    float y;
-    float w;
-    float h;
-};
-
 struct UniformBufferObject {
     mat4  projection;
     mat4  view;

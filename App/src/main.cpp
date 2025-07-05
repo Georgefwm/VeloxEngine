@@ -24,7 +24,7 @@ float direction = 1.0;
 void updateStar(Velox::Entity& e, double getDeltaTime)
 {
     e.position.x += (300 * direction) * getDeltaTime;
-    e.rotation   += (40 * direction) * getDeltaTime;
+    // e.rotation   += (40 * direction) * getDeltaTime;
 
     ivec2 windowSize = Velox::getWindowSize();
     if (e.position.x > windowSize.x * 0.95) direction = -1.0;
@@ -133,8 +133,10 @@ void run()
     
     e->position = vec3(100.0f, 540.0f, 0.0f);
     e->scale    = vec2(100.0f, 100.0f);
+    e->collider = { 0.0f, 0.0f, e->scale.x, e->scale.y };
     e->texture  = Velox::getAssetManager()->loadTexture("star.png");
     e->setFlag(Velox::EntityFlags::Visible, true);
+    e->setFlag(Velox::EntityFlags::Collides, true);
     // Set update/draw functions like this.
     e->updateFunction = updateStar;
     e->drawFunction = drawStar;

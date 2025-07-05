@@ -45,6 +45,14 @@ constexpr vec4 COLOR_MAGENTA     = { 1.00f, 0.00f, 0.75f, 1.0f };
 
 #define MS_PER_SECOND 1000
 
+namespace Velox {
+
+struct Rectangle {
+    float x, y, w, h;
+};
+
+}
+
 template <>
 struct fmt::formatter<vec3> : formatter<string_view> {
     auto format(vec3 v, format_context& ctx) const

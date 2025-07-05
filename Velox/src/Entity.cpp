@@ -55,6 +55,9 @@ void Velox::Entity::update(double& getDeltaTime, Velox::Entity* parentRef)
         absoluteScale    = scale;
     }
 
+    collider.w = absoluteScale.x;
+    collider.h = absoluteScale.y;
+
     if (!hasFlag(Velox::EntityFlags::Updates))
         return;
 
