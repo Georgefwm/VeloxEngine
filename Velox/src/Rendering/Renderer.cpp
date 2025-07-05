@@ -259,6 +259,7 @@ void Velox::initRenderer()
         .eventRangeStart = SDL_EVENT_DISPLAY_FIRST,
         .eventRangeEnd   = SDL_EVENT_WINDOW_LAST,  // Window events are just after display events.
         .callback = Velox::rendererEventCallback,
+        .priority = 2,
     };
 
     Velox::getEventPublisher()->subscribe(subInfo);

@@ -61,6 +61,7 @@ void Velox::initUI()
         //.eventRangeStart = u32(0x200), // SDL input event range.
         //.eventRangeEnd   = u32(0x300),
         .callback = Velox::uiEventCallback,
+        .priority = 3,
     };
 
     Velox::getEventPublisher()->subscribe(subInfo);
