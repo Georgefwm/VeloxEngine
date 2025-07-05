@@ -50,11 +50,9 @@ void drawStar(Velox::Entity& e)
 void doUpdates(double& deltaTime)
 {
     g_entityManager->treeView.updateEntities(deltaTime);
-
-    Velox::Entity* e = g_entityManager->getMut(e1);
 }
 
-void doRenderingStuff()
+void doTestStuff()
 {
     Velox::drawQuad(vec3(100.0f, 100.0f, 0.0f), vec2(200.0f, 200.0f), vec4(1.0f));
 
@@ -65,12 +63,10 @@ void doRenderingStuff()
 
     Velox::drawQuad(vec3(400.0f, 100.0f, 0.0f), vec2(500.0f, 500.0f), vec4(1.0f), g_font->texture);
 
-    g_entityManager->drawEntities();
-
     Velox::drawQuad(vec3(950.0f, 100.0f, 0.0f), vec2(1200.0f, 500.0f), vec4(1.0f));
 
     Velox::TextDrawStyle textInfo {};
-    textInfo.textSize = 130;
+    textInfo.textSize = 130.0f;
     Velox::pushTextStyle(textInfo);
 
     Velox::TextDrawStyle editorStyle {};
@@ -118,7 +114,12 @@ void doRenderingStuff()
         Velox::drawText("SAMPLE TEXT", vec3(100.0f, startHeight, 0.0f));
         Velox::popTextStyle();
     }
+}
 
+void doRenderingStuff()
+{
+    // doTestStuff();
+    g_entityManager->drawEntities();
     ImGui::ShowDemoWindow();
 }
 
@@ -132,7 +133,7 @@ void run()
     
     e->position = vec3(100.0f, 540.0f, 0.0f);
     e->scale    = vec2(100.0f, 100.0f);
-    e->texture = Velox::getAssetManager()->loadTexture("star.png");
+    e->texture  = Velox::getAssetManager()->loadTexture("star.png");
     e->setFlag(Velox::EntityFlags::Visible, true);
     // Set update/draw functions like this.
     e->updateFunction = updateStar;
@@ -144,9 +145,10 @@ void run()
 
     e->position = vec3(30.0f, 0.0f, 0.0f);
     e->scale    = vec2(1.0f);
-    e->texture = Velox::getAssetManager()->getTexture("star.png");
+    e->texture  = Velox::getAssetManager()->getTexture("star.png");
     e->setFlag(Velox::EntityFlags::Visible, true);
     e->drawFunction = drawStar;
+    // No update function set so this entity will not update.
 
     g_font = Velox::getAssetManager()->loadFont("martius.ttf");
 
