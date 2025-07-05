@@ -120,6 +120,27 @@ void Velox::EntityNode::update(double& deltaTime, Entity* parent, bool isRoot)
         child.update(deltaTime, currentEntity);
 }
 
+void Velox::EntityNode::destroyChildren(const Velox::EntityHandle& handle, bool isRoot)
+{
+    // Not a node that needs touching, just propogate request.
+    if (handle != id)
+    {
+        for (Velox::EntityNode& child : children)
+            child.destroyChildren(handle);
+
+        return;
+    }
+
+    for (Velox::EntityNode& child : children)
+    {
+        // Pass reference to own id to signal it should be removed.
+        child.destroyChildren(child.id);
+    }
+
+    // Actually delete nodes from bottom to top (leafs at bottom).
+    s_entityManager.destroyEntityInternal(id);
+}
+
 //
 // EntityTreeView
 //
@@ -195,15 +216,22 @@ Velox::Entity* Velox::EntityManager::getMut(Velox::EntityHandle handle)
     return &entities[handle.index];
 }
 
-void Velox::EntityManager::destroyEntity(Velox::EntityHandle handle)
+void Velox::EntityManager::destroyEntity(const Velox::EntityHandle& handle)
+{
+    if (!isAlive(handle)) return;
+
+    treeView.root.destroyChildren(handle);
+
+    generateTreeView();
+}
+
+void Velox::EntityManager::destroyEntityInternal(const Velox::EntityHandle& handle)
 {
     if (!isAlive(handle)) return;
 
     generations[handle.index] += 1; // Invalidate stale handles;
     freeIndices[freeIndicesCount] = handle.index;
     freeIndicesCount += 1;
-
-    generateTreeView();
 }
 
 void Velox::EntityManager::updateEntities(double& deltaTime)

@@ -31,6 +31,7 @@ struct VELOX_API EntityHandle {
 
         return true;
     }
+    bool operator!=(const EntityHandle& other) const { return !(*this == other); }
 };
 
 void initEntitySystem();
@@ -92,6 +93,7 @@ struct VELOX_API EntityNode {
     bool isLeaf();
     bool addNode(const Velox::EntityNode& node, const Velox::EntityNode& desiredParent);
     void update(double& deltaTime, Velox::Entity* parent = nullptr, bool isRoot = false);
+    void destroyChildren(const EntityHandle& handle, bool isRoot = false);
 };
 
 struct VELOX_API EntityTreeView {
@@ -125,7 +127,8 @@ struct VELOX_API EntityManager {
     Entity& get(EntityHandle handle);
     Entity* getMut(EntityHandle handle);
 
-    void destroyEntity(EntityHandle handle);
+    void destroyEntity(const EntityHandle& handle);
+    void destroyEntityInternal(const EntityHandle& handle);
 
     void updateEntities(double& deltaTime);
     void drawEntities();
