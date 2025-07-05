@@ -21,10 +21,10 @@ Velox::EntityHandle e1;
 Velox::EntityHandle e2;
 float direction = 1.0;
 
-void updateStar(Velox::Entity& e, const double& getDeltaTime)
+void updateStar(Velox::Entity& e, const double& deltaTime)
 {
-    e.position.x += (300 * direction) * getDeltaTime;
-    // e.rotation   += (40 * direction) * getDeltaTime;
+    e.position.x += (300 * direction) * deltaTime;
+    // e.rotation   += (40 * direction) * deltaTime;
 
     ivec2 windowSize = Velox::getWindowSize();
     if (e.position.x > windowSize.x * 0.95) direction = -1.0;
@@ -47,7 +47,7 @@ void drawStar(Velox::Entity& e)
         Velox::drawRotatedQuad(usePosition, e.absoluteScale, e.colorTint, e.absoluteRotation, 0);
 }
 
-void doUpdates(double& deltaTime)
+void doUpdates(const double& deltaTime)
 {
     g_entityManager->treeView.updateEntities(deltaTime);
 }

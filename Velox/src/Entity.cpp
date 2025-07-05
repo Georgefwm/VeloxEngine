@@ -27,17 +27,17 @@ void Velox::Entity::setParent(const EntityHandle& handle)
     s_entityManager.generateTreeView();
 }
 
-void Velox::Entity::update(double& getDeltaTime)
+void Velox::Entity::update(const double& deltaTime)
 {
     // Could maybe add flag for enabling/disabling update. Dunno yet.
 
     if (updateFunction == nullptr)
         return;
     
-    updateFunction(*this, getDeltaTime);
+    updateFunction(*this, deltaTime);
 }
 
-void Velox::Entity::update(double& getDeltaTime, Velox::Entity* parentRef)
+void Velox::Entity::update(const double& deltaTime, Velox::Entity* parentRef)
 {
     if (parentRef != nullptr)
     {
@@ -64,7 +64,7 @@ void Velox::Entity::update(double& getDeltaTime, Velox::Entity* parentRef)
     if (updateFunction == nullptr)
         return;
     
-    updateFunction(*this, getDeltaTime);
+    updateFunction(*this, deltaTime);
 }
 
 void Velox::Entity::draw()
@@ -106,7 +106,7 @@ bool Velox::EntityNode::addNode(const Velox::EntityNode& node, const Velox::Enti
     return false;
 }
 
-void Velox::EntityNode::update(double& deltaTime, Entity* parent, bool isRoot)
+void Velox::EntityNode::update(const double& deltaTime, Entity* parent, bool isRoot)
 {
     Velox::Entity* currentEntity = nullptr;
 
@@ -153,7 +153,7 @@ bool Velox::EntityTreeView::addNode(const Velox::EntityHandle& handle, const Vel
     return root.addNode({ handle }, { desiredParent });
 }
 
-void Velox::EntityTreeView::updateEntities(double &deltaTime)
+void Velox::EntityTreeView::updateEntities(const double& deltaTime)
 {
     root.update(deltaTime, nullptr, true);
 }

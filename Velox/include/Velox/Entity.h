@@ -44,7 +44,7 @@ struct VELOX_API Entity {
     u32 flags = Velox::EntityFlags::Updates;
 
     // Functions
-    std::function<void(Velox::Entity&, double&)> updateFunction = nullptr;
+    std::function<void(Velox::Entity&, const double&)> updateFunction = nullptr;
     std::function<void(Velox::Entity&)> drawFunction = nullptr;
 
     EntityHandle parent = {};
@@ -85,9 +85,9 @@ struct VELOX_API Entity {
     void setParent(const EntityHandle& handle);
 
     // Only for calling update/draw function members.
-    void update(double& getDeltaTime);
+    void update(const double& deltaTime);
     // Speeds up hierarchical iteration slightly (probably).
-    void update(double& getDeltaTime, Entity* parentRef);
+    void update(const double& deltaTime, Entity* parentRef);
     void draw();
 };
 
@@ -97,7 +97,7 @@ struct VELOX_API EntityNode {
 
     bool isLeaf();
     bool addNode(const Velox::EntityNode& node, const Velox::EntityNode& desiredParent);
-    void update(double& deltaTime, Velox::Entity* parent = nullptr, bool isRoot = false);
+    void update(const double& deltaTime, Velox::Entity* parent = nullptr, bool isRoot = false);
     void destroyChildren(const EntityHandle& handle, bool isRoot = false);
 };
 
@@ -106,7 +106,7 @@ struct VELOX_API EntityTreeView {
 
     bool addNode(const EntityHandle& node, const EntityHandle& desiredParent = {});
     // void removeNode(EntityHandle& handle);
-    void updateEntities(double& deltaTime);
+    void updateEntities(const double& deltaTime);
 };
 
 // Ideas:
