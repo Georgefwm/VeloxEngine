@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Velox.h"
+#include <Velox.h>
 
 struct SDL_Window;
 SDL_EVENT_FWD_DECL

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Velox.h"
+#include <Velox.h>
 
 #include "SDL3/SDL_events.h"
 

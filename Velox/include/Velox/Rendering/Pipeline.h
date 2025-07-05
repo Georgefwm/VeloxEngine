@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Velox.h"
+#include <Velox.h>
 
 #include "Rendering/Renderer.h"
 #include "glad/gl.h"

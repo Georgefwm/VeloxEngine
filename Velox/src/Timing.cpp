@@ -81,7 +81,7 @@ void Velox::calculateDeltaTime()
     }
 }
 
-void Velox::updateGame(std::function<void(double&)> updateCallback)
+void Velox::updateGame(std::function<void(const double&)> updateCallback)
 {
     while (s_frameAccumulator >= s_desiredFrameTime * s_updateMultiplicity)
     {

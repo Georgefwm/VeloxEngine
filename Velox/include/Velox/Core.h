@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Velox.h"
+#include <Velox.h>
 
 SDL_EVENT_FWD_DECL
 
