@@ -25,7 +25,6 @@ Velox::EntityHandle setupPlane()
     e->texture = Velox::getAssetManager()->loadTexture("plane_red_1.png");
     e->scale = vec2(200.0f, 200.0f);
 
-    e->setFlag(Velox::EntityFlags::Updates,  true);
     e->setFlag(Velox::EntityFlags::Visible,  true);
     e->setFlag(Velox::EntityFlags::Collides, true);
 
