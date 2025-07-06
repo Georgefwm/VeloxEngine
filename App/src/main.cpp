@@ -1,3 +1,5 @@
+#include "PlaneGame.h"
+
 #include "Core.h"
 #include "Asset.h"
 #include "Debug.h"
@@ -9,8 +11,6 @@
 #include "Entity.h"
 
 #include <imgui.h>
-#include <iostream>
-#include <ostream>
 
 Velox::EntityManager* g_entityManager;
 
@@ -41,10 +41,7 @@ void drawStar(Velox::Entity& e)
         usePosition.y -= e.absoluteScale.y * 0.5f;
     }
 
-    if (e.texture != nullptr)
-        Velox::drawRotatedQuad(usePosition, e.absoluteScale, e.colorTint, e.absoluteRotation, e.texture);
-    else
-        Velox::drawRotatedQuad(usePosition, e.absoluteScale, e.colorTint, e.absoluteRotation, 0);
+    Velox::drawRotatedQuad(usePosition, e.absoluteScale, e.colorTint, e.absoluteRotation, e.texture);
 }
 
 void doUpdates(const double& deltaTime)
@@ -114,13 +111,15 @@ void doTestStuff()
         Velox::drawText("SAMPLE TEXT", vec3(100.0f, startHeight, 0.0f));
         Velox::popTextStyle();
     }
+
 }
 
 void doRenderingStuff()
 {
-    // doTestStuff();
     g_entityManager->drawEntities();
-    ImGui::ShowDemoWindow();
+
+    // doTestStuff();
+    // ImGui::ShowDemoWindow();
 }
 
 void run()
@@ -176,15 +175,6 @@ void run()
 
 int main(int argc, char** argv)
 {   
-    try
-    {
-        run();
-    }
-    catch (const std::exception& e)
-    {
-        std::cerr << e.what() << std::endl;
-        return EXIT_FAILURE;
-    }
-
+    runPlaneGame();
     return 0;
 }
