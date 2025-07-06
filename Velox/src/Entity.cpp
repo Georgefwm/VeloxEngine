@@ -1,4 +1,5 @@
 #include "Entity.h"
+#include "Rendering/Renderer.h"
 #include <PCH.h>
 
 #include <glm/gtx/rotate_vector.hpp>
@@ -67,13 +68,30 @@ void Velox::Entity::update(const double& deltaTime, Velox::Entity* parentRef)
     updateFunction(*this, deltaTime);
 }
 
+void defaultDrawSprite(Velox::Entity& e)
+{
+    vec3 usePosition = e.absolutePosition;
+
+    if (e.drawFromCenter)
+    {
+        usePosition.x -= e.absoluteScale.x * 0.5f;
+        usePosition.y -= e.absoluteScale.y * 0.5f;
+    }
+
+    Velox::drawRotatedQuad(usePosition, e.absoluteScale, e.colorTint, e.absoluteRotation, e.texture);
+}
+
 void Velox::Entity::draw()
 {
-    if (drawFunction == nullptr)
-        return;
-
     if (!hasFlag(Velox::EntityFlags::Visible)) 
         return;
+
+    if (drawFunction == nullptr)
+    {
+        // Just use this as a safe default.
+        defaultDrawSprite(*this);
+        return;
+    }
 
     drawFunction(*this);    
 }
