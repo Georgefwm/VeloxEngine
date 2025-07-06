@@ -7,6 +7,7 @@
 #include "Debug.h"
 #include "Entity.h"
 #include "Event.h"
+#include "Input.h"
 #include "Text.h"
 #include "Timing.h"
 #include "UI.h"
@@ -96,6 +97,11 @@ void Velox::init()
     timeStamp("Entity System", initStartTime);
 #endif
 
+    Velox::initInput();
+#if SPLIT_TIMES
+    timeStamp("Input", initStartTime);
+#endif
+
     Velox::SubscribeInfo subInfo {
         .name = "Core",
         .eventRangeStart = SDL_EVENT_QUIT,
@@ -147,6 +153,8 @@ void Velox::doFrameEndUpdates()
 
     if (engineState.drawColliders)
         Velox::drawEntityColliders();
+
+    Velox::updateKeyStates();
 }
 
 void Velox::quit()
