@@ -366,20 +366,7 @@ void Velox::drawEntityColliders()
         if (!entity->hasFlag(Velox::EntityFlags::Collides))
             continue;
 
-        Velox::Rectangle rect = entity->collider;
-
-        if (entity->collideFromCenter)
-        {
-            rect.x += entity->absolutePosition.x - (entity->scale.x / 2.0f);
-            rect.y += entity->absolutePosition.y - (entity->scale.y / 2.0f);
-        }
-        else
-        {
-            rect.x += entity->absolutePosition.x;
-            rect.y += entity->absolutePosition.y;
-        }
-
-        Velox::drawRect(rect, COLOR_YELLOW);
+        Velox::drawRect(entity->collider, COLOR_YELLOW);
     }
 }
 
@@ -389,11 +376,10 @@ void addEntityInfo(const Velox::EntityNode& node, bool topLevel = false)
 
     bool hasChildren = !node.children.empty();
 
-    if (ImGui::TreeNode(fmt::format("Entity - ID: {}", node.id.index).c_str()))
+    Velox::Entity* entity = entityManager->getMut(node.id);
+
+    if (ImGui::TreeNode(fmt::format("Entity - ID: {}, Type: {}", node.id.index, entity->type).c_str()))
     {
-        Velox::Entity* entity = entityManager->getMut(node.id);
-
-
         if (ImGui::TreeNode("Core"))
         {
             bool updateState = entity->hasFlag(Velox::EntityFlags::Updates);
