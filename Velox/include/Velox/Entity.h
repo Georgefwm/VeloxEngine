@@ -42,6 +42,7 @@ struct VELOX_API Entity {
     // Core
     EntityHandle id;
     u32 flags = Velox::EntityFlags::Updates;
+    u32 type = 0;
 
     // Functions
     std::function<void(Velox::Entity&, const double&)> updateFunction = nullptr;
