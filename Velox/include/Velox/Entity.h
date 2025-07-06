@@ -134,6 +134,7 @@ struct VELOX_API EntityManager {
 
     void destroyEntity(const EntityHandle& handle);
     void destroyEntityInternal(const EntityHandle& handle);
+    void destroyAllEntities();
 
     void updateEntities(double& deltaTime);
     void drawEntities();

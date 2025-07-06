@@ -255,6 +255,17 @@ void Velox::EntityManager::destroyEntityInternal(const Velox::EntityHandle& hand
     freeIndicesCount += 1;
 }
 
+void Velox::EntityManager::destroyAllEntities()
+{
+    for (u32 i = 0; i < MAX_ENTITIES; i++)
+    {
+        entities[i]      = {};
+        freeIndices[i]   = MAX_ENTITIES - i - 1;
+        generations[i]  += 1;
+        freeIndicesCount = MAX_ENTITIES;
+    }
+}
+
 void Velox::EntityManager::updateEntities(double& deltaTime)
 {
     treeView.updateEntities(deltaTime);
