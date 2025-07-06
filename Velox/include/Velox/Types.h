@@ -51,6 +51,8 @@ struct Rectangle {
     float x, y, w, h;
 };
 
+struct EntityHandle;
+
 }
 
 template <>
@@ -58,6 +60,17 @@ struct fmt::formatter<vec3> : formatter<string_view> {
     auto format(vec3 v, format_context& ctx) const
         -> format_context::iterator
         {
-            return format_to(ctx.out(), "{} x: {}, y: {}, z: {} {}", '{', v.x, v.y, v.x, '}');
+            return format_to(ctx.out(), "vec2(x: {}, y: {}, z: {})", v.x, v.y, v.x);
         }
 };
+
+template <>
+struct fmt::formatter<Velox::Rectangle> : formatter<string_view> {
+    auto format(Velox::Rectangle& rect, format_context& ctx) const
+        -> format_context::iterator
+        {
+            return format_to(ctx.out(), "Rectangle(x: {}, y: {}, w: {}, h: {})",
+                rect.x, rect.y, rect.w, rect.h);
+        }
+};
+
