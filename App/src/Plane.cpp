@@ -6,7 +6,6 @@
 #include "Asset.h"
 #include "Input.h"
 #include "Rendering/Renderer.h"
-#include "Util.h"
 #include <SDL3/SDL_scancode.h>
 #include <glm/ext/scalar_constants.hpp>
 
@@ -15,9 +14,10 @@ constexpr f32 JUMP_IMPULSE_FORCE = 7.0f;
 
 static f32  s_verticalVelocity;
 
-Velox::EntityHandle setupPlane()
+void setupPlane()
 {
     Velox::Entity* e = Velox::getEntityManager()->getCreateEntity();
+    e->type = EntityType::Plane;
      
     e->position.x = 200;
     e->position.y = Velox::getWindowSize().y / 2.0f;
@@ -31,8 +31,6 @@ Velox::EntityHandle setupPlane()
     e->updateFunction = updatePlane;
 
     s_verticalVelocity = JUMP_IMPULSE_FORCE;
-
-    return e->id;
 }
 
 void updatePlane(Velox::Entity& e, const double& deltaTime)
@@ -53,10 +51,11 @@ void updatePlane(Velox::Entity& e, const double& deltaTime)
     // Check for collisions.
     std::vector<Velox::EntityHandle> overlaps = e.getOverlappingEntities();
 
+    // Currenly anything that would overlap would kill the plane.
     if (overlaps.size() > 0)
     {
         changeGameStage(GameStage::PostRound);
-        return;    
+        return;
     }
 
     s_verticalVelocity -= GRAVITY_FACTOR * deltaTime;

@@ -1,10 +1,13 @@
 #include "PlaneGame.h"
 #include <PCH.h>
+#include <SDL3/SDL_scancode.h>
 
 #include "Core.h"
 #include "Entity.h"
 #include "Event.h"
+#include "Input.h"
 #include "Menu.h"
+#include "Obstacles.h"
 #include "PostGameMenu.h"
 #include "Plane.h"
 #include "Rendering/Renderer.h"
@@ -22,10 +25,11 @@ void changeGameStage(u8 newStage)
 
     if (newStage == GameStage::Simulation)
     {
-        // Enter simulation logic.
         Velox::getEntityManager()->destroyAllEntities();
+
         setupScrollingBackground();
         setupPlane();
+        setupSpawner();
     }
 
     if (newStage == GameStage::MainMenu)
@@ -75,8 +79,11 @@ void runPlaneGame()
     {
         Velox::getEventPublisher()->processEvents();
 
-        // In this example updateGame handles drawing as well, but it doesn't have to.
-        Velox::updateGame(doPlaneGameUpdates);
+        if (Velox::isKeyPressed(SDL_SCANCODE_ESCAPE))
+            s_gameState.paused = !s_gameState.paused;
+
+        if (!s_gameState.paused)
+            Velox::updateGame(doPlaneGameUpdates);
 
         drawPlaneGame();
 

@@ -7,7 +7,7 @@ SDL_EVENT_FWD_DECL
 #include <Entity.h>
 
 
-Velox::EntityHandle setupPlane();
+void setupPlane();
 
 void updatePlane(Velox::Entity& e, const double& deltaTime);
 
