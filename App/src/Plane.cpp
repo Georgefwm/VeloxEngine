@@ -51,20 +51,12 @@ void updatePlane(Velox::Entity& e, const double& deltaTime)
         s_verticalVelocity = JUMP_IMPULSE_FORCE;
 
     // Check for collisions.
-    for (auto entityPair : Velox::getEntityManager()->iter())
+    std::vector<Velox::EntityHandle> overlaps = e.getOverlappingEntities();
+
+    if (overlaps.size() > 0)
     {
-        if (e.id == entityPair.first)
-            continue;
-
-        if (!entityPair.second->hasFlag(Velox::EntityFlags::Collides))
-            continue;
-
-        if (Velox::isOverlapping(e.collider, entityPair.second->collider))
-        {
-            changeGameStage(GameStage::PostRound);
-            return;
-        }
-        
+        changeGameStage(GameStage::PostRound);
+        return;    
     }
 
     s_verticalVelocity -= GRAVITY_FACTOR * deltaTime;

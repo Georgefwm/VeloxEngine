@@ -1,5 +1,6 @@
 #include "Entity.h"
 #include "Rendering/Renderer.h"
+#include "Util.h"
 #include <PCH.h>
 
 #include <glm/gtx/rotate_vector.hpp>
@@ -94,6 +95,27 @@ void Velox::Entity::draw()
     }
 
     drawFunction(*this);    
+}
+
+std::vector<Velox::EntityHandle> Velox::Entity::getOverlappingEntities()
+{
+    std::vector<Velox::EntityHandle> overlaps;
+
+    for (auto entityPair : Velox::getEntityManager()->iter())
+    {
+        if (id == entityPair.first)
+            continue;
+
+        if (!entityPair.second->hasFlag(Velox::EntityFlags::Collides))
+            continue;
+
+        if (!Velox::isOverlapping(collider, entityPair.second->collider))
+            continue;
+        
+        overlaps.push_back(entityPair.second->id);
+    }
+
+    return overlaps;
 }
 
 //

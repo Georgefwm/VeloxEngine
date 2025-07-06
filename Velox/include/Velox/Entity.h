@@ -89,6 +89,7 @@ struct VELOX_API Entity {
     // Speeds up hierarchical iteration slightly (probably).
     void update(const double& deltaTime, Entity* parentRef);
     void draw();
+    std::vector<Velox::EntityHandle> getOverlappingEntities();
 };
 
 struct VELOX_API EntityNode {
