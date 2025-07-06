@@ -68,8 +68,9 @@ void Velox::initUI()
 }
 
 bool Velox::uiEventCallback(SDL_Event& event)
-{
-    return ImGui_ImplSDL3_ProcessEvent(&event);
+{ 
+    ImGui_ImplSDL3_ProcessEvent(&event);
+    return false;
 }
 
 ImDrawData* Velox::getUIDrawData()

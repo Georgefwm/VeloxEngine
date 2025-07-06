@@ -25,6 +25,8 @@ void Velox::initInput()
         .callback = Velox::inputEventCallback,
         .priority = 4,
     };
+
+    Velox::getEventPublisher()->subscribe(subInfo);
 }
 
 void Velox::updateKeyStates()
