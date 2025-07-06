@@ -403,18 +403,15 @@ void addEntityInfo(const Velox::EntityNode& node, bool topLevel = false)
             ImGui::TreePop();
         }
 
-        // Show absolute for top level entities (no parent) and relative for children.
-        if (topLevel)
+        if (ImGui::TreeNode(topLevel ? "Relative Transform (effictively absolute)" : "Relative Transform"))
         {
-            if (ImGui::TreeNode("Relative Transform"))
-            {
-                ImGui::InputFloat3("Position", (float*)&entity->position);
-                ImGui::InputFloat("Rotation", (float*)&entity->rotation);
-                ImGui::InputFloat2("Scale", (float*)&entity->scale);
-                ImGui::TreePop();
-            }
+            ImGui::InputFloat3("Position", (float*)&entity->position);
+            ImGui::InputFloat("Rotation", (float*)&entity->rotation);
+            ImGui::InputFloat2("Scale", (float*)&entity->scale);
+            ImGui::TreePop();
         }
-        else
+
+        if (topLevel)
         {
             if (ImGui::TreeNode("Absolute Position"))
             {
