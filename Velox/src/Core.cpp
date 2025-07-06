@@ -155,6 +155,8 @@ void Velox::doFrameEndUpdates()
         Velox::drawEntityColliders();
 
     Velox::updateKeyStates();
+
+    Velox::getEntityManager()->generateTreeView();
 }
 
 void Velox::quit()

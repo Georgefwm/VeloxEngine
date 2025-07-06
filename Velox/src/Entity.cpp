@@ -26,7 +26,7 @@ void Velox::Entity::setParent(const EntityHandle& handle)
     parent = handle;
 
     // Only reason this function exists.
-    s_entityManager.generateTreeView();
+    // s_entityManager.generateTreeView();
 }
 
 void Velox::Entity::update(const double& deltaTime)
@@ -57,8 +57,16 @@ void Velox::Entity::update(const double& deltaTime, Velox::Entity* parentRef)
         absoluteScale    = scale;
     }
 
+    collider.x = absolutePosition.x;
+    collider.y = absolutePosition.y;
     collider.w = absoluteScale.x;
     collider.h = absoluteScale.y;
+
+    if (collideFromCenter)
+    {
+        collider.x -= scale.x / 2.0f;
+        collider.y -= scale.y / 2.0f;
+    }
 
     if (!hasFlag(Velox::EntityFlags::Updates))
         return;
@@ -101,7 +109,7 @@ std::vector<Velox::EntityHandle> Velox::Entity::getOverlappingEntities()
 {
     std::vector<Velox::EntityHandle> overlaps;
 
-    for (auto entityPair : Velox::getEntityManager()->iter())
+    for (auto entityPair : s_entityManager.iter())
     {
         if (id == entityPair.first)
             continue;
@@ -220,8 +228,6 @@ Velox::EntityHandle Velox::EntityManager::createEntity(const Velox::EntityHandle
     entities[index] = { makeHandle(index) };
     entities[index].parent = parent;
 
-    generateTreeView();
-
     return makeHandle(index);
 }
 
@@ -233,8 +239,6 @@ Velox::Entity* Velox::EntityManager::getCreateEntity(const Velox::EntityHandle& 
     uint32_t index = freeIndices[freeIndicesCount];
     entities[index] = { makeHandle(index)};
     entities[index].parent = parent;
-
-    generateTreeView();
 
     return &entities[index];
 }
@@ -264,8 +268,6 @@ void Velox::EntityManager::destroyEntity(const Velox::EntityHandle& handle)
     if (!isAlive(handle)) return;
 
     treeView.root.destroyChildren(handle);
-
-    generateTreeView();
 }
 
 void Velox::EntityManager::destroyEntityInternal(const Velox::EntityHandle& handle)

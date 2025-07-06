@@ -182,3 +182,13 @@ struct VELOX_API EntityManager::EntityIterable {
 
 }
 
+// Has to be outside of Velox namespace.
+template <>
+struct fmt::formatter<Velox::EntityHandle> : formatter<string_view> {
+    auto format(Velox::EntityHandle& handle, format_context& ctx) const
+        -> format_context::iterator
+        {
+            return format_to(ctx.out(), "EntityHandle({})", handle.index);
+        }
+};
+
