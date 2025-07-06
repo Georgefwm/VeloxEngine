@@ -4,6 +4,7 @@
 #include "Asset.h"
 #include "Console.h"
 #include "Core.h"
+#include "Event.h"
 #include <sstream>
 
 void Velox::registerDefaultCommands()
@@ -31,6 +32,9 @@ void Velox::registerDefaultCommands()
     // Debug deraw colliders.
     console->registerCommand("collision", &Velox::colliderCommand);
 
+    // Print event subscribers.
+    console->registerCommand("eventsubscribers", &Velox::eventSubscribersCommand);
+
     // Request quit.
     console->registerCommand("quit", &Velox::quitCommand);
 }
@@ -43,9 +47,7 @@ void Velox::listCommands(std::string& response, const std::vector<std::string> a
     string << "Registered commands:\n\n";
 
     for (const auto& pair : console->commands)
-    {
         string << pair.first << "\n";
-    }
 
     string << "\n";
 
@@ -100,6 +102,19 @@ void Velox::colliderCommand(std::string& response, const std::vector<std::string
 {
     Velox::EngineState* engineState = Velox::getEngineState();
     engineState->drawColliders= !engineState->drawColliders;
+}
+
+void Velox::eventSubscribersCommand(std::string& response, const std::vector<std::string> args)
+{
+    std::stringstream string;
+    string << "Event subscribers:\n";
+
+    for (const Velox::SubscribeInfo& sub : Velox::getEventPublisher()->subscribers)
+        string << sub.name << ", priority: " << sub.priority << "\n";
+
+    string << "\n";
+
+    response = string.str();
 }
 
 void Velox::quitCommand(std::string& response, const std::vector<std::string> args)
