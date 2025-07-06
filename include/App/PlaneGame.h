@@ -13,7 +13,7 @@ struct GameState {
     i32 hoveredItem = -1;
 
     // Simulation
-    float scrollSpeed = 10;
+    float scrollSpeed = 700.0f;
 };
 
 GameState* getGameState();

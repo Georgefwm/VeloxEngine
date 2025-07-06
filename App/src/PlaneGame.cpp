@@ -8,6 +8,7 @@
 #include "PostGameMenu.h"
 #include "Plane.h"
 #include "Rendering/Renderer.h"
+#include "ScrollingBackground.h"
 #include "Timing.h"
 
 static GameState s_gameState {};
@@ -23,6 +24,7 @@ void changeGameStage(u8 newStage)
     {
         // Enter simulation logic.
         Velox::getEntityManager()->destroyAllEntities();
+        setupScrollingBackground();
         setupPlane();
     }
 
@@ -50,6 +52,8 @@ void doPlaneGameUpdates(const double& deltaTime)
 
 void drawPlaneGame()
 {
+    Velox::getEntityManager()->drawEntities();
+
     if (s_gameState.gameStage == GameStage::MainMenu)
     {
         drawMenu();
@@ -58,9 +62,7 @@ void drawPlaneGame()
     if (s_gameState.gameStage == GameStage::PostRound)
     {
         drawPostGameMenu();
-    }
-    
-    Velox::getEntityManager()->drawEntities();
+    }    
 }
 
 void runPlaneGame()
