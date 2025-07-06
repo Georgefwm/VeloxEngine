@@ -16,4 +16,6 @@ inline ImVec2 toImVec2(const glm::vec2& vec) { return ImVec2(vec.x, vec.y); }
 
 bool isOverlapping(const Velox::Rectangle& rectA, const Velox::Rectangle& rectB);
 
+bool isMouseInArea(const Velox::Rectangle& rect);
+
 }

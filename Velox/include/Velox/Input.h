@@ -17,9 +17,13 @@ void initInput();
 
 void updateKeyStates();
 
+vec2 getMousePosition();
 bool isKeyPressed(SDL_Scancode code);
 bool isKeyDown(SDL_Scancode code);
+bool isMouseButtonPressed(u8 buttonNum);
+bool isMouseButtonDown(u8 buttonNum);
 
-bool inputEventCallback(SDL_Event& event);
+bool keyboardInputEventCallback(SDL_Event& event);
+bool mouseInputEventCallback(SDL_Event& event);
 
 }

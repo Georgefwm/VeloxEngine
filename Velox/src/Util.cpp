@@ -1,6 +1,7 @@
 #include "Util.h"
 #include <PCH.h>
 
+#include "Input.h"
 #include "Rendering/Renderer.h"
 
 #include <SDL3/SDL.h>
@@ -42,5 +43,18 @@ bool Velox::isOverlapping(const Velox::Rectangle& rectA, const Velox::Rectangle&
     bool overlapY = topA  < bottomB && bottomA > topB;
 
     return overlapX && overlapY;
+}
+
+bool Velox::isMouseInArea(const Velox::Rectangle& rect)
+{
+    vec2 mousePosition = Velox::getMousePosition();
+    
+    if (mousePosition.x < rect.x || mousePosition.x > rect.x + rect.w)
+        return false;
+
+    if (mousePosition.y < rect.y || mousePosition.y > rect.y + rect.h)
+        return false;
+
+    return true;
 }
 
