@@ -73,7 +73,6 @@ void setupSpawner()
     s_spawnCooldown = s_spawnRateSecs;
 
     s_offsetMax = Velox::getWindowSize().y - s_gapSize - 100.0f;
-    LOG_INFO("Max offset: {}", s_offsetMax);
 }
 
 void updateSpawner(Velox::Entity& e, const double& deltaTime)
