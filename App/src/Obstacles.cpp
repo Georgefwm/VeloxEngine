@@ -23,34 +23,38 @@ void setupObstacles(f32 gapOffset)
     top->type = EntityType::Spike;
     bot->type = EntityType::Spike;
 
+    f32 spikeSize = (windowSize.y / 2.0f) + s_offsetMax - (s_gapSize / 2.0f) + 5.0f;
     f32 midPoint  = (windowSize.y / 2.0f) + gapOffset;
 
-    f32 topExtent = midPoint + (s_gapSize / 2.0f);
-    f32 botExtent = midPoint - (s_gapSize / 2.0f);
+    top->scale = vec2(spikeSize / 8.0f, spikeSize);
+    bot->scale = vec2(spikeSize / 8.0f, spikeSize);
 
-    f32 topSpikeSize = windowSize.y - topExtent;
-    f32 botSpikeSize = botExtent;
-
-    top->scale = vec2(topSpikeSize / 4.0f, topSpikeSize);
-    bot->scale = vec2(botSpikeSize / 4.0f, botSpikeSize);
-
-    top->position.x = windowSize.x + 30.0f;
-    top->position.y = windowSize.y - top->scale.y;
+    top->position = vec3(windowSize.x + 30.0f, midPoint + (s_gapSize / 2.0f) + 5.0f, 0.0f);
     top->rotation = 180.0f;  // upside down.
 
-    bot->position.x = windowSize.x + 30.0f;
-    bot->position.y = 0.0f;
+    bot->position = vec3(windowSize.x + 30.0f, midPoint - spikeSize - (s_gapSize / 2.0f)- 0.5, 0.0f);
 
     top->texture = Velox::getAssetManager()->loadTexture("rock_ice.png");
-    bot->texture = Velox::getAssetManager()->loadTexture("rock_ice.png");
+    bot->texture = Velox::getAssetManager()->getTexture("rock_ice.png");
 
     top->setFlag(Velox::EntityFlags::Visible,  true);
-    top->setFlag(Velox::EntityFlags::Collides, true);
     bot->setFlag(Velox::EntityFlags::Visible,  true);
-    bot->setFlag(Velox::EntityFlags::Collides, true);
 
     top->updateFunction = updateObstacles;
     bot->updateFunction = updateObstacles;
+
+    // Use child entities for colliders.
+    Velox::Entity* topCollider = Velox::getEntityManager()->getCreateEntity(top->id);
+    Velox::Entity* botCollider = Velox::getEntityManager()->getCreateEntity(bot->id);
+
+    topCollider->position.x = -60.0f;
+    botCollider->position.x = 120.0f;
+
+    topCollider->scale.x = 0.2f;
+    botCollider->scale.x = 0.2f;
+
+    topCollider->setFlag(Velox::EntityFlags::Collides, true);
+    botCollider->setFlag(Velox::EntityFlags::Collides, true);
 }
 
 void updateObstacles(Velox::Entity& e, const double& deltaTime)

@@ -13,6 +13,7 @@
 #include "Rendering/Renderer.h"
 #include "ScrollingBackground.h"
 #include "Timing.h"
+#include <imgui.h>
 
 static GameState s_gameState {};
 
@@ -59,14 +60,10 @@ void drawPlaneGame()
     Velox::getEntityManager()->drawEntities();
 
     if (s_gameState.gameStage == GameStage::MainMenu)
-    {
         drawMenu();
-    }
 
     if (s_gameState.gameStage == GameStage::PostRound)
-    {
         drawPostGameMenu();
-    }    
 }
 
 void runPlaneGame()
@@ -86,6 +83,8 @@ void runPlaneGame()
             Velox::updateGame(doPlaneGameUpdates);
 
         drawPlaneGame();
+
+        ImGui::ShowDemoWindow();
 
         Velox::submitFrameData();
 
