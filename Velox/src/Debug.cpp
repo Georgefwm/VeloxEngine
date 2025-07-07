@@ -366,7 +366,7 @@ void Velox::drawEntityColliders()
         if (!entity->hasFlag(Velox::EntityFlags::Collides))
             continue;
 
-        Velox::drawRect(entity->collider, COLOR_YELLOW);
+        Velox::drawRect(entity->collider, COLOR_RED);
     }
 }
 
