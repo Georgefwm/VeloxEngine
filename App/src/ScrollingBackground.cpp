@@ -41,5 +41,5 @@ void updateScrollingBackground(Velox::Entity& e, const double& deltaTime)
     if (e.position.x + e.scale.x - 1.0f <= 0.0f)
         e.position.x += (e.scale.x - 1.0f) * 2.0f;
 
-    e.position.x -= getGameState()->scrollSpeed * deltaTime;
+    e.position.x -= (getGameState()->scrollSpeed / 2.0f) * deltaTime;
 }
