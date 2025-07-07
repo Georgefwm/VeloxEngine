@@ -156,7 +156,7 @@ void Velox::doFrameEndUpdates()
 
     Velox::updateKeyStates();
 
-    Velox::getEntityManager()->generateTreeView();
+    Velox::getEntityManager()->postFrameUpdates();
 }
 
 void Velox::quit()

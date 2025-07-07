@@ -16,7 +16,8 @@ enum EntityFlags : uint32_t {
     Updates  = 1 << 0,
     Visible  = 1 << 1,
     Static   = 1 << 2,
-    Collides = 1 << 3
+    Collides = 1 << 3,
+    Dead     = 1 << 4,
 };
 
 struct VELOX_API EntityHandle {
@@ -141,6 +142,8 @@ struct VELOX_API EntityManager {
 
     void updateEntities(double& deltaTime);
     void drawEntities();
+
+    void postFrameUpdates();
 
     // Currently this needs to be called after adding a parent to an entity when added in any way 
     // other than on first creation with the optional parent parameter on createEntity().

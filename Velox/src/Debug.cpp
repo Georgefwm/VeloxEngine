@@ -377,9 +377,12 @@ void addEntityInfo(const Velox::EntityNode& node, bool topLevel = false)
     bool hasChildren = !node.children.empty();
 
     Velox::Entity* entity = entityManager->getMut(node.id);
+    if (entity == nullptr)
+        return;
 
     if (ImGui::TreeNode(fmt::format("Entity - ID: {}, Type: {}", node.id.index, entity->type).c_str()))
     {
+
         if (ImGui::TreeNode("Core"))
         {
             bool updateState = entity->hasFlag(Velox::EntityFlags::Updates);
@@ -441,6 +444,20 @@ void addEntityInfo(const Velox::EntityNode& node, bool topLevel = false)
 
         ImGui::TreePop();
     }    
+
+    if (ImGui::IsItemHovered())
+    {
+        vec2 windowSize = Velox::getWindowSize();
+        Velox::drawRect(entity->collider, COLOR_GREEN);
+
+        vec3 xLineMin = vec3(entity->absolutePosition.x, 0.0f,         0.0f);
+        vec3 xLineMax = vec3(entity->absolutePosition.x, windowSize.y, 0.0f);
+        Velox::drawLine(xLineMin, xLineMax, COLOR_GREEN);
+
+        vec3 yLineMin = vec3(0.0f,         entity->absolutePosition.y, 0.0f);
+        vec3 yLineMax = vec3(windowSize.y, entity->absolutePosition.y, 0.0f);
+        Velox::drawLine(yLineMin, yLineMax, COLOR_GREEN);
+    }
 }
 
 void Velox::drawEntityHierarchyInfo()
@@ -470,7 +487,7 @@ void Velox::drawEntityHierarchyInfo()
 
     ImGui::Separator();
 
-    for (Velox::EntityNode& node : entityManager->treeView.root.children)
+    for (Velox::EntityNode node : entityManager->treeView.root.children)
         addEntityInfo(node, true);
     
     

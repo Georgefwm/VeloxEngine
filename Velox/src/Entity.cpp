@@ -188,8 +188,8 @@ void Velox::EntityNode::destroyChildren(const Velox::EntityHandle& handle, bool 
         child.destroyChildren(child.id);
     }
 
-    // Actually delete nodes from bottom to top (leafs at bottom).
-    s_entityManager.destroyEntityInternal(id);
+    // Mark for death, wait until end of frame to remove.
+    s_entityManager.getMut(id)->setFlag(Velox::EntityFlags::Dead, true);
 }
 
 //
@@ -307,6 +307,20 @@ void Velox::EntityManager::drawEntities()
 {
     for (std::pair<EntityHandle, Entity*> pair : iter())
         pair.second->draw();
+}
+
+void Velox::EntityManager::postFrameUpdates()
+{
+    for (i32 i = 0; i < MAX_ENTITIES; i++)
+    {
+        if (entities[i].hasFlag(Velox::EntityFlags::Dead))
+        {
+            destroyEntityInternal(entities[i].id);
+            isTreeDirty = true;
+        }
+    }
+
+    generateTreeView();
 }
 
 void Velox::EntityManager::generateTreeView(bool forceUpdate)
