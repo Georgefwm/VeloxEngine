@@ -52,6 +52,8 @@ Velox::Config* s_config;
 static bool s_adaptiveVsyncSupported = false;
 
 static ivec2 s_windowSize;
+static ivec2 s_frameBufferSize;
+
 static int s_vsyncMode;
 
 SDL_Window* g_window;
@@ -123,9 +125,12 @@ void Velox::setResolution(ivec2 newResolution)
     if (g_glContext == nullptr)
         return;
 
+    SDL_GetWindowSizeInPixels(g_window, &s_frameBufferSize.x, &s_frameBufferSize.y);
+
     // update OpenGL things.
-    glViewport(0, 0, s_windowSize.x, s_windowSize.y);
-    g_projection =  glm::ortho(0.0f, (float)s_windowSize.x, 0.0f, (float)s_windowSize.y, -1.0f, 1.0f);
+    glViewport(0, 0, s_frameBufferSize.x, s_frameBufferSize.y);
+
+    g_projection =  glm::ortho(0.0f, (float)s_frameBufferSize.x, 0.0f, (float)s_frameBufferSize.y, -1.0f, 1.0f);
 }
 
 void Velox::setVsyncMode(int newMode)
@@ -203,7 +208,9 @@ void Velox::initRenderer()
     LOG_TRACE("GLAD loaded fns for version {}.{}", GLAD_VERSION_MAJOR(version), GLAD_VERSION_MINOR(version));
 
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-    glViewport(0, 0, s_windowSize.x, s_windowSize.y);
+
+    SDL_GetWindowSizeInPixels(g_window, &s_frameBufferSize.x, &s_frameBufferSize.y);
+    glViewport(0, 0, s_frameBufferSize.x, s_frameBufferSize.y);
 
     // Render settings
     glEnable(GL_BLEND);
