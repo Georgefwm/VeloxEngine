@@ -400,15 +400,12 @@ void addEntityInfo(const Velox::EntityNode& node, bool topLevel = false)
             ImGui::TreePop();
         }
 
-        if (topLevel)
+        if (ImGui::TreeNode("Absolute Position"))
         {
-            if (ImGui::TreeNode("Absolute Position"))
-            {
-                ImGui::InputFloat3("Position", (float*)&entity->position);
-                ImGui::InputFloat("Rotation", (float*)&entity->rotation);
-                ImGui::InputFloat2("Scale", (float*)&entity->scale);
-                ImGui::TreePop();
-            }
+            ImGui::InputFloat3("Position", (float*)&entity->position);
+            ImGui::InputFloat("Rotation", (float*)&entity->rotation);
+            ImGui::InputFloat2("Scale", (float*)&entity->scale);
+            ImGui::TreePop();
         }
 
         if (ImGui::TreeNode("Collision"))

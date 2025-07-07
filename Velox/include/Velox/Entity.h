@@ -55,12 +55,12 @@ struct VELOX_API Entity {
     // Usually you want to write these.
     vec3  position = vec3(0.0f);
     float rotation = 0;
-    vec2  scale    = vec4(10.0f);
+    vec2  scale    = vec4(1.0f);
 
     // Usually you only want to read these.
     vec3  absolutePosition = vec3(0.0f);
     float absoluteRotation = 0;
-    vec2  absoluteScale    = vec4(10.0f);
+    vec2  absoluteScale    = vec4(1.0f);
 
     // Collision
     bool collideFromCenter = false;
@@ -123,7 +123,7 @@ struct VELOX_API EntityManager {
     uint32_t generations[MAX_ENTITIES];
     uint32_t freeIndices[MAX_ENTITIES];
     size_t freeIndicesCount = MAX_ENTITIES;
-    Velox::EntityTreeView treeView;
+    Velox::EntityTreeView treeView {};
     bool isTreeDirty = false;
 
     EntityManager();

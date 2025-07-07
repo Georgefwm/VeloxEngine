@@ -219,9 +219,14 @@ Velox::EntityManager::EntityManager()
     }
 }
 
+// TODO: Allow child entities to be created before thier parent. 
 Velox::EntityHandle Velox::EntityManager::createEntity(const Velox::EntityHandle& parent)
 {
-    assert(freeIndicesCount > 0 && "WARNING: Entity pool exhausted!");
+    if (freeIndicesCount <= 0)
+    {
+        LOG_WARN("Entity pool exhausted");
+        return {};
+    }
 
     freeIndicesCount -= 1;
     uint32_t index = freeIndices[freeIndicesCount];
@@ -230,12 +235,16 @@ Velox::EntityHandle Velox::EntityManager::createEntity(const Velox::EntityHandle
 
     isTreeDirty = true;
 
-    return makeHandle(index);
+    return entities[index].id;
 }
 
 Velox::Entity* Velox::EntityManager::getCreateEntity(const Velox::EntityHandle& parent)
 {
-    assert(freeIndicesCount > 0 && "WARNING: Entity pool exhausted!");
+    if (freeIndicesCount <= 0)
+    {
+        LOG_WARN("Entity pool exhausted");
+        return {};
+    }
 
     freeIndicesCount -= 1;
     uint32_t index = freeIndices[freeIndicesCount];
@@ -254,7 +263,8 @@ Velox::EntityHandle Velox::EntityManager::makeHandle(uint32_t index) const
 
 Velox::Entity& Velox::EntityManager::get(Velox::EntityHandle handle)
 {
-    assert(isAlive(handle) && "WARNING: Non-alive entity queried!");
+    if (!isAlive(handle))
+        LOG_WARN("Non-alive entity queried!");
 
     return entities[handle.index];
 }
@@ -269,7 +279,8 @@ Velox::Entity* Velox::EntityManager::getMut(Velox::EntityHandle handle)
 
 void Velox::EntityManager::destroyEntity(const Velox::EntityHandle& handle)
 {
-    if (!isAlive(handle)) return;
+    if (!isAlive(handle))
+        return;
 
     treeView.root.destroyChildren(handle);
 
@@ -278,7 +289,8 @@ void Velox::EntityManager::destroyEntity(const Velox::EntityHandle& handle)
 
 void Velox::EntityManager::destroyEntityInternal(const Velox::EntityHandle& handle)
 {
-    if (!isAlive(handle)) return;
+    if (!isAlive(handle))
+        return;
 
     generations[handle.index] += 1; // Invalidate stale handles;
     freeIndices[freeIndicesCount] = handle.index;
@@ -311,7 +323,7 @@ void Velox::EntityManager::drawEntities()
 
 void Velox::EntityManager::postFrameUpdates()
 {
-    for (i32 i = 0; i < MAX_ENTITIES; i++)
+    for (i32 i = MAX_ENTITIES - 1; i >= 0; i--)
     {
         if (entities[i].hasFlag(Velox::EntityFlags::Dead))
         {
@@ -334,7 +346,7 @@ void Velox::EntityManager::generateTreeView(bool forceUpdate)
     {
         bool result = treeView.addNode(pair.first, pair.second->parent);
         if (!result)
-            LOG_WARN("Failed to add entity to tree view");
+            LOG_WARN("Failed to add entity to tree view, parent '{}' not found", pair.second->parent);
     }
 
     isTreeDirty = false;
