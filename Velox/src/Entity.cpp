@@ -228,6 +228,8 @@ Velox::EntityHandle Velox::EntityManager::createEntity(const Velox::EntityHandle
     entities[index] = { makeHandle(index) };
     entities[index].parent = parent;
 
+    isTreeDirty = true;
+
     return makeHandle(index);
 }
 
@@ -239,6 +241,8 @@ Velox::Entity* Velox::EntityManager::getCreateEntity(const Velox::EntityHandle& 
     uint32_t index = freeIndices[freeIndicesCount];
     entities[index] = { makeHandle(index)};
     entities[index].parent = parent;
+
+    isTreeDirty = true;
 
     return &entities[index];
 }
@@ -268,6 +272,8 @@ void Velox::EntityManager::destroyEntity(const Velox::EntityHandle& handle)
     if (!isAlive(handle)) return;
 
     treeView.root.destroyChildren(handle);
+
+    isTreeDirty = true;
 }
 
 void Velox::EntityManager::destroyEntityInternal(const Velox::EntityHandle& handle)
@@ -288,6 +294,8 @@ void Velox::EntityManager::destroyAllEntities()
         generations[i]  += 1;
         freeIndicesCount = MAX_ENTITIES;
     }
+
+    isTreeDirty = true;
 }
 
 void Velox::EntityManager::updateEntities(double& deltaTime)
@@ -301,8 +309,11 @@ void Velox::EntityManager::drawEntities()
         pair.second->draw();
 }
 
-void Velox::EntityManager::generateTreeView()
+void Velox::EntityManager::generateTreeView(bool forceUpdate)
 {
+    if (!isTreeDirty && !forceUpdate)
+        return;
+
     treeView.root = {};
 
     for (std::pair<EntityHandle, Entity*> pair : iter())
@@ -311,6 +322,8 @@ void Velox::EntityManager::generateTreeView()
         if (!result)
             LOG_WARN("Failed to add entity to tree view");
     }
+
+    isTreeDirty = false;
 }
 
 void Velox::EntityManager::getTreeViewHandlesAsVector(std::vector<EntityHandle>* handles)

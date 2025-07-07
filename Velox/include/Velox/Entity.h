@@ -123,6 +123,7 @@ struct VELOX_API EntityManager {
     uint32_t freeIndices[MAX_ENTITIES];
     size_t freeIndicesCount = MAX_ENTITIES;
     Velox::EntityTreeView treeView;
+    bool isTreeDirty = false;
 
     EntityManager();
 
@@ -145,7 +146,7 @@ struct VELOX_API EntityManager {
     // other than on first creation with the optional parent parameter on createEntity().
     // This is pretty dusty, but hierachy is suprisingly tricky to get right (without blowing up
     // code complextity). addParent() utility method should be used as a reminder.
-    void generateTreeView();
+    void generateTreeView(bool forceUpdate = false);
 
     void getTreeViewHandlesAsVector(std::vector<EntityHandle>* handles);
     void getTreeViewEntitiesAsVector(std::vector<Entity*>* handles);
