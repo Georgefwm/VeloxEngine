@@ -21,7 +21,7 @@ VELOX_API Velox::TextDrawStyle* GetUsingTextStyle();
 VELOX_API void getStringContinueInfo(const char* text, Velox::TextContinueInfo* resultInfo,
         Velox::TextContinueInfo* startInfo = nullptr);
 
-VELOX_API void getStringBounds(const char* text, Velox::Rectangle* bounds,
+VELOX_API void getStringBounds(const char* text, const vec3& position, Velox::Rectangle* bounds,
         Velox::TextContinueInfo* startInfo = nullptr);
 
 void initText();

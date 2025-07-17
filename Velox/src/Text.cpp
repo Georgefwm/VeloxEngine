@@ -3,6 +3,7 @@
 
 #include "Asset.h"
 #include <SDL3/SDL_stdinc.h>
+#include <glm/ext/matrix_transform.hpp>
 #include <stack>
 #include <msdf-atlas-gen/msdf-atlas-gen.h>
 
@@ -68,8 +69,8 @@ void Velox::getStringContinueInfo(const char* text, Velox::TextContinueInfo* res
     msdfgen::FontMetrics metrics = fontGeometry.getMetrics();
 
     double x = 0.0;
-    double fontScale = 1 / (metrics.ascenderY - metrics.descenderY) * usingStyle->textSize;
-    double y = 0.0;
+    double fontScale = 1 / (metrics.ascenderY - metrics.descenderY);
+    double y = fontScale * (metrics.ascenderY);
 
     size_t charCount = SDL_strlen(text);
 
@@ -127,12 +128,11 @@ void Velox::getStringContinueInfo(const char* text, Velox::TextContinueInfo* res
     resultInfo->advanceY = y;
 }
 
-void Velox::getStringBounds(const char* text, Velox::Rectangle* bounds, Velox::TextContinueInfo* textContinueInfo)
+void Velox::getStringBounds(const char* text, const vec3& position, Velox::Rectangle* bounds,
+        Velox::TextContinueInfo* textContinueInfo)
 {
     if (bounds == nullptr)
         return;
-
-    *bounds = {};
 
     Velox::Font* usingFont = Velox::GetUsingFont();
     Velox::TextDrawStyle* usingStyle = Velox::GetUsingTextStyle();
@@ -142,8 +142,11 @@ void Velox::getStringBounds(const char* text, Velox::Rectangle* bounds, Velox::T
     msdfgen::FontMetrics metrics = fontGeometry.getMetrics();
 
     double x = 0.0;
-    double fontScale = 1 / (metrics.ascenderY - metrics.descenderY) * usingStyle->textSize;
-    double y = 0.0;
+    double fontScale = 1 / (metrics.ascenderY - metrics.descenderY);
+    double y = fontScale * (metrics.ascenderY);
+
+    bounds->x = 9999;
+    bounds->y = 9999;
 
     size_t charCount = SDL_strlen(text);
 
@@ -159,7 +162,7 @@ void Velox::getStringBounds(const char* text, Velox::Rectangle* bounds, Velox::T
 
         x += fontScale * advance;
     }
-
+    
     for (size_t i = 0; i < charCount; i++)
     {
         char character = text[i];
@@ -169,7 +172,7 @@ void Velox::getStringBounds(const char* text, Velox::Rectangle* bounds, Velox::T
         if (character == '\n')
         {
             x = 0;
-            y -= fontScale * metrics.lineHeight + usingStyle->lineSpacing;
+            y += usingStyle->textSize * metrics.lineHeight * usingStyle->lineSpacing;
             continue;
         }
 
@@ -185,25 +188,58 @@ void Velox::getStringBounds(const char* text, Velox::Rectangle* bounds, Velox::T
             continue;
         }
 
-        // Only need to calculate the quad bounds for this.
+        double atlasLeft, atlasBot, atlasRight, atlasTop;
+        glyph->getQuadAtlasBounds(atlasLeft, atlasBot, atlasRight, atlasTop);
+
+        vec2 textureCoordMin((f32)atlasLeft,  (f32)atlasBot);
+        vec2 textureCoordMax((f32)atlasRight, (f32)atlasTop);
 
         double planeLeft, planeBot, planeRight, planeTop;
         glyph->getQuadPlaneBounds(planeLeft, planeBot, planeRight, planeTop);
 
-        vec2 quadMin((f32)planeLeft,  (f32)planeBot);
-        vec2 quadMax((f32)planeRight, (f32)planeTop);
+        vec2 quadMin((f32)planeLeft,  (f32)planeTop);
+        vec2 quadMax((f32)planeRight, (f32)planeBot);
         
-        quadMin *= fontScale;
+        float yOffset = planeTop + planeBot;
+        quadMin.y -= yOffset;
+        quadMax.y -= yOffset;
+
         quadMax *= fontScale;
         
         vec2 currentAdvance((f32)x, (f32)y); 
         quadMin += currentAdvance;
         quadMax += currentAdvance;
 
-        if (quadMin.x < bounds->x) bounds->x = quadMin.x;
-        if (quadMin.y < bounds->y) bounds->y = quadMin.y;
-        if (quadMax.x > bounds->w) bounds->w = quadMax.x;
-        if (quadMax.y > bounds->h) bounds->h = quadMax.y;
+        vec2 texelSize(1.0 / usingFont->atlasResolution.x, 1.0 / usingFont->atlasResolution.y);
+        textureCoordMin *= texelSize;
+        textureCoordMax *= texelSize;
+
+        // Draw. 
+
+        constexpr u32 quadVertexCount = 4;
+        constexpr u32 quadIndexCount  = 6;
+
+        glm::mat4 transform = 
+            glm::translate(glm::mat4(1.0f), position) *
+            glm::scale(glm::mat4(1.0f), vec3(vec2(usingStyle->textSize), 1.0f));
+
+        Velox::FontVertex baseVertex;
+
+        baseVertex.position = transform * vec4(quadMin.x, quadMax.y, 0.0f, 1.0f);
+        
+        if (bounds->x > baseVertex.position.x)
+            bounds->x = baseVertex.position.x;
+
+        if (bounds->y > baseVertex.position.y)
+            bounds->y = baseVertex.position.y;
+
+        baseVertex.position = transform * vec4(quadMax.x, quadMin.y, 0.0f, 1.0f);
+
+        if (bounds->w < baseVertex.position.x - bounds->x)
+            bounds->w = baseVertex.position.x - bounds->x;
+
+        if (bounds->h < baseVertex.position.y - bounds->y)
+            bounds->h = baseVertex.position.y - bounds->y;
 
         // update advance.
 

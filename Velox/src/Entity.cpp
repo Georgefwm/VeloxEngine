@@ -43,7 +43,7 @@ void Velox::Entity::update(const double& deltaTime, Velox::Entity* parentRef)
 {
     if (parentRef != nullptr)
     {
-        // GM: This is jank, sorry :(
+        // GM: This is kinda jank.
         absolutePosition = vec3(vec2(parentRef->absolutePosition) +
             glm::rotate(vec2(position), glm::radians(parentRef->absoluteRotation)), 0.0f);
 

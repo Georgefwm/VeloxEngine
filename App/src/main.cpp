@@ -89,10 +89,7 @@ void doTestStuff()
     Velox::drawText(testText, testPos);
 
     Velox::Rectangle bounds;
-    Velox::getStringBounds(testText, &bounds);
-
-    bounds.x += testPos.x;
-    bounds.y += testPos.y;
+    Velox::getStringBounds(testText, testPos, &bounds);
 
     Velox::drawRect(bounds, COLOR_GREEN);
 
@@ -118,7 +115,7 @@ void doRenderingStuff()
 {
     g_entityManager->drawEntities();
 
-    // doTestStuff();
+    doTestStuff();
     // ImGui::ShowDemoWindow();
 }
 
@@ -176,5 +173,6 @@ void run()
 int main(int argc, char** argv)
 {   
     runPlaneGame();
+    // run();
     return 0;
 }

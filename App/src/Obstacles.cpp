@@ -30,9 +30,9 @@ void setupObstacles(f32 gapOffset)
     bot->scale = vec2(spikeSize / 8.0f, spikeSize);
 
     top->position = vec3(windowSize.x + 30.0f, midPoint + (s_gapSize / 2.0f) + 5.0f, 0.0f);
-    top->rotation = 180.0f;  // upside down.
 
     bot->position = vec3(windowSize.x + 30.0f, midPoint - spikeSize - (s_gapSize / 2.0f)- 0.5, 0.0f);
+    bot->rotation = 180.0f;  // upside down.
 
     top->texture = Velox::getAssetManager()->loadTexture("rock_ice.png");
     bot->texture = Velox::getAssetManager()->getTexture("rock_ice.png");
@@ -47,8 +47,8 @@ void setupObstacles(f32 gapOffset)
     Velox::Entity* topCollider = Velox::getEntityManager()->getCreateEntity(top->id);
     Velox::Entity* botCollider = Velox::getEntityManager()->getCreateEntity(bot->id);
 
-    topCollider->position.x = -60.0f;
-    botCollider->position.x = 120.0f;
+    topCollider->position.x = 80.0f;
+    botCollider->position.x = -45.0f;
 
     topCollider->scale.x = 0.2f;
     botCollider->scale.x = 0.2f;

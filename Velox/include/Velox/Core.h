@@ -12,6 +12,7 @@ struct VELOX_API EngineState {
     bool showSettings         = false;
     bool showEntityInfo       = false;
     bool drawColliders        = false;
+    bool drawTextLines        = false;
 };
 
 // GM: Sets up all framework systems.

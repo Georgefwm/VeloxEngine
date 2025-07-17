@@ -48,6 +48,13 @@ constexpr vec4 QUAD_VERTEX_POSITIONS[4] = {
 	{  1.0f, 0.0f, 0.0f, 1.0f },
 };
 
+constexpr vec4 QUAD_UV_POSITIONS[4] = {
+	{  0.0f, 1.0f, 0.0f, 1.0f },
+    {  0.0f, 0.0f, 0.0f, 1.0f },
+	{  1.0f, 0.0f, 0.0f, 1.0f },
+	{  1.0f, 1.0f, 0.0f, 1.0f },
+};
+
 Velox::Config* s_config;
 static bool s_adaptiveVsyncSupported = false;
 
@@ -130,7 +137,7 @@ void Velox::setResolution(ivec2 newResolution)
     // update OpenGL things.
     glViewport(0, 0, s_frameBufferSize.x, s_frameBufferSize.y);
 
-    g_projection =  glm::ortho(0.0f, (float)s_frameBufferSize.x, 0.0f, (float)s_frameBufferSize.y, -1.0f, 1.0f);
+    g_projection =  glm::ortho(0.0f, (float)s_frameBufferSize.x, (float)s_frameBufferSize.y, 0.0f, -1.0f, 1.0f);
 }
 
 void Velox::setVsyncMode(int newMode)
@@ -216,9 +223,9 @@ void Velox::initRenderer()
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);  
 
-    glEnable(GL_CULL_FACE); 
-    glCullFace(GL_BACK);
-    glFrontFace(GL_CW); // Vertices are defind clockwise. This is standard in mordern model formats.
+    // glEnable(GL_CULL_FACE); 
+    // glCullFace(GL_BACK);
+    // glFrontFace(GL_CW); // Vertices are defind clockwise. This is standard in mordern model formats.
 
     g_texturedQuadPipeline.init(1);
     g_linePipeline.init(2);
@@ -257,7 +264,7 @@ void Velox::initRenderer()
     g_errorTexture = assetManager->loadTexture("missing_texture.png");
     g_whiteTexture = assetManager->loadTexture("white.png");
 
-    g_projection =  glm::ortho(0.0f, (float)s_windowSize.x, 0.0f, (float)s_windowSize.y, -1.0f, 1.0f);
+    g_projection =  glm::ortho(0.0f, (float)s_windowSize.x, (float)s_windowSize.y, 0.0f, -1.0f, 1.0f);
     g_view = glm::mat4(1.0f);
     // g_view = glm::translate(g_view, glm::vec3(0.0f, 0.0f, -3.0f)); 
     
@@ -461,7 +468,7 @@ void Velox::drawQuad(const mat4& transform, const mat4& uvTransform, const vec4&
         Velox::TextureVertex vertex {};
         vertex.position = transform * QUAD_VERTEX_POSITIONS[i];
         vertex.color    = color;
-        vertex.uv       = uvTransform * QUAD_VERTEX_POSITIONS[i];
+        vertex.uv       = uvTransform * QUAD_UV_POSITIONS[i];
 
         g_texturedQuadPipeline.vertices[startVertexOffset + i] = vertex;
     }
@@ -582,6 +589,8 @@ void Velox::drawRect(const vec3& position, const vec2& size, const vec4& color)
 Velox::TextContinueInfo Velox::drawText(const char* text, const vec3& position,
         Velox::TextContinueInfo* textContinueInfo)
 {
+    bool drawDebugLines = Velox::getEngineState()->drawTextLines;
+
     Velox::Font* usingFont = Velox::GetUsingFont();
     Velox::TextDrawStyle* usingStyle = Velox::GetUsingTextStyle();
 
@@ -590,8 +599,12 @@ Velox::TextContinueInfo Velox::drawText(const char* text, const vec3& position,
     msdfgen::FontMetrics metrics = fontGeometry.getMetrics();
 
     double x = 0.0;
-    double fontScale = 1 / (metrics.ascenderY - metrics.descenderY) * usingStyle->textSize;
-    double y = 0.0;
+    double fontScale = 1 / (metrics.ascenderY - metrics.descenderY);
+    double y = fontScale * (metrics.ascenderY);
+
+    Velox::Rectangle bounds {};
+    bounds.x = 9999;
+    bounds.y = 9999;
 
     size_t charCount = SDL_strlen(text);
 
@@ -617,7 +630,7 @@ Velox::TextContinueInfo Velox::drawText(const char* text, const vec3& position,
         if (character == '\n')
         {
             x = 0;
-            y -= fontScale * metrics.lineHeight * usingStyle->lineSpacing;
+            y += usingStyle->textSize * metrics.lineHeight * usingStyle->lineSpacing;
             continue;
         }
 
@@ -642,10 +655,13 @@ Velox::TextContinueInfo Velox::drawText(const char* text, const vec3& position,
         double planeLeft, planeBot, planeRight, planeTop;
         glyph->getQuadPlaneBounds(planeLeft, planeBot, planeRight, planeTop);
 
-        vec2 quadMin((f32)planeLeft,  (f32)planeBot);
-        vec2 quadMax((f32)planeRight, (f32)planeTop);
+        vec2 quadMin((f32)planeLeft,  (f32)planeTop);
+        vec2 quadMax((f32)planeRight, (f32)planeBot);
         
-        quadMin *= fontScale;
+        float yOffset = planeTop + planeBot;
+        quadMin.y -= yOffset;
+        quadMax.y -= yOffset;
+
         quadMax *= fontScale;
         
         vec2 currentAdvance((f32)x, (f32)y); 
@@ -675,7 +691,8 @@ Velox::TextContinueInfo Velox::drawText(const char* text, const vec3& position,
         command.numIndices  = quadIndexCount;  // Always 6 for a quad.
 
         glm::mat4 transform = 
-            glm::translate(glm::mat4(1.0f), position);
+            glm::translate(glm::mat4(1.0f), position) *
+            glm::scale(glm::mat4(1.0f), vec3(vec2(usingStyle->textSize), 1.0f));
 
         Velox::FontVertex baseVertex = {
             .innerColor = usingStyle->color,
@@ -695,6 +712,15 @@ Velox::TextContinueInfo Velox::drawText(const char* text, const vec3& position,
         baseVertex.uv       = { textureCoordMin.x, textureCoordMax.y };
         g_fontPipeline.vertices[startVertexOffset + 1] = baseVertex;
         
+        if (drawDebugLines)
+        {
+            if (bounds.x > baseVertex.position.x)
+                bounds.x = baseVertex.position.x;
+
+            if (bounds.y > baseVertex.position.y)
+                bounds.y = baseVertex.position.y;
+        }
+
         baseVertex.position = transform * vec4(quadMax.x, quadMax.y, 0.0f, 1.0f);
         baseVertex.uv       = { textureCoordMax.x, textureCoordMax.y };
         g_fontPipeline.vertices[startVertexOffset + 2] = baseVertex;
@@ -702,6 +728,15 @@ Velox::TextContinueInfo Velox::drawText(const char* text, const vec3& position,
         baseVertex.position = transform * vec4(quadMax.x, quadMin.y, 0.0f, 1.0f);
         baseVertex.uv       = { textureCoordMax.x, textureCoordMin.y };
         g_fontPipeline.vertices[startVertexOffset + 3] = baseVertex;
+
+        if (drawDebugLines)
+        {
+            if (bounds.w < baseVertex.position.x - bounds.x)
+                bounds.w = baseVertex.position.x - bounds.x;
+
+            if (bounds.h < baseVertex.position.y - bounds.y)
+                bounds.h = baseVertex.position.y - bounds.y;
+        }
 
         for (u32 i = 0; i < quadIndexCount; i++)
         {
@@ -724,6 +759,19 @@ Velox::TextContinueInfo Velox::drawText(const char* text, const vec3& position,
             float kerningOffset = 0.0;
             x += fontScale * advance + kerningOffset;
         }
+    }
+
+    if (drawDebugLines)
+    {
+        Velox::drawRect(bounds, COLOR_GREEN);
+
+        // Baseline
+        Velox::drawLine(vec3(bounds.x, position.y + (metrics.ascenderY * usingStyle->textSize), 0.0f),
+                vec3(bounds.x + bounds.w, position.y + (metrics.ascenderY * usingStyle->textSize), 0.0f),
+                COLOR_RED);
+
+        Velox::drawLine(vec3(position), vec3(position) + vec3(0.0f, 40.0f, 0.0f), COLOR_YELLOW);
+        Velox::drawLine(vec3(position), vec3(position) + vec3(40.0f, 0.0f, 0.0f), COLOR_YELLOW);
     }
 
     return Velox::TextContinueInfo { 

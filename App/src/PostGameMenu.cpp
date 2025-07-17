@@ -43,9 +43,7 @@ void drawPostGameMenu()
     for (i32 i = 0; i < s_menuItems.size(); i++)
     {
         Velox::Rectangle textBounds;
-        Velox::getStringBounds(s_menuItems[i].c_str(), &textBounds);
-        textBounds.x = menuPosition.x;
-        textBounds.y = menuPosition.y;
+        Velox::getStringBounds(s_menuItems[i].c_str(), menuPosition, &textBounds);
 
         if (Velox::isMouseInArea(textBounds))
         {

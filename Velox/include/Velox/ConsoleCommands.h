@@ -17,6 +17,7 @@ void reloadShaderCommand(std::string& response, const std::vector<std::string> a
 void entityCommand(std::string& response, const std::vector<std::string> args);
 void colliderCommand(std::string& response, const std::vector<std::string> args);
 void eventSubscribersCommand(std::string& response, const std::vector<std::string> args);
+void debugText(std::string& response, const std::vector<std::string> args);
 void quitCommand(std::string& response, const std::vector<std::string> args);
 
 }

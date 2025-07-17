@@ -34,6 +34,9 @@ void Velox::registerDefaultCommands()
 
     // Print event subscribers.
     console->registerCommand("eventsubscribers", &Velox::eventSubscribersCommand);
+    
+    // Draw text alignment info.
+    console->registerCommand("debugtext", &Velox::debugText);
 
     // Request quit.
     console->registerCommand("quit", &Velox::quitCommand);
@@ -115,6 +118,12 @@ void Velox::eventSubscribersCommand(std::string& response, const std::vector<std
     string << "\n";
 
     response = string.str();
+}
+
+void Velox::debugText(std::string& response, const std::vector<std::string> args)
+{
+    Velox::EngineState* engineState = Velox::getEngineState();
+    engineState->drawTextLines= !engineState->drawTextLines;
 }
 
 void Velox::quitCommand(std::string& response, const std::vector<std::string> args)

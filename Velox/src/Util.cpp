@@ -48,6 +48,7 @@ bool Velox::isOverlapping(const Velox::Rectangle& rectA, const Velox::Rectangle&
 bool Velox::isMouseInArea(const Velox::Rectangle& rect)
 {
     vec2 mousePosition = Velox::getMousePosition();
+    mousePosition.y = Velox::getWindowSize().y - mousePosition.y;
     
     if (mousePosition.x < rect.x || mousePosition.x > rect.x + rect.w)
         return false;

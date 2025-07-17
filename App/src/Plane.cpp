@@ -38,7 +38,7 @@ void updatePlane(Velox::Entity& e, const double& deltaTime)
     float windowHeight = Velox::getWindowSize().y;
 
     // Lose if plane falls out of bounds.
-    if (e.position.y < 0 - e.scale.y * 0.8)
+    if (e.position.y > windowHeight - (e.scale.y * 0.5))
     {
         changeGameStage(GameStage::PostRound);
         return;
@@ -59,7 +59,7 @@ void updatePlane(Velox::Entity& e, const double& deltaTime)
     }
 
     s_verticalVelocity -= GRAVITY_FACTOR * deltaTime;
-    e.position.y += s_verticalVelocity;
+    e.position.y -= s_verticalVelocity;
 
     // update orientation
     vec2 pointDirection = vec2(getGameState()->scrollSpeed, s_verticalVelocity);
