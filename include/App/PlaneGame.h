@@ -10,8 +10,10 @@ struct GameState {
     u8 gameStage = 0;
     bool paused = false;;
 
-    // Menu
+    // UI
     i32 hoveredItem = -1;
+    i32 score = 0;
+    i32 highScore = 0;
 
     // Simulation
     float scrollSpeed = 700.0f;

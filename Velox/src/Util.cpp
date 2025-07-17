@@ -1,6 +1,7 @@
 #include "Util.h"
 #include <PCH.h>
 
+#include "Core.h"
 #include "Input.h"
 #include "Rendering/Renderer.h"
 
@@ -49,6 +50,9 @@ bool Velox::isMouseInArea(const Velox::Rectangle& rect)
 {
     vec2 mousePosition = Velox::getMousePosition();
     mousePosition.y = Velox::getWindowSize().y - mousePosition.y;
+
+    if (Velox::getEngineState()->drawColliders)
+        Velox::drawRect(rect, COLOR_GREEN);
     
     if (mousePosition.x < rect.x || mousePosition.x > rect.x + rect.w)
         return false;

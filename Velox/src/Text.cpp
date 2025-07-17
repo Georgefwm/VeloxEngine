@@ -252,6 +252,7 @@ void Velox::getStringBounds(const char* text, const vec3& position, Velox::Recta
             x += fontScale * advance + kerningOffset;
         }
     }
+
 }
 
 void Velox::initText()

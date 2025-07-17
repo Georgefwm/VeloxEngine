@@ -12,6 +12,7 @@
 #include "Plane.h"
 #include "Rendering/Renderer.h"
 #include "ScrollingBackground.h"
+#include "Text.h"
 #include "Timing.h"
 #include <imgui.h>
 
@@ -19,6 +20,7 @@ static GameState s_gameState {};
 
 GameState* getGameState() { return &s_gameState; }
 
+// This is very unreal engine-y, not sure if good thing.
 void changeGameStage(u8 newStage)
 {
     if (s_gameState.gameStage == newStage)
@@ -28,20 +30,24 @@ void changeGameStage(u8 newStage)
     {
         Velox::getEntityManager()->destroyAllEntities();
 
+        s_gameState.score = 0;
+
         setupScrollingBackground();
         setupPlane();
         setupSpawner();
     }
 
     if (newStage == GameStage::MainMenu)
-    {
-        // Enter main menu logic.
         Velox::getEntityManager()->destroyAllEntities();
-    }
 
     if (newStage == GameStage::PostRound)
     {
-        // Enter post round menu logic.
+        if (s_gameState.highScore < s_gameState.score)
+        {
+            s_gameState.highScore = s_gameState.score;
+
+            // Something special for new highscore!
+        }
     }
 
     s_gameState.gameStage = newStage;
@@ -58,6 +64,18 @@ void doPlaneGameUpdates(const double& deltaTime)
 void drawPlaneGame()
 {
     Velox::getEntityManager()->drawEntities();
+
+    if (s_gameState.gameStage == GameStage::Simulation)
+    {
+        Velox::TextDrawStyle style {};
+        style.textSize = 100.0f;
+
+        std::string scoreText = fmt::format("Score: {}", s_gameState.score);
+
+        Velox::pushTextStyle(style);
+        Velox::drawText(scoreText.c_str(), vec3(50.0f, 50.0f, 0.0f));
+        Velox::popTextStyle();
+    }
 
     if (s_gameState.gameStage == GameStage::MainMenu)
         drawMenu();

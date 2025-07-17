@@ -12,6 +12,7 @@ static f64 s_spawnCooldown = 6.0f;
 
 static f32 s_gapSize = 500.0f;
 static f32 s_offsetMax;
+static Velox::EntityHandle s_lastScoringID {};
 
 void setupObstacles(f32 gapOffset)
 {
@@ -63,6 +64,18 @@ void updateObstacles(Velox::Entity& e, const double& deltaTime)
     {
         Velox::getEntityManager()->destroyEntity(e.id);
         return;
+    }
+
+    // Bit jank, but just use the top spike to register points, need better
+    // entity system...
+    if (e.position.y < 0.0f)
+    {
+        float planeXPosition = 200.0f;
+        if (e.position.x < planeXPosition && s_lastScoringID != e.id)
+        {
+            s_lastScoringID = e.id;
+            getGameState()->score += 1;
+        }
     }
 
     e.position.x -= getGameState()->scrollSpeed * deltaTime;

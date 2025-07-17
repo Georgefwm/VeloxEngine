@@ -30,14 +30,13 @@ static std::vector<std::string> s_menuItems = { "Play", "Quit" };
 void drawMenu()
 {
     GameState* gs = getGameState();
-    vec2 windowSize = Velox::getWindowSize();
-    vec3 menuPosition = vec3(200, windowSize.y * 0.8f, 0.0f);
+    vec3 menuPosition = vec3(200.0f, 200.0f, 0.0f);
 
     Velox::pushTextStyle(TITLE_TEXT_STYLE);
     Velox::drawText("PLANE GAME", menuPosition);
     Velox::popTextStyle();
 
-    menuPosition.y -= ITEM_SPACING;
+    menuPosition.y += ITEM_SPACING + 50.0f;
 
     Velox::pushTextStyle(TEXT_STYLE);
     
@@ -72,7 +71,7 @@ void drawMenu()
             Velox::drawText(s_menuItems[i].c_str(), menuPosition);
         }
 
-        menuPosition.y -= ITEM_SPACING;
+        menuPosition.y += ITEM_SPACING;
     }
 
     Velox::popTextStyle();
