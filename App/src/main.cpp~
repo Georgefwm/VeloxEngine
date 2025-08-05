@@ -52,10 +52,10 @@ void doTestStuff()
 
     vec3 continueTextPosition = vec3(1000.0f, 300.0f, 0.0f);
     Velox::TextContinueInfo contInfo = Velox::drawText("con", continueTextPosition);
-    //contInfo = Velox::drawColoredText("tin", continueTextPosition, COLOR_RED, &contInfo);
-    //contInfo = Velox::drawColoredText("ued ", continueTextPosition, COLOR_GREEN, &contInfo);
-    //contInfo = Velox::drawColoredText("text and\non ", continueTextPosition, COLOR_BLUE, &contInfo);
-    //contInfo = Velox::drawColoredText("new line", continueTextPosition, COLOR_GRAY_LIGHT, &contInfo);
+    contInfo = Velox::drawColoredText("tin", continueTextPosition, COLOR_RED, &contInfo);
+    contInfo = Velox::drawColoredText("ued ", continueTextPosition, COLOR_GREEN, &contInfo);
+    contInfo = Velox::drawColoredText("text and\non ", continueTextPosition, COLOR_BLUE, &contInfo);
+    contInfo = Velox::drawColoredText("new line", continueTextPosition, COLOR_GRAY_LIGHT, &contInfo);
 
     vec3 testPos(2200.0f, 300.0f, 0.0f);
     const char* testText = "boundtest";
@@ -88,20 +88,7 @@ void doUITestStuff()
 {
     UI::beginBuild();
 
-    UI::Comm wComm = UI::window({ 0.0f, 0.0f, 1920.0f, 300.0f }, "window_a");
-    wComm.box->childLayoutAxis = UI::Axis2_Y;
-
-    UI::section();
-    UI::button("file");
-    UI::spacing(50.0f);
-    UI::button("options");
-    UI::spacing(50.0f);
-    UI::button("help");
-    UI::popParent();
-
-    UI::section();
-    UI::text("some test text in a new section");
-    UI::popParent();
+    UI::Comm comm = UI::window({ 100.0f, 100.0f, 400.0f, 400.0f }, "test_window");
 
     UI::endBuild();
 }

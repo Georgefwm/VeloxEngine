@@ -3,7 +3,6 @@
 
 #include "Asset.h"
 #include <SDL3/SDL_stdinc.h>
-#include <glm/ext/matrix_transform.hpp>
 #include <stack>
 #include <msdf-atlas-gen/msdf-atlas-gen.h>
 
@@ -30,7 +29,12 @@ void Velox::popFont()
     s_fontStack.pop();
 }
 
-Velox::Font* Velox::GetUsingFont()
+Velox::Font* Velox::getDefaultFont()
+{
+    return g_defaultFont;
+}
+
+Velox::Font* Velox::getUsingFont()
 {
     if (s_fontStack.size() == 0)
         return g_defaultFont;
@@ -61,7 +65,7 @@ Velox::TextDrawStyle* Velox::GetUsingTextStyle()
 
 void Velox::getStringContinueInfo(const char* text, Velox::TextContinueInfo* resultInfo, Velox::TextContinueInfo* startInfo)
 {
-    Velox::Font* usingFont = Velox::GetUsingFont();
+    Velox::Font* usingFont = Velox::getUsingFont();
     Velox::TextDrawStyle* usingStyle = Velox::GetUsingTextStyle();
 
     const msdf_atlas::FontGeometry& fontGeometry = usingFont->fontGeometry;
@@ -134,7 +138,7 @@ void Velox::getStringBounds(const char* text, const vec3& position, Velox::Recta
     if (bounds == nullptr)
         return;
 
-    Velox::Font* usingFont = Velox::GetUsingFont();
+    Velox::Font* usingFont = Velox::getUsingFont();
     Velox::TextDrawStyle* usingStyle = Velox::GetUsingTextStyle();
 
     const msdf_atlas::FontGeometry& fontGeometry = usingFont->fontGeometry;
@@ -253,6 +257,109 @@ void Velox::getStringBounds(const char* text, const vec3& position, Velox::Recta
         }
     }
 
+}
+
+vec2 Velox::getStringSize(const char* text, const Velox::TextDrawStyle& style)
+{
+    Velox::Font* font = style.font;
+    if (font == nullptr)
+    {
+        LOG_WARN("Falling back to default font for text bounds calculation");
+        font = Velox::getDefaultFont();
+    }
+
+    const msdf_atlas::FontGeometry& fontGeometry = style.font->fontGeometry;
+
+    msdfgen::FontMetrics metrics = fontGeometry.getMetrics();
+
+    double x = 0.0;
+    double fontScale = 1 / (metrics.ascenderY - metrics.descenderY);
+    double y = fontScale * (metrics.ascenderY);
+
+    Velox::Rectangle bounds {};
+    bounds.x = 9999;
+    bounds.y = 9999;
+
+    size_t charCount = SDL_strlen(text);
+
+    for (size_t i = 0; i < charCount; i++)
+    {
+        char character = text[i];
+
+        const msdf_atlas::GlyphGeometry* glyph = fontGeometry.getGlyph(character);
+        
+        if (character == '\n')
+        {
+            x = 0;
+            y += style.textSize * metrics.lineHeight * style.lineSpacing;
+            continue;
+        }
+
+        if (glyph == nullptr)
+        {
+            LOG_WARN("Couldn't find glyph for '{}', falling back to '?'", character);
+            glyph = fontGeometry.getGlyph('?'); // fallback char
+        }
+        
+        if (glyph == nullptr)
+        {
+            LOG_ERROR("Couldn't find fallback glyph");
+            continue;
+        }
+
+        double planeLeft, planeBot, planeRight, planeTop;
+        glyph->getQuadPlaneBounds(planeLeft, planeBot, planeRight, planeTop);
+
+        vec2 quadMin((f32)planeLeft,  (f32)planeTop);
+        vec2 quadMax((f32)planeRight, (f32)planeBot);
+        
+        float yOffset = planeTop + planeBot;
+        quadMin.y -= yOffset;
+        quadMax.y -= yOffset;
+
+        quadMax *= fontScale;
+        
+        vec2 currentAdvance((f32)x, (f32)y); 
+        quadMin += currentAdvance;
+        quadMax += currentAdvance;
+
+        glm::mat4 transform = 
+            glm::scale(glm::mat4(1.0f), vec3(vec2(style.textSize), 1.0f));
+
+        Velox::FontVertex baseVertex = {};
+
+        baseVertex.position = transform * vec4(quadMin.x, quadMin.y, 0.0f, 1.0f);
+        baseVertex.position = transform * vec4(quadMin.x, quadMax.y, 0.0f, 1.0f);  
+
+        if (bounds.x > baseVertex.position.x)
+            bounds.x = baseVertex.position.x;
+
+        if (bounds.y > baseVertex.position.y)
+            bounds.y = baseVertex.position.y;
+
+
+        baseVertex.position = transform * vec4(quadMax.x, quadMax.y, 0.0f, 1.0f);
+        baseVertex.position = transform * vec4(quadMax.x, quadMin.y, 0.0f, 1.0f);
+
+        if (bounds.w < baseVertex.position.x - bounds.x)
+            bounds.w = baseVertex.position.x - bounds.x;
+
+        if (bounds.h < baseVertex.position.y - bounds.y)
+            bounds.h = baseVertex.position.y - bounds.y;
+
+        // update advance.
+
+        if (i < charCount - 1) // Last iteration.
+        {
+            double advance; 
+            fontGeometry.getAdvance(advance, character, text[i + 1]);
+
+            float kerningOffset = 0.0;
+            x += fontScale * advance + kerningOffset;
+        }
+    }
+
+    return { bounds.w, (metrics.ascenderY - metrics.descenderY) * style.textSize };
 }
 
 void Velox::initText()

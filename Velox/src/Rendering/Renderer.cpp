@@ -18,9 +18,6 @@
 #include <SDL3/SDL_opengl.h>
 #include <SDL3_image/SDL_image.h>
 
-#include <glm/ext/matrix_clip_space.hpp>
-#include <glm/ext/matrix_transform.hpp>
-
 #include <imgui.h>
 #include <imgui_impl_sdl3.h>
 #include <imgui_impl_opengl3.h>
@@ -587,14 +584,17 @@ void Velox::drawRect(const vec3& position, const vec2& size, const vec4& color)
 // GM: For reference of how fonts are rendered on screen see:
 // https://freetype.org/freetype2/docs/tutorial/step2.html#section-1
 Velox::TextContinueInfo Velox::drawText(const char* text, const vec3& position,
-        Velox::TextContinueInfo* textContinueInfo)
+        const Velox::TextDrawStyle& style, Velox::TextContinueInfo* textContinueInfo)
 {
     bool drawDebugLines = Velox::getEngineState()->drawTextLines;
 
-    Velox::Font* usingFont = Velox::GetUsingFont();
-    Velox::TextDrawStyle* usingStyle = Velox::GetUsingTextStyle();
+    Velox::Font* font = style.font;
+    if (font == nullptr)
+    {
+        font = Velox::getDefaultFont();
+    }
 
-    const msdf_atlas::FontGeometry& fontGeometry = usingFont->fontGeometry;
+    const msdf_atlas::FontGeometry& fontGeometry = font->fontGeometry;
 
     msdfgen::FontMetrics metrics = fontGeometry.getMetrics();
 
@@ -630,7 +630,7 @@ Velox::TextContinueInfo Velox::drawText(const char* text, const vec3& position,
         if (character == '\n')
         {
             x = 0;
-            y += usingStyle->textSize * metrics.lineHeight * usingStyle->lineSpacing;
+            y += style.textSize * metrics.lineHeight * style.lineSpacing;
             continue;
         }
 
@@ -668,7 +668,7 @@ Velox::TextContinueInfo Velox::drawText(const char* text, const vec3& position,
         quadMin += currentAdvance;
         quadMax += currentAdvance;
 
-        vec2 texelSize(1.0 / usingFont->atlasResolution.x, 1.0 / usingFont->atlasResolution.y);
+        vec2 texelSize(1.0 / font->atlasResolution.x, 1.0 / font->atlasResolution.y);
         textureCoordMin *= texelSize;
         textureCoordMax *= texelSize;
 
@@ -685,23 +685,23 @@ Velox::TextContinueInfo Velox::drawText(const char* text, const vec3& position,
 
         Velox::DrawCommand command {};
         command.pipeline = &g_fontPipeline;
-        command.texture  = usingFont->texture;
+        command.texture  = font->texture;
         command.shader   = g_fontShaderProgram;
         command.indexOffset = startIndexOffset;
         command.numIndices  = quadIndexCount;  // Always 6 for a quad.
 
         glm::mat4 transform = 
             glm::translate(glm::mat4(1.0f), position) *
-            glm::scale(glm::mat4(1.0f), vec3(vec2(usingStyle->textSize), 1.0f));
+            glm::scale(glm::mat4(1.0f), vec3(vec2(style.textSize), 1.0f));
 
         Velox::FontVertex baseVertex = {
-            .innerColor = usingStyle->color,
-            .threshold  = usingStyle->fontWeightBias,
+            .innerColor = style.color,
+            .threshold  = style.fontWeightBias,
             .outBias    = 0.25f,
-            .outerColor = usingStyle->outlineColor,
-            .outlineWidthAbsolute = usingStyle->outlineWidth,
-            .outlineWidthRelative = usingStyle->outlineWidth / 4,
-            .outlineBlur = usingStyle->outlineBlur,
+            .outerColor = style.outlineColor,
+            .outlineWidthAbsolute = style.outlineWidth,
+            .outlineWidthRelative = style.outlineWidth / 4,
+            .outlineBlur = style.outlineBlur,
         };
 
         baseVertex.position = transform * vec4(quadMin.x, quadMin.y, 0.0f, 1.0f);
@@ -766,12 +766,12 @@ Velox::TextContinueInfo Velox::drawText(const char* text, const vec3& position,
         Velox::drawRect(bounds, COLOR_GREEN);
 
         // Baseline
-        Velox::drawLine(vec3(bounds.x, position.y + (metrics.ascenderY * usingStyle->textSize), 0.0f),
-                vec3(bounds.x + bounds.w, position.y + (metrics.ascenderY * usingStyle->textSize), 0.0f),
+        Velox::drawLine(vec3(bounds.x, position.y + (metrics.ascenderY * style.textSize), 0.0f),
+                vec3(bounds.x + bounds.w, position.y + (metrics.ascenderY * style.textSize), 0.0f),
                 COLOR_RED);
 
-        Velox::drawLine(vec3(position), vec3(position) + vec3(0.0f, 40.0f, 0.0f), COLOR_YELLOW);
-        Velox::drawLine(vec3(position), vec3(position) + vec3(40.0f, 0.0f, 0.0f), COLOR_YELLOW);
+        Velox::drawLine(vec3(position), vec3(position) + vec3(0.0f, 500.0f, 0.0f), COLOR_RED);
+        Velox::drawLine(vec3(position), vec3(position) + vec3(500.0f, 0.0f, 0.0f), COLOR_RED);
     }
 
     return Velox::TextContinueInfo { 
@@ -781,16 +781,3 @@ Velox::TextContinueInfo Velox::drawText(const char* text, const vec3& position,
     };
 }
 
-
-Velox::TextContinueInfo Velox::drawColoredText(const char* text, const vec3& position,
-        const vec4& color, Velox::TextContinueInfo* textContinueInfo)
-{
-    Velox::TextDrawStyle* style = Velox::GetUsingTextStyle();
-    style->color = color;
-
-    Velox::pushTextStyle(*style);
-    Velox::TextContinueInfo continueInfo = Velox::drawText(text, position, textContinueInfo);
-    Velox::popTextStyle();
-
-    return continueInfo;
-}

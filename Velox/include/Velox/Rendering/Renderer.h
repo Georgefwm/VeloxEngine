@@ -1,12 +1,13 @@
 #pragma once
 
+#include "Text.h"
 #include <Velox.h>
 
 struct SDL_Window;
 SDL_EVENT_FWD_DECL
 
 namespace Velox {
-
+struct Font;
 struct Arena;
 
 struct UniformBufferObject {
@@ -40,6 +41,7 @@ struct alignas(16) FontVertex {
 };
 
 struct TextDrawStyle {
+    Velox::Font* font    = nullptr;
     float textSize       = 24.0f;
     float fontWeightBias = 0.5f;  // Range (0.0f, 1.0f)
     vec4  color          = COLOR_WHITE;
@@ -127,9 +129,8 @@ VELOX_API void drawLine(const vec3& p0, const vec3& p1, const vec4& color);
 VELOX_API void drawRect(const Velox::Rectangle& rect, const vec4& color);
 VELOX_API void drawRect(const vec3& position, const vec2& size, const vec4& color);
 
-VELOX_API TextContinueInfo drawText(const char* text, const vec3& position, TextContinueInfo* textContinueInfo = nullptr);
+VELOX_API TextContinueInfo drawText(const char* text, const vec3& position,
+        const Velox::TextDrawStyle& style = *Velox::GetUsingTextStyle(), TextContinueInfo* textContinueInfo = nullptr);
 
-VELOX_API Velox::TextContinueInfo drawColoredText(const char* text, const vec3& position,
-        const vec4& color, Velox::TextContinueInfo* textContinueInfo = nullptr);
 
 }

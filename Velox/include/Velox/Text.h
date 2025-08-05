@@ -11,7 +11,8 @@ struct Rectangle;
 
 VELOX_API void pushFont(const char* fontName);
 VELOX_API void popFont();
-VELOX_API Velox::Font* GetUsingFont();
+VELOX_API Velox::Font* getDefaultFont();
+VELOX_API Velox::Font* getUsingFont();
 
 VELOX_API void pushTextStyle(const Velox::TextDrawStyle& style);
 VELOX_API void popTextStyle();
@@ -23,6 +24,8 @@ VELOX_API void getStringContinueInfo(const char* text, Velox::TextContinueInfo* 
 
 VELOX_API void getStringBounds(const char* text, const vec3& position, Velox::Rectangle* bounds,
         Velox::TextContinueInfo* startInfo = nullptr);
+
+VELOX_API vec2 getStringSize(const char* text, const Velox::TextDrawStyle& style);
 
 void initText();
 

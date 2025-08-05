@@ -37,6 +37,7 @@ find_package(imgui        CONFIG REQUIRED)
 find_package(tomlplusplus CONFIG REQUIRED)
 find_package(fmt          CONFIG REQUIRED)
 find_package(spdlog       CONFIG REQUIRED)
+find_package(xxhash       CONFIG REQUIRED)
 
 target_link_libraries(Velox PUBLIC
     SDL3::SDL3
@@ -49,6 +50,7 @@ target_link_libraries(Velox PUBLIC
     tomlplusplus::tomlplusplus
     fmt::fmt
     spdlog::spdlog
+    xxHash::xxhash
 )
 
 target_link_libraries(Velox PRIVATE OpenGL::GL)

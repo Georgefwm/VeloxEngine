@@ -65,12 +65,14 @@ struct fmt::formatter<vec3> : formatter<string_view> {
 };
 
 template <>
-struct fmt::formatter<Velox::Rectangle> : formatter<string_view> {
-    auto format(Velox::Rectangle& rect, format_context& ctx) const
-        -> format_context::iterator
-        {
+class fmt::formatter<Velox::Rectangle> {
+public:
+    constexpr auto parse (format_parse_context& ctx) { return ctx.begin(); }
+    template <typename Context>
+    constexpr auto format (Velox::Rectangle const& rect, Context& ctx) const {
             return format_to(ctx.out(), "Rectangle(x: {}, y: {}, w: {}, h: {})",
                 rect.x, rect.y, rect.w, rect.h);
-        }
+    }
 };
+
 
