@@ -5,13 +5,11 @@
 #include "Rendering/Renderer.h"
 
 #include <SDL3_image/SDL_image.h>
-#include <msdf-atlas-gen/types.h>
 #include <SDL3/SDL_filesystem.h>
 #include <SDL3/SDL_oldnames.h>
 #include <SDL3/SDL_pixels.h>
 #include <SDL3/SDL_surface.h>
 #include <glad/gl.h>
-#include <msdf-atlas-gen/msdf-atlas-gen.h>
 
 #include <fstream>
 
@@ -352,7 +350,7 @@ Velox::Font* Velox::AssetManager::loadFont(const char* filepath)
     packer.setDimensionsConstraint(msdf_atlas::DimensionsConstraint::SQUARE);
 
     // setScale for a fixed size or setMinimumScale to use the largest that fits
-    packer.setScale(40.0);
+    packer.setScale(50.0);
 
     // setPixelRange or setUnitRange
     packer.setPixelRange(4.0);

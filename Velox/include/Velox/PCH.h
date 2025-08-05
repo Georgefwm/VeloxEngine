@@ -17,8 +17,15 @@
 // #include <SDL3/SDL.h>
 #include <glm/common.hpp>
 #include <glm/trigonometric.hpp>
+#include <glm/ext/scalar_constants.hpp>
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/ext/matrix_clip_space.hpp>
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/gtx/rotate_vector.hpp>
 #include <fmt/base.h>
 #include <fmt/format.h>
+#include <msdf-atlas-gen/types.h>
+#include <msdf-atlas-gen/msdf-atlas-gen.h>
 
 // typedefs
 #include <Types.h>

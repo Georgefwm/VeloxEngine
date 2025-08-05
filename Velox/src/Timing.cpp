@@ -6,7 +6,6 @@
 #include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_video.h>
 #include <functional>
-#include <glm/common.hpp>
 
 static i64 s_currentFrameTime = 0;
 static i64 s_currentDeltaTime = 0;

@@ -7,7 +7,6 @@
 #include "Input.h"
 #include "Rendering/Renderer.h"
 #include <SDL3/SDL_scancode.h>
-#include <glm/ext/scalar_constants.hpp>
 
 constexpr f32 GRAVITY_FACTOR     = 10.0f;
 constexpr f32 JUMP_IMPULSE_FORCE = 7.0f;

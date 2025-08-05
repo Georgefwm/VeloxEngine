@@ -5,7 +5,6 @@
 #include "Rendering/Renderer.h"
 #include <unordered_map>
 
-#include <msdf-atlas-gen/msdf-atlas-gen.h>
 
 namespace Velox {
 

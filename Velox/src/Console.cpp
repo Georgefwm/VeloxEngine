@@ -6,7 +6,6 @@
 #include "Timing.h"
 #include "Rendering/Renderer.h"
 
-#include <glm/common.hpp>  // clamp()
 #include <imgui.h>
 #include <imgui_internal.h>
 

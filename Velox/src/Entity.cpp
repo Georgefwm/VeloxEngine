@@ -3,7 +3,6 @@
 #include "Util.h"
 #include <PCH.h>
 
-#include <glm/gtx/rotate_vector.hpp>
 #include <utility>
 
 static Velox::EntityManager s_entityManager;
