@@ -297,9 +297,6 @@ void UI::beginBuild()
 
     UI::pushParent(root);
     s_uiState.root = root;
-
-    if (s_uiState.debug)
-        LOG_INFO("-- New Frame --------------------------");
 }
 
 void fillTextStyleFromBox(UI::Box* box, Velox::TextDrawStyle* style)
@@ -307,6 +304,8 @@ void fillTextStyleFromBox(UI::Box* box, Velox::TextDrawStyle* style)
     style->font = box->font;
     style->textSize = box->fontSize;
     style->color = box->fontColor;
+    style->wrapText = true;
+    style->wrapXSize = box->textWrapSize;
 }
 
 UI::Box* boxDepthFirstPreOrder(UI::Box* box, UI::Box* root)
@@ -348,8 +347,9 @@ void calculateSizesStandalone(UI::Box* root, UI::Axis2 axis)
 
                 vec2 stringSize = Velox::getStringSize(box->string.c_str(), style);
 
-                box->preferredSize[axis].value = stringSize[axis];
-                box->fixedSize[axis].value     = stringSize[axis];
+                box->preferredSize[axis].value = stringSize[axis] + (box->padding[axis] * 2.0f);
+                box->fixedSize[axis].value     = stringSize[axis] + (box->padding[axis] * 2.0f);
+
                 break;
             }
                 
@@ -369,7 +369,7 @@ void calculateSizesUpwardsDependant(UI::Box* root, UI::Axis2 axis)
                 box->fixedSize[axis].value = box->preferredSize[axis].value;
 
                 UI::Box* fixedParent;
-                for (UI::Box* parent = box->first; parent != nullptr; parent = parent->parent)
+                for (UI::Box* parent = box->parent; parent != nullptr; parent = parent->parent)
                 {
                     if (parent->flags & UI::UIBoxFlags_FixedWidth ||
                         parent->preferredSize[axis].kind == UI::UISizeKind_Pixels ||
@@ -381,7 +381,10 @@ void calculateSizesUpwardsDependant(UI::Box* root, UI::Axis2 axis)
                     }
                 }
 
-                f32 size = fixedParent->fixedSize[axis].value * box->preferredSize[axis].value;
+                f32 size =
+                    (fixedParent->fixedSize[axis].value - (fixedParent->padding[axis] * 2.0f)) *
+                    box->preferredSize[axis].value;
+
                 box->fixedSize[axis].value = size;
             }
 
@@ -407,6 +410,9 @@ void calculateSizesDownwardsDependant(UI::Box* root, UI::Axis2 axis)
                     else
                         sum = glm::max(sum, child->fixedSize[axis].value);
                 }
+
+                // Account for padding.
+                sum += box->padding[axis] * 2.0f;
 
                 box->fixedSize[axis].value = sum;
             }
@@ -501,73 +507,71 @@ void enforceLayoutConstraints(UI::Box* root, UI::Axis2 axis)
 
 #define USE_FLOOR 0
 
-void setLayoutPositions(UI::Box* box, UI::Axis2 axis)
+void setLayoutPositions(UI::Box* root, UI::Axis2 axis)
 {
-    f32 layoutPosition = 0.0f;
-    f32 bounds = 0.0f;
-
-    for (UI::Box* child = box->first; child != nullptr; child = child->next)
+    for (UI::Box* box = root; box != nullptr; box = boxDepthFirstPreOrder(box, root)) 
     {
-        f32 originalPosition = axis == UI::Axis2_X ? child->rect.x : child->rect.y;
+        f32 layoutPosition = box->padding[axis];
+        f32 bounds = 0.0f;
 
-        if (child->flags & UI::UIBoxFlags_Floating)
+        for (UI::Box* child = box->first; child != nullptr; child = child->next)
         {
-            child->fixedPosition[axis].value = child->preferredPosition[axis];
-            continue;
-        }
+            f32 originalPosition = axis == UI::Axis2_X ? child->rect.x : child->rect.y;
 
-        child->fixedPosition[axis].value = layoutPosition;
+            if (child->flags & UI::UIBoxFlags_Floating)
+            {
+                child->fixedPosition[axis].value = child->preferredPosition[axis];
+                continue;
+            }
 
-        if (box->childLayoutAxis == axis)
-        {
-            layoutPosition += child->fixedSize[axis].value;
-            bounds += child->fixedSize[axis].value;
-        }
-        else
-            bounds = glm::max(bounds, child->fixedSize[axis].value); 
+            child->fixedPosition[axis].value = layoutPosition;
 
-        // if animating on axis
-        // else
+            if (box->childLayoutAxis == axis)
+            {
+                layoutPosition += child->fixedSize[axis].value;
+                bounds += child->fixedSize[axis].value;
+            }
+            else
+                bounds = glm::max(bounds, child->fixedSize[axis].value); 
 
-        child->fixedPosition[axis].value = box->fixedPosition[axis].value + child->fixedPosition[axis].value;
+            // if animating on axis
+            // else
 
-        //if (axis == UI::Axis2_X)
-        //{
-        //    child->fixedPosition[axis].value = box->fixedPosition[axis].value + child->fixedPosition[axis].value;
-        //    child->rect.w = box->fixedSize[axis].value;
-        //}
-        //        // - !(child->flags&(UIBoxFlags_SkipViewOffX<<axis))*floor_f32(box->view_off.v[axis])
-        //else
-        //{
-        //    child->rect.y = box->fixedPosition[axis].value + child->fixedPosition[axis].value;
-        //    child->rect.h = box->fixedSize[axis].value;
-        //}
-//
-        //if (axis == UI::Axis2_X)
-        //{
-        //    child->rect.w = child->rect.w + child->fixedSize[axis].value;
-        //    child->rect.w = box->fixedSize[axis].value;
-        //}
-        //else
-        //{
-        //    child->rect.h = child->rect.h + child->fixedSize[axis].value;
-        //    child->rect.h = box->fixedSize[axis].value;
-        //}
+            child->fixedPosition[axis].value = box->fixedPosition[axis].value + child->fixedPosition[axis].value;
+
+            //if (axis == UI::Axis2_X)
+            //{
+            //    child->fixedPosition[axis].value = box->fixedPosition[axis].value + child->fixedPosition[axis].value;
+            //    child->rect.w = box->fixedSize[axis].value;
+            //}
+            //        // - !(child->flags&(UIBoxFlags_SkipViewOffX<<axis))*floor_f32(box->view_off.v[axis])
+            //else
+            //{
+            //    child->rect.y = box->fixedPosition[axis].value + child->fixedPosition[axis].value;
+            //    child->rect.h = box->fixedSize[axis].value;
+            //}
+    //
+            //if (axis == UI::Axis2_X)
+            //{
+            //    child->rect.w = child->rect.w + child->fixedSize[axis].value;
+            //    child->rect.w = box->fixedSize[axis].value;
+            //}
+            //else
+            //{
+            //    child->rect.h = child->rect.h + child->fixedSize[axis].value;
+            //    child->rect.h = box->fixedSize[axis].value;
+            //}
 
 #if USE_FLOOR == 1
-        child->rect.x = glm::floor(child->rect.x);
-        child->rect.y = glm::floor(child->rect.y);
-        child->rect.w = glm::floor(child->rect.w);
-        child->rect.h = glm::floor(child->rect.h);
+            child->rect.x = glm::floor(child->rect.x);
+            child->rect.y = glm::floor(child->rect.y);
+            child->rect.w = glm::floor(child->rect.w);
+            child->rect.h = glm::floor(child->rect.h);
 #endif
 
-        f32 positionDelta = (axis == UI::Axis2_X ? child->rect.x : child->rect.y) - originalPosition;
-    }
-
-    for (UI::Box* child = box->first; child != nullptr; child = child->next)
-    {
-        setLayoutPositions(child, axis);
-    }
+            f32 positionDelta = (axis == UI::Axis2_X ? child->rect.x : child->rect.y) - originalPosition;
+        }
+    } 
 }
 
 void UI::endBuild()
@@ -581,6 +585,14 @@ void UI::endBuild()
         enforceLayoutConstraints(s_uiState.root, axis);
         setLayoutPositions(s_uiState.root, axis);
     }
+
+    // Set text wrap.
+    for (UI::Box* box = s_uiState.root; box != nullptr; box = boxDepthFirstPreOrder(box, s_uiState.root)) 
+    {
+        if (box->flags & UIBoxFlags_DrawText)
+            box->textWrapSize = box->fixedSize[Axis2_X].value;
+    }
+
 }
 
 void drawBoxRecurse(UI::Box* box)
@@ -626,8 +638,7 @@ void drawBoxRecurseDebug(UI::Box* box)
         .h = box->fixedSize[UI::Axis2_Y].value,
     };
 
-    LOG_INFO(fmt::format("Box: {}, parent: {}, {}",
-                box->name.c_str(), p != nullptr ? p->name : "None", rect));
+    // LOG_INFO(fmt::format("Box: {}, parent: {}, {}", box->name.c_str(), p != nullptr ? p->name : "None", rect));
 
     if (!UI::keyComp(box->key, s_uiState.root->key))
     {
@@ -635,6 +646,11 @@ void drawBoxRecurseDebug(UI::Box* box)
             vec3(rect.x, rect.y, 0.0f),
             vec2(rect.w, rect.h),
             COLOR_BLUE);
+
+        Velox::drawRect(
+            vec3(rect.x + box->padding[UI::Axis2_X], rect.y + box->padding[UI::Axis2_Y], 0.0f),
+            vec2(rect.w - box->padding[UI::Axis2_X], rect.h - box->padding[UI::Axis2_Y]),
+            COLOR_GREEN);
     }
 
     for (UI::Box* child = box->first; child != nullptr; child = child->next)

@@ -49,6 +49,8 @@ struct TextDrawStyle {
     vec4  outlineColor   = COLOR_BLACK;
     float outlineWidth   = 1.0f;  // Range (0.0f, 2.0f) for threshold == 0.5f. Range effected by threshold.
     float outlineBlur    = 1.0f;  // Range (0.0f, 2.0f). Very much depends on outlineWidth;
+    bool wrapText        = false;
+    f32 wrapXSize        = 99999.9f;  // Width of available X axis space to draw.
 
     bool operator==(TextDrawStyle const& rhs) const
     {
@@ -130,7 +132,8 @@ VELOX_API void drawRect(const Velox::Rectangle& rect, const vec4& color);
 VELOX_API void drawRect(const vec3& position, const vec2& size, const vec4& color);
 
 VELOX_API TextContinueInfo drawText(const char* text, const vec3& position,
-        const Velox::TextDrawStyle& style = *Velox::GetUsingTextStyle(), TextContinueInfo* textContinueInfo = nullptr);
+        const Velox::TextDrawStyle& style = *Velox::GetUsingTextStyle(),
+        TextContinueInfo* textContinueInfo = nullptr);
 
 
 }

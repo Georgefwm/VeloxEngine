@@ -49,6 +49,7 @@ enum UIBoxFlags_ : u64 {
     UIBoxFlags_FixedHeight     = (UI::BoxFlags)(1ull << 8),
     UIBoxFlags_AllowOverflowX  = (UI::BoxFlags)(1ull << 9),
     UIBoxFlags_AllowOverflowY  = (UI::BoxFlags)(1ull << 10),
+    UIBoxFlags_WrapText        = (UI::BoxFlags)(1ull << 11),
 };
 
 struct Key {
@@ -117,12 +118,13 @@ struct Box {
     Velox::Font* font;
     f32 fontSize;
     vec4 fontColor;
+    f32 textWrapSize = 99999.9f;
 
     vec4 backgroundColor;
     vec4 hoverColor;
     vec4 usingColor = backgroundColor;
 
-    vec2 padding = vec2(0.0f);
+    f32 padding[Axis2_COUNT];
     
     UI::TextAlignment textAlignment;
 };
@@ -179,7 +181,7 @@ struct UIState {
     std::stack<vec4> fontColorStack {};
     std::stack<UI::TextAlignment> textAlignmentStack {};
 
-    bool debug = false;
+    bool debug = true;
 };
 
 void beginBuild();

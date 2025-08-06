@@ -16,6 +16,7 @@
 
 Velox::Font* g_font;
 
+static f32 s_wWidth = 1000.0f;
 
 
 void doUpdates(const double& deltaTime)
@@ -88,8 +89,12 @@ void doUITestStuff()
 {
     UI::beginBuild();
 
-    UI::Comm wComm = UI::window({ 0.0f, 0.0f, 1920.0f, 300.0f }, "window_a");
+    Velox::floatScalerWidget(&s_wWidth, 100.0f, 1919.0f);
+    UI::Comm wComm = UI::window({ 50.0f, 50.0f, s_wWidth, 700.0f }, "window_a");
     wComm.box->childLayoutAxis = UI::Axis2_Y;
+    wComm.box->padding[UI::Axis2_X] = 30.0f;
+    wComm.box->padding[UI::Axis2_Y] = 30.0f;
+    wComm.box->usingColor = COLOR_RED;
 
     UI::section();
     UI::button("file");

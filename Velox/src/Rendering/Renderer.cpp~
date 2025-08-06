@@ -634,44 +634,14 @@ Velox::TextContinueInfo Velox::drawText(const char* text, const vec3& position,
             continue;
         }
 
-        // Wrap if next word goes past wrap size.
         if (style.wrapText && character == ' ')
         {
-            const char* start = &text[i+1];
+            const char* start = &text[i];
             const char* found = strchr(start, ' ');
 
-            i32 foundIndex = -1;
+            i32 foundIndex = found ? static_cast<i32>(found - start) : -1;
 
-            if (found)
-                foundIndex = static_cast<i32>(found - start);
-            else
-            {
-                const char* backup = strchr(start, '\0');
-                if (backup)
-                    foundIndex = static_cast<i32>(backup - start);
-            }
-
-            if (foundIndex >= 0.0f)
-            {
-                f64 wordAdvance = x;
-                for (i32 subIndex = 0; subIndex <= foundIndex; subIndex += 1)
-                {
-                    f64 charAdvance;
-                    char charText = text[i + subIndex];
-                    fontGeometry.getAdvance(charAdvance, charText, text[i + subIndex + 1]);
-
-                    wordAdvance += fontScale * charAdvance;
-                }
-
-                wordAdvance *= style.textSize;
-
-                if (wordAdvance > style.wrapXSize)
-                {
-                    x = 0;
-                    y += fontScale * metrics.lineHeight;
-                    continue;
-                }
-            }
+            LOG_INFO("found index: {}", foundIndex);
         }
 
         if (glyph == nullptr)
@@ -796,7 +766,8 @@ Velox::TextContinueInfo Velox::drawText(const char* text, const vec3& position,
             double advance; 
             fontGeometry.getAdvance(advance, character, text[i + 1]);
 
-            x += fontScale * advance;
+            float kerningOffset = 0.0;
+            x += fontScale * advance + kerningOffset;
         }
     }
 

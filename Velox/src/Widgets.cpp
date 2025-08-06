@@ -34,7 +34,7 @@ UI::Comm UI::section(std::string string)
     box->preferredSize[Axis2_X].kind = UI::UISizeKind_ParentPct;
     box->preferredSize[Axis2_X].value = 1.0f;
 
-    box->preferredSize[Axis2_Y].kind = UI::UISizeKind_ParentPct;
+    box->preferredSize[Axis2_Y].kind = UI::UISizeKind_ChildrenSum;
     box->preferredSize[Axis2_Y].value = 1.0f;
 
 
@@ -95,13 +95,16 @@ UI::Comm UI::button(std::string string)
 UI::Comm UI::text(std::string string)
 {
     UI::BoxFlags flags =
-        UIBoxFlags_DrawText;
+        UIBoxFlags_DrawText |
+        UIBoxFlags_WrapText;
 
     UI::Box* box = UI::buildBoxFromString(flags, string);
 
     box->name = string;
 
-    box->preferredSize[UI::Axis2_X].kind = UI::UISizeKind_TextContent;
+    box->preferredSize[UI::Axis2_X].kind = UI::UISizeKind_ParentPct;
+    box->preferredSize[UI::Axis2_X].value = 1.0f;
+
     box->preferredSize[UI::Axis2_Y].kind = UI::UISizeKind_TextContent;
 
     UI::Comm comm = UI::commFromBox(box);
