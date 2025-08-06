@@ -542,6 +542,29 @@ void Velox::textStyleEditor(Velox::TextDrawStyle* style, bool useCurrentAsBase)
     style->outlineBlur = s_editorStyle.outlineBlur;
 }
 
+void Velox::floatScalerWidget(f32* value, const f32& min, const f32& max)
+{
+    ImGuiWindowFlags flags = 0;
+    
+    ImGuiInputTextFlags inputTextFlags = 0;
+    inputTextFlags |= ImGuiInputTextFlags_EnterReturnsTrue;
+    inputTextFlags |= ImGuiInputTextFlags_CallbackCharFilter; 
+
+    ImVec2 windowSize = { 1200, 150 };
+
+    // Don't change size of window, just position; To avoid resizing elements.
+    ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(windowSize,  ImGuiCond_FirstUseEver);
+
+    int valueSpacing = 300;
+
+    ImGui::Begin("Float Slider", NULL, flags);
+
+    ImGui::SliderFloat("Font Weight", value, min, max, "%.2f");
+    
+    ImGui::End();
+}
+
 void Velox::updateFrameHistory()
 {
     // GM: Wrap around to start.
